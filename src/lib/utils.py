@@ -36,3 +36,23 @@ not_using_operators_in_mbfl = [
     "IndVarRepPar", "IndVarRepGlo", "IndVarRepExt", "IndVarRepLoc",
     "STRI"
 ]
+
+crash_codes = [
+    132,  # SIGILL
+    133,  # SIGTRAP
+    134,  # SIGABRT
+    135,  # SIGBUS
+    136,  # SIGFPE
+    137,  # SIGKILL
+    138,  # SIGBUS
+    139,  # segfault
+    140,  # SIGPIPE
+    141,  # SIGALRM
+    124,  # timeout
+    143,  # SIGTERM
+    129,  # SIGHUP
+]
+
+def sort_testcase_script_name(tc_script):
+    tc_filename = tc_script.split('.')[0]
+    return int(tc_filename[2:])

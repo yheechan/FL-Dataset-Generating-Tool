@@ -4,7 +4,7 @@ import subprocess as sp
 
 from lib.utils import *
 from lib.subject_base import Subject
-from lib.mutant_bug_collection import MutantBugCollection
+from lib.version_bug_collection import VersionBugCollection
 
 class BuggyMutantCollection(Subject):
     def __init__(self, subject_name):
@@ -18,15 +18,15 @@ class BuggyMutantCollection(Subject):
         # self.initialize_working_directory()
         
         # # 2. Configure subject
-        # self.configure_no_cov()
+        self.configure_no_cov()
         
         # # 3. Build subject
-        # self.build()
+        self.build()
         
         # # 4. Generate mutants
         # # self.mutants_dir format: path to 'generated_mutants' directory
         # # self.targetfile_and_mutantdir format: (target_file, its mutants_dir)
-        # self.generate_mutants()
+        self.generate_mutants()
 
         # # 5. Get mutants: self.mutants_list
         # # self.mutant_list format: [(target_file, mutant)]
@@ -36,7 +36,7 @@ class BuggyMutantCollection(Subject):
         # # 6. Assign mutants to cores
         # # mutant_assignments format: {machine_core: [(target_file, mutant)]}
         self.mutant_assignments = self.assign_mutants_to_cores()
-        self.print_mutant_assignments()
+        # self.print_mutant_assignments()
 
         # 7. Prepare for mutation testing
         self.prepare_for_mutation_testing()
@@ -44,7 +44,7 @@ class BuggyMutantCollection(Subject):
         # self.experiment.print_machines()
 
         # 8. Test mutants
-        self.test_mutants()
+        # self.test_mutants()
     
     def test_mutants(self):
         # make a new process (job) for each machine-core
@@ -73,7 +73,7 @@ class BuggyMutantCollection(Subject):
             # get last two from the path
             mutant = "/".join(mutant.parts[-2:])
             print(f'>> Testing mutant {mutant} on {target_file}')
-            mutant_object = MutantBugCollection()
+            # mutant_object = MutantBugCollection()
             # self.test_single_mutant(machine_core, target_file, mutant)
     
     def prepare_for_mutation_testing(self):
@@ -83,6 +83,7 @@ class BuggyMutantCollection(Subject):
             self.prepare_for_local()
 
 
+    # MAYBE I can send this as a class of FileManager?
     def prepare_for_local(self):
         working_env = self.work / "workers-collecting_mutants"
         working_env.mkdir(exist_ok=True)
@@ -193,17 +194,19 @@ class BuggyMutantCollection(Subject):
         mutants_list = []
         for target_mutants_dir in self.mutants_dir.iterdir():
             target_file = target_mutants_dir.name.replace('-', '/')
+            if "HTMLparser.c" not in target_file:
+                continue
 
             target_mutants = list(target_mutants_dir.glob(subject_lang))
             for mutant in target_mutants:
                 mutants_list.append((target_file, mutant))
 
                 # TEMPORARY
-                if len(mutants_list) >= 30:
+                if len(mutants_list) >= 32:
                     break
 
             # TEMPORARY
-            if len(mutants_list) >= 30:
+            if len(mutants_list) >= 32:
                 break
         
         return mutants_list
