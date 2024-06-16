@@ -22,6 +22,7 @@ class WorkerStage01(Worker):
         assert self.buggy_mutants_dir.exists(), f"Buggy mutants directory does not exist: {self.buggy_mutants_dir}"
     
     def run(self):
+        print(f"Testing mutant {self.assigned_mutant_code_file.name} on {self.machine}::{self.core}")
         # 1. Configure subject
         if self.need_configure:
             self.configure_no_cov()
@@ -114,4 +115,3 @@ class WorkerStage01(Worker):
         print(f"Test suite size: {len(self.test_suite)}")
         for idx, tc_script in enumerate(self.test_suite):
             print(f"\t{idx+1}. {tc_script}")
-        

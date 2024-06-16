@@ -2,12 +2,18 @@ from pathlib import Path
 
 # src/lib/utils.py
 root_dir = Path(__file__).resolve().parent.parent.parent
+
 work_dir = root_dir / "work"
 work_dir.mkdir(exist_ok=True)
+log_dir = root_dir / "log"
+log_dir.mkdir(exist_ok=True)
+out_dir = root_dir / "out"
+out_dir.mkdir(exist_ok=True)
+
 configs_dir = root_dir / "configs"
 subjects_dir = root_dir / "subjects"
 tools_dir = root_dir / "tools"
-log_dir = root_dir / "logs"
+src_dir = root_dir / "src"
 
 # files in user_configs_dir
 configure_no_cov_script = 'configure_no_cov_script.sh'

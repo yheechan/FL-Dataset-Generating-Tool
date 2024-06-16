@@ -24,6 +24,12 @@ class Subject:
 
         self.initialize_working_directory()
 
+        self.out = out_dir / f"{self.name}"
+        self.out.mkdir(exist_ok=True, parents=True)
+
+        self.log = log_dir / f"{self.name}/{self.stage_name}"
+        self.log.mkdir(exist_ok=True, parents=True)
+
     
     def read_configs(self):
         configs = None
