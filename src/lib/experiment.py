@@ -8,7 +8,18 @@ class Experiment():
         self.use_distributed_machines = self.experiment_config["use_distributed_machines"]
 
         # self.machines format: [(machine_name, core_idx, homedirectory)]
-        self.machines = self.read_machines()
+        self.machineCores_list = self.read_machines()
+
+        # self.machine_core_dict format: {machine_name: [core_idx, homedirectory]}
+        self.machineCores_dict = self.get_machine_core_dict()
+    
+    def get_machine_core_dict(self):
+        machineCores_dict = {}
+        for machine_name, core_idx, homedirectory in self.machineCores_list:
+            if machine_name not in machineCores_dict:
+                machineCores_dict[machine_name] = []
+            machineCores_dict[machine_name].append((core_idx, homedirectory))
+        return machineCores_dict
     
     def read_experiment_config(self):
         configs = None
@@ -23,6 +34,8 @@ class Experiment():
         return configs
 
     def read_machines(self):
+        machineCores_list = []
+
         if self.use_distributed_machines:
             machines = None
 
@@ -33,28 +46,26 @@ class Experiment():
             if machines is None:
                 raise Exception("Machines are not loaded")
             
-            machines_cores_list = []
             for machine_name, info in machines.items():
                 cores = info["cores"]
                 homedirectory = info["homedirectory"]
 
                 for idx in range(cores):
                     core_idx = f"core{idx}"
-                    machines_cores_list.append((machine_name, core_idx, homedirectory))
+                    machineCores_list.append((machine_name, core_idx, homedirectory))
         else:
             single_machine = self.experiment_config["single_machine"]
             machine_name = single_machine["name"]
             cores = single_machine["cores"]
             homedirectory = single_machine["homedirectory"]
 
-            machines_cores_list = []
             for idx in range(cores):
                 core_idx = f"core{idx}"
-                machines_cores_list.append((machine_name, core_idx, homedirectory))
+                machineCores_list.append((machine_name, core_idx, homedirectory))
 
-        return machines_cores_list
+        return machineCores_list
             
     def print_machines(self):
-        print(f"Number of machines: {len(self.machines)}")
-        for machine in self.machines:
+        print(f"Number of machines: {len(self.machineCores_list)}")
+        for machine in self.machineCores_list:
             print(f"\t{machine}")

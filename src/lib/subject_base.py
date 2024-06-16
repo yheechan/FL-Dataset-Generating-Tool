@@ -9,7 +9,7 @@ class Subject:
         self.stage_name = stage_name
         self.name = subject_name
 
-        self.work = work_dir / f"{subject_name}-{stage_name}"
+        self.work = work_dir / f"{subject_name}"
         self.subject_dir = subjects_dir / subject_name
         self.subject_repo = self.work / subject_name
         self.config = self.read_configs()
@@ -21,8 +21,6 @@ class Subject:
         self.compile_command_file = self.work / self.config["compile_command_path"]
         
         self.experiment = Experiment()
-
-        self.initialize_working_directory()
 
         self.out = out_dir / f"{self.name}"
         self.out.mkdir(exist_ok=True, parents=True)
@@ -72,8 +70,8 @@ class Subject:
         assert self.build_file.exists(), "Build script does not exist"
         assert self.clean_file.exists(), "Clean build script does not exist"
         
-        if self.stage_name == "stage01":
-            self.musicup_exec = self.copy_musicup()
+        self.musicup_exec = self.copy_musicup()
+        self.extractor_exec = self.copy_extractor()
         
         print(f"Initialized working directory: {self.work}")
     
@@ -86,7 +84,7 @@ class Subject:
 
         return self.tools_dir / "music"
     
-    def copy_exctractor(self):
+    def copy_extractor(self):
         self.tools_dir = self.work / "tools"
         self.tools_dir.mkdir(exist_ok=True)
         extractor_exec = tools_dir / "extractor/extractor"

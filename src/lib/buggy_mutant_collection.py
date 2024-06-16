@@ -4,7 +4,7 @@ import subprocess as sp
 
 from lib.utils import *
 from lib.subject_base import Subject
-from lib.version_bug_collection import VersionBugCollection
+from lib.file_manager import FileManager
 
 class BuggyMutantCollection(Subject):
     def __init__(self, subject_name):
@@ -13,66 +13,76 @@ class BuggyMutantCollection(Subject):
         self.mutants_dir = out_dir / self.name / f"generated_mutants"
         self.mutants_dir.mkdir(exist_ok=True)
 
-        self.buggy_mutants_dir = out_dir / self.name / f"buggy_mutants"
+        self.buggy_mutants_dir = out_dir / self.name / "buggy_mutants"
         self.buggy_mutants_dir.mkdir(exist_ok=True)
+
+        self.fileManager = FileManager(self.name, self.work)
+
     
     def run(self):
         # # 1. Read configurations and initialize working directory: self.work
-        # self.initialize_working_directory()
+        self.initialize_working_directory()
         
         # # 2. Configure subject
-        # self.configure_no_cov()
+        self.configure_no_cov()
         
         # # 3. Build subject
-        # self.build()
+        self.build()
         
         # # 4. Generate mutants
         # # self.mutants_dir format: path to 'generated_mutants' directory
         # # self.targetfile_and_mutantdir format: (target_file, its mutants_dir)
-        # self.generate_mutants()
+        self.generate_mutants()
 
-        # # 5. Get mutants: self.mutants_list
-        # # self.mutant_list format: [(target_file, mutant)]
+        # 5. Get mutants: self.mutants_list
+        # self.mutant_list format: [(target_file, mutant)]
         self.mutants_list = self.get_mutants_list()
-        self.print_number_of_mutants()
+        # self.print_number_of_mutants()
 
-        # # 6. Assign mutants to cores
-        # # mutant_assignments format: {machine_core: [(target_file, mutant)]}
+        # 6. Assign mutants to cores
+        # mutant_assignments format: {machine_core: [(target_file, mutant)]}
         self.mutant_assignments = self.assign_mutants_to_cores()
         # self.print_mutant_assignments()
 
         # 7. Prepare for mutation testing
         self.prepare_for_mutation_testing()
 
-        # self.experiment.print_machines()
-
         # 8. Test mutants
         self.test_mutants()
     
+
+
+
+    # +++++++++++++++++++++++++++
+    # ++++++ Testing stage ++++++
+    # +++++++++++++++++++++++++++    
     def test_mutants(self):
         # make a new process (job) for each machine-core
 
         if self.experiment.experiment_config["use_distributed_machines"]:
-            pass
+            self.test_on_remote()
         else:
             self.test_on_local()
     
-    def test_on_local(self):
+    def test_on_remote(self):
         jobs = []
         for machine_core, mutants in self.mutant_assignments.items():
             machine, core, homedir = machine_core.split("::")
             job = multiprocessing.Process(
-                target=self.test_single_machine_core,
+                target=self.test_single_machine_core_remote,
                 args=(machine, core, homedir, mutants)
             )
             jobs.append(job)
             job.start()
         
         for job in jobs:
-            job.join()  
-
-
-    def test_single_machine_core(self, machine, core, homedir, mutants):
+            job.join()
+    
+        print(f">> Finished testing mutants not collecting buggy mutants...")
+        self.fileManager.collect_data_remote("buggy_mutants", self.buggy_mutants_dir, self.experiment.machineCores_dict)
+        
+    def test_single_machine_core_remote(self, machine, core, homedir, mutants):
+        print(f"Testing on {machine}::{core}")
         subject_name = self.name
         machine_name = machine
         core_name = core
@@ -81,6 +91,54 @@ class BuggyMutantCollection(Subject):
         for target_file, mutant_path in mutants:
             # mutant_path : is a Path object
             # mutant is last two part of the path libxml2-HTMLparser.c/HTMLparser.MUT730.c
+            # target_file : libxml2/HTMLparser.c
+            mutant_input = "/".join(mutant_path.parts[-2:])
+            target_file_path = target_file
+            
+            cmd = [
+                "ssh", f"{machine_name}",
+                f"cd {homedir}/FL-dataset-generation-{subject_name}/src && python3 test_mutant_buggy_collection.py --subject {subject_name} --machine {machine_name} --core {core_name} --mutant-path {mutant_input} --target-file-path {target_file_path}",
+            ]
+            if need_configure:
+                cmd.append("--need-configure")
+                need_configure = False
+            res = sp.run(cmd, stderr=sp.PIPE, stdout=sp.PIPE, cwd=src_dir)
+
+            # write stdout and stderr to self.log
+            log_file = self.log / f"{machine_name}-{core_name}.log"
+            with log_file.open("a") as f:
+                f.write(f"\n+++++ results for {mutant_path.name} +++++\n")
+                f.write("+++++ STDOUT +++++\n")
+                f.write(res.stdout.decode())
+                f.write("\n+++++ STDERR +++++\n")
+                f.write(res.stderr.decode())
+
+    
+    def test_on_local(self):
+        jobs = []
+        for machine_core, mutants in self.mutant_assignments.items():
+            machine, core, homedir = machine_core.split("::")
+            job = multiprocessing.Process(
+                target=self.test_single_machine_core_local,
+                args=(machine, core, homedir, mutants)
+            )
+            jobs.append(job)
+            job.start()
+        
+        for job in jobs:
+            job.join()
+
+    def test_single_machine_core_local(self, machine, core, homedir, mutants):
+        print(f"Testing on {machine}::{core}")
+        subject_name = self.name
+        machine_name = machine
+        core_name = core
+        need_configure = True
+
+        for target_file, mutant_path in mutants:
+            # mutant_path : is a Path object
+            # mutant is last two part of the path libxml2-HTMLparser.c/HTMLparser.MUT730.c
+            # target_file : libxml2/HTMLparser.c
             mutant_input = "/".join(mutant_path.parts[-2:])
             target_file_path = target_file
 
@@ -96,39 +154,42 @@ class BuggyMutantCollection(Subject):
             res = sp.run(cmd, stderr=sp.PIPE, stdout=sp.PIPE, cwd=src_dir)
 
             # write stdout and stderr to self.log
-            log_file = self.log / f"{machine_name}-{core_name}-{mutant_path.name}.log"
-            with log_file.open("w") as f:
+            log_file = self.log / f"{machine_name}-{core_name}.log"
+            with log_file.open("a") as f:
+                f.write(f"\n+++++ results for {mutant_path.name} +++++\n")
                 f.write("+++++ STDOUT +++++\n")
                 f.write(res.stdout.decode())
                 f.write("\n+++++ STDERR +++++\n")
                 f.write(res.stderr.decode())
-        
-        self.collect_buggy_mutants_to_public(machine, core)
-    
-    def collect_buggy_mutants_to_public(self, machine, core):
-        buggy_mutants_dir = self.working_env / f"{machine}/{core}/buggy_mutants"
-        
-        for buggy_mutant in buggy_mutants_dir.iterdir():
-            if buggy_mutant.name == "buggy_mutants":
-                print(f"Skipping {buggy_mutant.name} {machine} {core}")
-            sp.check_call(["cp", "-r", buggy_mutant, self.buggy_mutants_dir])
     
     def prepare_for_mutation_testing(self):
         if self.experiment.experiment_config["use_distributed_machines"]:
-            pass
+            self.prepare_for_remote()
         else:
             self.prepare_for_local()
 
 
+    # +++++++++++++++++++++++++++++
+    # ++++++ Preparing stage ++++++
+    # +++++++++++++++++++++++++++++
+    def prepare_for_remote(self):
+        # 1. Initialize
+        self.clean_build()
+        self.fileManager.make_assigned_works_remote_stage01(self.mutant_assignments)
+        self.fileManager.send_mutants_remote_stage01(self.mutant_assignments)
+        self.fileManager.send_repo_remote(self.subject_repo, self.experiment.machineCores_list)
+        self.fileManager.send_configurations_remote(self.experiment.machineCores_dict)
+        self.fileManager.send_src_remote(self.experiment.machineCores_dict)
+
     # MAYBE I can send this as a class of FileManager?
     def prepare_for_local(self):
-        self.working_env = self.work / "workers-collecting_mutants"
-        self.working_env.mkdir(exist_ok=True)
+
+        self.working_env = self.fileManager.make_working_env_local()
 
         for machine_core, mutants in self.mutant_assignments.items():
             machine, core, homedir = machine_core.split("::")
             machine_core_dir = self.working_env / f"{machine}/{core}"
-            assigned_dir = machine_core_dir / "assigned_works"
+            assigned_dir = machine_core_dir / f"{self.stage_name}-assigned_works"
 
             target_dirs = []
             for target_file, mutant in mutants:
@@ -145,19 +206,18 @@ class BuggyMutantCollection(Subject):
                 mutant_path = target_dir_path / mutant.name
                 if not mutant_path.exists():
                     mutant_path.symlink_to(mutant)
-            
-            # This part makes directory for buggy mutants to be collected
-            buggy_mutant_dir = machine_core_dir / 'buggy_mutants'
-            buggy_mutant_dir.mkdir(exist_ok=True, parents=True)
 
             # This part copies subject repository to the machine-core directory
             sp.check_call(["cp", "-r", self.subject_repo, machine_core_dir])
 
 
+    # ++++++++++++++++++++++++++++++++++++
+    # ++++++ Gen mutants and assign ++++++
+    # ++++++++++++++++++++++++++++++++++++
     def assign_mutants_to_cores(self):
         mutant_assignments = {}
         for idx, (target_file, mutant) in enumerate(self.mutants_list):
-            machine_core = self.experiment.machines[idx % len(self.experiment.machines)]
+            machine_core = self.experiment.machineCores_list[idx % len(self.experiment.machineCores_list)]
 
             machine_core_str = "::".join(machine_core)
 
@@ -240,15 +300,14 @@ class BuggyMutantCollection(Subject):
                 mutants_list.append((target_file, mutant))
 
                 # TEMPORARY
-                if len(mutants_list) >= 32:
+                if len(mutants_list) >= 201:
                     break
 
             # TEMPORARY
-            if len(mutants_list) >= 32:
+            if len(mutants_list) >= 201:
                 break
         
         return mutants_list
-
 
     def print_number_of_mutants(self):
         print(f">> Generated {len(self.mutants_list)} mutants")

@@ -12,9 +12,9 @@ class Worker:
         self.machine = machine
         self.core = core
 
-        self.work = work_dir / f"{self.name}-{stage_name}"
+        self.work = work_dir / f"{self.name}"
         self.tools_dir = self.work / "tools"
-        self.core_dir = self.work / f"workers-{worker_env_name}/{machine}/{core}"
+        self.core_dir = self.work / f"working_env/{machine}/{core}"
         self.subject_repo = self.work / self.name
         self.config = self.read_configs()
 

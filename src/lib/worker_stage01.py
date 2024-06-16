@@ -8,7 +8,7 @@ class WorkerStage01(Worker):
         super().__init__(subject_name, "stage01", "collecting_mutants", machine, core)
         
         self.test_suite = self.get_testsuite()
-        self.assigned_works_dir = self.core_dir / "assigned_works"
+        self.assigned_works_dir = self.core_dir / f"stage01-assigned_works"
         self.need_configure = need_configure
 
         self.assigned_mutant_code_file = self.assigned_works_dir / mutant_path
@@ -18,8 +18,8 @@ class WorkerStage01(Worker):
         self.target_file_code_file = self.core_dir / self.target_file_path
         assert self.target_file_code_file.exists(), f"Target file code file does not exist: {self.target_file_code_file}"
 
-        self.buggy_mutants_dir = self.core_dir / "buggy_mutants"
-        assert self.buggy_mutants_dir.exists(), f"Buggy mutants directory does not exist: {self.buggy_mutants_dir}"
+        self.buggy_mutants_dir = out_dir / f"{self.name}" / "buggy_mutants"
+        self.buggy_mutants_dir.mkdir(exist_ok=True, parents=True)
     
     def run(self):
         print(f"Testing mutant {self.assigned_mutant_code_file.name} on {self.machine}::{self.core}")
