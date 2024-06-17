@@ -1,17 +1,18 @@
 import argparse
 
-from lib.worker_stage01 import WorkerStage01
+from lib.worker_stage02 import WorkerStage02
 
-# This script is to test single mutant (of subject)
-# the mutant is considered buggy (and saved within out/buggy_mutants)
-# if at least one test case fails
+# This script it to test single version (of subject)
+# the version is considered usable (and saved within out/usable_buggy_versions)
+# 1. if all its failing TCs execute its dedicated buggy line
+# 2. if the coverage of each failing TC is measurable (no internal crash, etc.)
 def main():
     parser = make_parser()
     args = parser.parse_args()
 
-    worker = WorkerStage01(
+    worker = WorkerStage02(
         args.subject, args.machine, args.core,
-        args.mutant_path, args.target_file_path, args.need_configure,
+        args.version, args.need_configure,
         args.verbose
     )
     worker.run()
@@ -21,8 +22,7 @@ def make_parser():
     parser.add_argument("--subject", type=str, help="Subject name", required=True)
     parser.add_argument("--machine", type=str, help="Machine name", required=True)
     parser.add_argument("--core", type=str, help="Core name", required=True)
-    parser.add_argument("--mutant-path", type=str, help="Mutant path", required=True)
-    parser.add_argument("--target-file-path", type=str, help="Target file path", required=True)
+    parser.add_argument("--version", type=str, help="Version name", required=True)
     parser.add_argument("--need-configure", action="store_true", help="Need configure")
     parser.add_argument("--verbose", action="store_true", help="Verbose mode")
     return parser

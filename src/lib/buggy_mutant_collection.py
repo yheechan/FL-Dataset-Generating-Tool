@@ -7,32 +7,32 @@ from lib.subject_base import Subject
 from lib.file_manager import FileManager
 
 class BuggyMutantCollection(Subject):
-    def __init__(self, subject_name):
-        super().__init__(subject_name, "stage01")
-
+    def __init__(self, subject_name, verbose=False):
+        super().__init__(subject_name, "stage01", verbose)
         self.mutants_dir = out_dir / self.name / f"generated_mutants"
         self.mutants_dir.mkdir(exist_ok=True)
 
         self.buggy_mutants_dir = out_dir / self.name / "buggy_mutants"
         self.buggy_mutants_dir.mkdir(exist_ok=True)
 
-        self.fileManager = FileManager(self.name, self.work)
+        self.fileManager = FileManager(self.name, self.work, self.verbose)
 
     
     def run(self):
-        # # 1. Read configurations and initialize working directory: self.work
+        # 1. Read configurations and initialize working directory: self.work
         self.initialize_working_directory()
         
-        # # 2. Configure subject
+        # 2. Configure subject
         self.configure_no_cov()
         
-        # # 3. Build subject
+        # 3. Build subject
         self.build()
         
-        # # 4. Generate mutants
-        # # self.mutants_dir format: path to 'generated_mutants' directory
-        # # self.targetfile_and_mutantdir format: (target_file, its mutants_dir)
+        # 4. Generate mutants
+        # self.mutants_dir format: path to 'generated_mutants' directory
+        # self.targetfile_and_mutantdir format: (target_file, its mutants_dir)
         self.generate_mutants()
+        self.clean_build()
 
         # 5. Get mutants: self.mutants_list
         # self.mutant_list format: [(target_file, mutant)]
@@ -41,7 +41,7 @@ class BuggyMutantCollection(Subject):
 
         # 6. Assign mutants to cores
         # mutant_assignments format: {machine_core: [(target_file, mutant)]}
-        self.mutant_assignments = self.assign_mutants_to_cores()
+        self.mutant_assignments = self.assign_works_to_machines(self.mutants_list)
         # self.print_mutant_assignments()
 
         # 7. Prepare for mutation testing
@@ -94,14 +94,19 @@ class BuggyMutantCollection(Subject):
             # target_file : libxml2/HTMLparser.c
             mutant_input = "/".join(mutant_path.parts[-2:])
             target_file_path = target_file
+
+            optional_flag = ""
+            if need_configure:
+                optional_flag = "--need-configure"
+                need_configure = False
+            if self.verbose:
+                optional_flag += " --verbose"
             
             cmd = [
                 "ssh", f"{machine_name}",
-                f"cd {homedir}/FL-dataset-generation-{subject_name}/src && python3 test_mutant_buggy_collection.py --subject {subject_name} --machine {machine_name} --core {core_name} --mutant-path {mutant_input} --target-file-path {target_file_path}",
+                f"cd {homedir}/FL-dataset-generation-{subject_name}/src && python3 test_mutant_buggy_collection.py --subject {subject_name} --machine {machine_name} --core {core_name} --mutant-path {mutant_input} --target-file-path {target_file_path} {optional_flag}",
             ]
-            if need_configure:
-                cmd.append("--need-configure")
-                need_configure = False
+            print_command(cmd, self.verbose)
             res = sp.run(cmd, stderr=sp.PIPE, stdout=sp.PIPE, cwd=src_dir)
 
             # write stdout and stderr to self.log
@@ -150,7 +155,10 @@ class BuggyMutantCollection(Subject):
             if need_configure:
                 cmd.append("--need-configure")
                 need_configure = False
+            if self.verbose:
+                cmd.append("--verbose")
             
+            print_command(cmd, self.verbose)
             res = sp.run(cmd, stderr=sp.PIPE, stdout=sp.PIPE, cwd=src_dir)
 
             # write stdout and stderr to self.log
@@ -174,7 +182,6 @@ class BuggyMutantCollection(Subject):
     # +++++++++++++++++++++++++++++
     def prepare_for_remote(self):
         # 1. Initialize
-        self.clean_build()
         self.fileManager.make_assigned_works_remote_stage01(self.mutant_assignments)
         self.fileManager.send_mutants_remote_stage01(self.mutant_assignments)
         self.fileManager.send_repo_remote(self.subject_repo, self.experiment.machineCores_list)
@@ -183,12 +190,11 @@ class BuggyMutantCollection(Subject):
 
     # MAYBE I can send this as a class of FileManager?
     def prepare_for_local(self):
-
         self.working_env = self.fileManager.make_working_env_local()
 
         for machine_core, mutants in self.mutant_assignments.items():
             machine, core, homedir = machine_core.split("::")
-            machine_core_dir = self.working_env / f"{machine}/{core}"
+            machine_core_dir = self.working_env / machine / core
             assigned_dir = machine_core_dir / f"{self.stage_name}-assigned_works"
 
             target_dirs = []
@@ -199,35 +205,24 @@ class BuggyMutantCollection(Subject):
                 if target_dir not in target_dirs:
                     target_dirs.append(target_dir)
                     target_dir_path = assigned_dir / target_dir
+                    print_command(["mkdir", "-p", target_dir_path], self.verbose)
                     target_dir_path.mkdir(exist_ok=True, parents=True)
 
                 # This part copies mutant to assigned directory
                 target_dir_path = assigned_dir / target_dir
                 mutant_path = target_dir_path / mutant.name
                 if not mutant_path.exists():
+                    print_command(["cp", mutant, mutant_path], self.verbose)
                     mutant_path.symlink_to(mutant)
 
             # This part copies subject repository to the machine-core directory
+            print_command(["cp", "-r", self.subject_repo, machine_core_dir], self.verbose)
             sp.check_call(["cp", "-r", self.subject_repo, machine_core_dir])
 
 
     # ++++++++++++++++++++++++++++++++++++
     # ++++++ Gen mutants and assign ++++++
     # ++++++++++++++++++++++++++++++++++++
-    def assign_mutants_to_cores(self):
-        mutant_assignments = {}
-        for idx, (target_file, mutant) in enumerate(self.mutants_list):
-            machine_core = self.experiment.machineCores_list[idx % len(self.experiment.machineCores_list)]
-
-            machine_core_str = "::".join(machine_core)
-
-            if machine_core_str not in mutant_assignments:
-                mutant_assignments[machine_core_str] = []
-            
-            mutant_assignments[machine_core_str].append((target_file, mutant))
-        
-        return mutant_assignments
-    
     def generate_mutants(self):
         self.targetfile_and_mutantdir = self.initalize_mutants_dir()
 
@@ -260,7 +255,7 @@ class BuggyMutantCollection(Subject):
             '-d', unused_ops,
             '-p', str(self.compile_command_file)
         ]
-
+        print_command(cmd, self.verbose)
         sp.check_call(cmd, stderr=sp.PIPE, stdout=sp.PIPE)
 
     

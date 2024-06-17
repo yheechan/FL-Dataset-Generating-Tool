@@ -4,10 +4,10 @@ import subprocess as sp
 from lib.utils import *
 
 class FileManager():
-    def __init__(self, subject_name, work):
+    def __init__(self, subject_name, work, verbose=False):
         self.name = subject_name
         self.work_dir = work # PATH
-        pass
+        self.verbose = verbose
 
     # ++++++++++++++++++++++
     # +++++ COMMONS ++++++++
@@ -25,8 +25,11 @@ class FileManager():
 
     def single_collect_data_remote(self, task):
         machine, homedir, data, dest = task
+        print_command([
+            "rsync", "-t", "-r", "--no-implied-dirs", f"{machine}:{homedir}FL-dataset-generation-{self.name}/out/{self.name}/{data}/", f"{dest}"
+        ], self.verbose)
         sp.check_call([
-            "rsync", "-t", "-r", f"{machine}:{homedir}FL-dataset-generation-{self.name}/out/{self.name}/{data}", f"{dest}"
+            "rsync", "-t", "-r", "--no-implied-dirs", f"{machine}:{homedir}FL-dataset-generation-{self.name}/out/{self.name}/{data}/", f"{dest}"
         ])
         
     def send_src_remote(self, machinesCores_dict):
@@ -43,6 +46,9 @@ class FileManager():
     
     def single_send_src_remote(self, task):
         machine, homedir = task
+        print_command([
+            "rsync", "-t", "-r", f"{src_dir}", f"{machine}:{homedir}FL-dataset-generation-{self.name}"
+        ], self.verbose)
         sp.check_call([
             "rsync", "-t", "-r", f"{src_dir}", f"{machine}:{homedir}FL-dataset-generation-{self.name}"
         ])
@@ -60,6 +66,9 @@ class FileManager():
 
     def single_send_repo_remote(self, task):
         machine, core, homedir, repo = task
+        print_command([
+            "rsync", "-t", "-r", f"{repo}", f"{machine}:{homedir}FL-dataset-generation-{self.name}"
+        ], self.verbose)
         sp.check_call([
             "rsync", "-t", "-r", f"{repo}", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}/working_env/{machine}/{core}"
         ])
@@ -78,17 +87,22 @@ class FileManager():
     
     def single_send_configurations_remote(self, task):
         machine, homedir = task
+        print_command([
+            "rsync", "-t", "-r", f"{self.work_dir}/configurations.json", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}"
+        ], self.verbose)
         sp.check_call([
             "rsync", "-t", "-r", f"{self.work_dir}/configurations.json", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}"
         ])
 
     def make_working_env_local(self):
         self.working_env = self.work_dir / "working_env"
+        print_command(["mkdir", "-p", self.working_env], self.verbose)
         self.working_env.mkdir(exist_ok=True, parents=True)
         return self.working_env
 
     def make_output_dir(self, output_name):
         self.output_dir = out_dir / f"{self.name}" / output_name
+        print_command(["mkdir", "-p", self.output_dir], self.verbose)
         self.output_dir.mkdir(exist_ok=True, parents=True)
         return self.output_dir
     
@@ -122,6 +136,10 @@ class FileManager():
     
     def single_assigned_dir_stage01(self, task):
         machine, core, homedir, stage, target_dir = task
+        print_command([
+            "ssh", f"{machine}",
+            f"mkdir -p {homedir}FL-dataset-generation-{self.name}/work/{self.name}/working_env/{machine}/{core}/{stage}/{target_dir}"
+        ], self.verbose)
         sp.check_call([
             "ssh", f"{machine}",
             f"mkdir -p {homedir}FL-dataset-generation-{self.name}/work/{self.name}/working_env/{machine}/{core}/{stage}/{target_dir}"
@@ -145,6 +163,9 @@ class FileManager():
     
     def single_send_mutant_stage01(self, task):
         machine, core, homedir, stage, target_dir, mutant = task
+        print_command([
+            "rsync", "-t", "-r", f"{mutant}", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}/working_env/{machine}/{core}/{stage}/{target_dir}"
+        ], self.verbose)
         sp.check_call([
             "rsync", "-t", "-r", f"{mutant}", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}/working_env/{machine}/{core}/{stage}/{target_dir}"
         ])

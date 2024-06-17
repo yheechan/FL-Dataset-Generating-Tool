@@ -4,8 +4,8 @@ from lib.utils import *
 from lib.worker_base import Worker
 
 class WorkerStage01(Worker):
-    def __init__(self, subject_name, machine, core, mutant_path, target_file_path, need_configure):
-        super().__init__(subject_name, "stage01", "collecting_mutants", machine, core)
+    def __init__(self, subject_name, machine, core, mutant_path, target_file_path, need_configure, verbose=False):
+        super().__init__(subject_name, "stage01", "collecting_mutants", machine, core, verbose)
         
         self.test_suite = self.get_testsuite()
         self.assigned_works_dir = self.core_dir / f"stage01-assigned_works"
@@ -29,9 +29,11 @@ class WorkerStage01(Worker):
 
         # 2. Build subject
         self.build()
+        self.set_env()
 
         # 3. Test mutant
         self.test_mutant()
+        self.clean_build()
     
     def test_mutant(self):
         # 1. Make patch file
@@ -68,7 +70,9 @@ class WorkerStage01(Worker):
     
 
     def save_mutant(self):
+        print(f">> Saving buggy mutant {self.assigned_mutant_code_file.name}")
         buggy_mutant_dir = self.buggy_mutants_dir / self.assigned_mutant_code_file.name
+        print_command(["mkdir", "-p", buggy_mutant_dir], self.verbose)
         buggy_mutant_dir.mkdir(parents=True, exist_ok=True)
         
         failing_tcs_file = buggy_mutant_dir / "failing_tcs.txt"

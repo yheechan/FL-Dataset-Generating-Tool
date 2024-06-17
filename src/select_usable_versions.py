@@ -1,15 +1,16 @@
 import argparse
 
-from lib.buggy_mutant_collection import BuggyMutantCollection
+from lib.usable_versions_selection import UsableVersionSelection
 
-# This script is to test mutants (of subject)
-# the mutant is considered buggy (and saved within out/buggy_mutants)
-# if at least one test case fails
+# This script it to test versions (of subject)
+# the version is considered usable (and saved within out/usable_buggy_versions)
+# 1. if all its failing TCs execute its dedicated buggy line
+# 2. if the coverage of each failing TC is measurable (no internal crash, etc.)
 def main():
     parser = make_parser()
     args = parser.parse_args()
 
-    subject = BuggyMutantCollection(args.subject, args.verbose)
+    subject = UsableVersionSelection(args.subject, args.verbose)
     subject.run()
 
 def make_parser():

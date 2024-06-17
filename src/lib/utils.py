@@ -1,4 +1,5 @@
 from pathlib import Path
+import time
 
 # src/lib/utils.py
 root_dir = Path(__file__).resolve().parent.parent.parent
@@ -62,3 +63,13 @@ crash_codes = [
 def sort_testcase_script_name(tc_script):
     tc_filename = tc_script.split('.')[0]
     return int(tc_filename[2:])
+
+def get_dirs_in_dir(directory):
+    return [d for d in directory.iterdir() if d.is_dir()]
+
+def print_command(command, verbose):
+    # print command if verbose is true (with data and time)
+    if verbose:
+        command = [str(c) for c in command]
+        command = " ".join(command)
+        print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {command}")
