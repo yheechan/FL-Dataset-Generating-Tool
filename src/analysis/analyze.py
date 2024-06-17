@@ -3,7 +3,6 @@ import random
 import subprocess as sp
 
 from lib.utils import *
-from analysis.utils import get_tc_list
 from analysis.individual import Individual
         
 
@@ -26,7 +25,7 @@ class Analyze:
             output_csv += ".csv"
         self.output_csv = self.stat_dir / output_csv
     
-    def testcase_statistics(self):
+    def usable_buggy_versions(self):
         csv_keys = [
             "buggy_version_name", "#_failing_TCs", "#_passing_TCs",
             "#_excluded_failing_TCs", "#_excluded_passing_TCs",
@@ -279,5 +278,75 @@ class Analyze:
         print(f"Number of buggy versions included: {included_buggy_version_cnt}")
         print(f"Number of buggy versions excluded: {excluded_buggy_version_cnt}")
 
+    def prerequisite_data(self):
+        csv_keys = [
+            "buggy_version_name", "#_failing_TCs", "#_passing_TCs",
+            "#_excluded_failing_TCs", "#_excluded_passing_TCs",
+            "#_CCTs", "#_total_TCs",
+            "#_lines_executed_by_failing_TCs", "#_lines_executed_by_passing_TCs",
+            "#_total_lines_executed", "#_total_lines", "coverage"
+        ]
+        failing_tcs = []
+        passing_tcs = []
+        excluded_failing_tcs = []
+        excluded_passing_tcs = []
+        ccts = []
+        total_tcs = []
+        lines_executed_by_failing_tcs = []
+        lines_executed_by_passing_tcs = []
+        total_lines_executed = []
+        total_lines = []
+        all_coverage = []
 
+        with open(self.output_csv, "w") as f:
+            f.write(",".join(csv_keys) + "\n")
 
+            for individual in self.individual_list:
+                print(f"Analyzing {individual.name} for statistics of prerequisites")
+
+                individual = Individual(self.subject_name, self.set_name, individual.name)
+                coverage_summary_file = individual.individual_dir / "coverage_summary.csv"
+                assert coverage_summary_file.exists(), f"Coverage summary file {coverage_summary_file} does not exist"
+
+                with open(coverage_summary_file, "r") as f:
+                    lines = f.readlines()
+                    assert len(lines) == 2, f"Coverage summary file {coverage_summary_file} is not in correct format"
+
+                    line = lines[1].strip()
+                    info = line.split(",")
+
+                    failing_tcs.append(int(info[0]))
+                    passing_tcs.append(int(info[1]))
+                    excluded_failing_tcs.append(int(info[2]))
+                    excluded_passing_tcs.append(int(info[3]))
+                    ccts.append(int(info[4]))
+                    total_tcs.append(int(info[5]))
+                    lines_executed_by_failing_tcs.append(int(info[6]))
+                    lines_executed_by_passing_tcs.append(int(info[7]))
+                    total_lines_executed.append(int(info[8]))
+                    total_lines.append(int(info[9]))
+
+                    coverage = int(info[8]) / int(info[9])
+                    all_coverage.append(coverage)
+
+                    info.append(coverage)
+                    info.insert(0, individual.name)
+                    f.write(",".join(map(str, info)) + "\n")
+
+        print(f"\nTotal individual: {self.set_size}")
+        print(f"Average # of failing TCs: {sum(failing_tcs) / self.set_size}")
+        print(f"Average # of passing TCs: {sum(passing_tcs) / self.set_size}")
+        print(f"Average # of excluded failing TCs: {sum(excluded_failing_tcs) / self.set_size}")
+        print(f"Average # of excluded passing TCs: {sum(excluded_passing_tcs) / self.set_size}")
+        print(f"Average # of CCTs: {sum(ccts) / self.set_size}")
+        print(f"Average # of total TCs: {sum(total_tcs) / self.set_size}")
+        print(f"Average # of lines executed by failing TCs: {sum(lines_executed_by_failing_tcs) / self.set_size}")
+        print(f"Average # of lines executed by passing TCs: {sum(lines_executed_by_passing_tcs) / self.set_size}")
+        print(f"Average # of total lines executed: {sum(total_lines_executed) / self.set_size}")
+        print(f"Average # of total lines: {sum(total_lines) / self.set_size}")
+        print(f"Average coverage: {sum(all_coverage) / self.set_size}")
+        print(f"Max # of failing TCs: {max(failing_tcs)}")
+        print(f"Max # of passing TCs: {max(passing_tcs)}")
+        print(f"Min # of failing TCs: {min(failing_tcs)}")
+        print(f"Min # of passing TCs: {min(passing_tcs)}")
+        

@@ -1,5 +1,4 @@
 from lib.utils import *
-from analysis.utils import get_tc_list
 
 class Individual:
     def __init__(self, subject_name, set_name, individual_name):
