@@ -78,8 +78,8 @@ class BuggyMutantCollection(Subject):
         for job in jobs:
             job.join()
     
-        print(f">> Finished testing mutants not collecting buggy mutants...")
-        self.fileManager.collect_data_remote("buggy_mutants", self.buggy_mutants_dir, self.experiment.machineCores_dict)
+        print(f">> Finished testing mutants now retrieving buggy mutants...")
+        self.fileManager.collect_data_remote("buggy_mutants", self.buggy_mutants_dir, self.mutant_assignments)
         
     def test_single_machine_core_remote(self, machine, core, homedir, mutants):
         print(f"Testing on {machine}::{core}")
@@ -104,7 +104,7 @@ class BuggyMutantCollection(Subject):
             
             cmd = [
                 "ssh", f"{machine_name}",
-                f"cd {homedir}/FL-dataset-generation-{subject_name}/src && python3 test_mutant_buggy_collection.py --subject {subject_name} --machine {machine_name} --core {core_name} --mutant-path {mutant_input} --target-file-path {target_file_path} {optional_flag}",
+                f"cd {homedir}/FL-dataset-generation-{subject_name}/src && python3 test_mutant_buggy_collection.py --subject {subject_name} --machine {machine_name} --core {core_name} --mutant-path {mutant_input} --target-file-path {target_file_path} {optional_flag}"
             ]
             print_command(cmd, self.verbose)
             res = sp.run(cmd, stderr=sp.PIPE, stdout=sp.PIPE, cwd=src_dir)
@@ -181,12 +181,14 @@ class BuggyMutantCollection(Subject):
     # ++++++ Preparing stage ++++++
     # +++++++++++++++++++++++++++++
     def prepare_for_remote(self):
-        # 1. Initialize
         self.fileManager.make_assigned_works_remote_stage01(self.mutant_assignments)
         self.fileManager.send_mutants_remote_stage01(self.mutant_assignments)
+        
         self.fileManager.send_repo_remote(self.subject_repo, self.experiment.machineCores_list)
+
         self.fileManager.send_configurations_remote(self.experiment.machineCores_dict)
         self.fileManager.send_src_remote(self.experiment.machineCores_dict)
+        self.fileManager.send_tools_remote(self.tools_dir, self.experiment.machineCores_dict)
 
     # MAYBE I can send this as a class of FileManager?
     def prepare_for_local(self):

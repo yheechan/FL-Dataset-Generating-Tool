@@ -12,11 +12,14 @@ class FileManager():
     # ++++++++++++++++++++++
     # +++++ COMMONS ++++++++
     # ++++++++++++++++++++++
-    def collect_data_remote(self, data, dest, machinesCores_dict):
+    def collect_data_remote(self, data, dest, work_assignments):
         tasks = []
-        for machine, coreHomedir_list in machinesCores_dict.items():
-            homedir = coreHomedir_list[0][1]
-            tasks.append((machine, homedir, data, dest))
+        machine_list = []
+        for machine, works in work_assignments.items():
+            machine, core, homedir = machine.split("::")
+            if machine not in machine_list:
+                machine_list.append(machine)
+                tasks.append((machine, homedir, data, dest))
 
         limit = 100
         print(f"Number of tasks (collect): {len(tasks)}")
@@ -52,6 +55,50 @@ class FileManager():
         sp.check_call([
             "rsync", "-t", "-r", f"{src_dir}", f"{machine}:{homedir}FL-dataset-generation-{self.name}"
         ])
+    
+    def make_assigned_works_dir_remote(self, machinesCores_list, stage):
+        tasks = []
+        for machine, core, homedir in machinesCores_list:
+            tasks.append((machine, core, homedir, stage))
+
+        limit = 100
+        print(f"Number of tasks (assigned_works): {len(tasks)}")
+        with multiprocessing.Pool(processes=limit) as pool:
+            pool.map(self.single_assigned_works_dir_remote, tasks)
+
+    def single_assigned_works_dir_remote(self, task):
+        machine, core, homedir, stage = task
+        print_command([
+            "ssh", f"{machine}",
+            f"mkdir -p {homedir}FL-dataset-generation-{self.name}/work/{self.name}/working_env/{machine}/{core}/{stage}-assigned_works"
+        ], self.verbose)
+        sp.check_call([
+            "ssh", f"{machine}",
+            f"mkdir -p {homedir}FL-dataset-generation-{self.name}/work/{self.name}/working_env/{machine}/{core}/{stage}-assigned_works"
+        ])
+    
+    def send_works_remote(self, work_assignments, stage):
+        # work_assignments format: {machine_core: [work_dir, ...]}
+        tasks = []
+        for machine_core, work_dirs in work_assignments.items():
+            machine, core, homedir = machine_core.split("::")
+
+            for work_dir in work_dirs:
+                tasks.append((machine, core, homedir, stage, work_dir))
+        
+        limit = 100
+        print(f"Number of tasks (works): {len(tasks)}")
+        with multiprocessing.Pool(processes=limit) as pool:
+            pool.map(self.single_send_work_remote, tasks)
+    
+    def single_send_work_remote(self, task):
+        machine, core, homedir, stage, work_dir = task
+        print_command([
+            "rsync", "-t", "-r", f"{work_dir}", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}/working_env/{machine}/{core}/{stage}-assigned_works"
+        ], self.verbose)
+        sp.check_call([
+            "rsync", "-t", "-r", f"{work_dir}", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}/working_env/{machine}/{core}/{stage}-assigned_works"
+        ])  
 
     def send_repo_remote(self, repo, machinesCores_list):
         # machinesCores_list format: [(machine, core, homedir), ...]
@@ -67,7 +114,7 @@ class FileManager():
     def single_send_repo_remote(self, task):
         machine, core, homedir, repo = task
         print_command([
-            "rsync", "-t", "-r", f"{repo}", f"{machine}:{homedir}FL-dataset-generation-{self.name}"
+            "rsync", "-t", "-r", f"{repo}", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}/working_env/{machine}/{core}"
         ], self.verbose)
         sp.check_call([
             "rsync", "-t", "-r", f"{repo}", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}/working_env/{machine}/{core}"
@@ -105,6 +152,29 @@ class FileManager():
         print_command(["mkdir", "-p", self.output_dir], self.verbose)
         self.output_dir.mkdir(exist_ok=True, parents=True)
         return self.output_dir
+    
+    def send_tools_remote(self, tools_dir, machinesCores_dict):
+        # machinesCores_dict format: {machine_name: [(core, homedir), ...]}
+        tasks = []
+        for machine, coreHomedir_list in machinesCores_dict.items():
+            homedir = coreHomedir_list[0][1]
+            tasks.append((machine, homedir, tools_dir))
+
+        limit = 100
+        print(f"Number of tasks (tools): {len(tasks)}")
+        with multiprocessing.Pool(processes=limit) as pool:
+            pool.map(self.single_send_tools_remote, tasks)
+    
+    def single_send_tools_remote(self, task):
+        machine, homedir, tools_dir = task
+        print_command([
+            "rsync", "-t", "-r", f"{tools_dir}", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}"
+        ], self.verbose)
+        sp.check_call([
+            "rsync", "-t", "-r", f"{tools_dir}", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}"
+        ])
+    
+
     
 
 
@@ -169,4 +239,3 @@ class FileManager():
         sp.check_call([
             "rsync", "-t", "-r", f"{mutant}", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}/working_env/{machine}/{core}/{stage}/{target_dir}"
         ])
-    

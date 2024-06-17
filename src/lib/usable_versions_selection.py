@@ -49,9 +49,59 @@ class UsableVersionSelection(Subject):
     # +++++++++++++++++++++++++++    
     def test_versions(self):
         if self.experiment.experiment_config["use_distributed_machines"]:
-            pass
+            self.test_versions_remote()
         else:
             self.test_versions_local()
+    
+    def test_versions_remote(self):
+        jobs = []
+        for machine_core, versions in self.versions_assignments.items():
+            machine, core, homedir = machine_core.split("::")
+            job = multiprocessing.Process(
+                target=self.test_single_machine_core_remote,
+                args=(machine, core, homedir, versions)
+            )
+            jobs.append(job)
+            job.start()
+
+        for job in jobs:
+            job.join()
+        
+        print(f">> Finished testing all versions now retrieving usable versions")
+        self.fileManager.collect_data_remote("usable_buggy_versions", self.usable_versions_dir, self.versions_assignments)
+    
+    def test_single_machine_core_remote(self, machine, core, homedir, versions):
+        print(f"Testing on {machine}::{core}")
+        subject_name = self.name
+        machine_name = machine
+        core_name = core
+        need_configure = True
+
+        for version in versions:
+            version_name = version.name
+
+            optional_flag = ""
+            if need_configure:
+                optional_flag = "--need-configure"
+                need_configure = False
+            if self.verbose:
+                optional_flag += " --verbose"
+
+            cmd = [
+                "ssh", f"{machine_name}",
+                f"cd {homedir}FL-dataset-generation-{subject_name}/src && python3 test_version_usability_check.py --subject {subject_name} --machine {machine_name} --core {core_name} --version {version_name} {optional_flag}"
+            ]
+            print_command(cmd, self.verbose)
+            res = sp.run(cmd, stdout=sp.PIPE, stderr=sp.PIPE)
+
+            # write stdout and stderr to self.log
+            log_file = self.log / f"{machine_name}-{core_name}.log"
+            with log_file.open("a") as f:
+                f.write(f"\n+++++ results for {version.name} +++++\n")
+                f.write("+++++ STDOUT +++++\n")
+                f.write(res.stdout.decode())
+                f.write("\n+++++ STDERR +++++\n")
+                f.write(res.stderr.decode())
     
     def test_versions_local(self):
         jobs = []
@@ -106,9 +156,19 @@ class UsableVersionSelection(Subject):
     # +++++++++++++++++++++++++++++
     def prepare_for_testing_versions(self):
         if self.experiment.experiment_config["use_distributed_machines"]:
-            pass
+            self.prepare_for_remote()
         else:
             self.prepare_for_local()
+    
+    def prepare_for_remote(self):
+        self.fileManager.make_assigned_works_dir_remote(self.experiment.machineCores_list, self.stage_name)
+        self.fileManager.send_works_remote(self.versions_assignments, self.stage_name)
+        
+        self.fileManager.send_repo_remote(self.subject_repo, self.experiment.machineCores_list)
+
+        self.fileManager.send_configurations_remote(self.experiment.machineCores_dict)
+        self.fileManager.send_src_remote(self.experiment.machineCores_dict)
+        self.fileManager.send_tools_remote(self.tools_dir, self.experiment.machineCores_dict)
     
     def prepare_for_local(self):
         self.working_env = self.fileManager.make_working_env_local()

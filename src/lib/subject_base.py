@@ -139,6 +139,8 @@ class Subject:
         )
 
     def assign_works_to_machines(self, work_list):
+        # returns a dict with format of
+        # {machine::core::homdir": [work_dir, ...]}
         work_assignments = {}
         for idx, work_dir in enumerate(work_list):
             machine_core = self.experiment.machineCores_list[idx % len(self.experiment.machineCores_list)]
