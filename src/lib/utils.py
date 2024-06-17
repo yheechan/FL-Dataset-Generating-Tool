@@ -10,6 +10,8 @@ log_dir = root_dir / "log"
 log_dir.mkdir(exist_ok=True)
 out_dir = root_dir / "out"
 out_dir.mkdir(exist_ok=True)
+stats_dir = root_dir / "statistics"
+stats_dir.mkdir(exist_ok=True)
 
 configs_dir = root_dir / "configs"
 subjects_dir = root_dir / "subjects"
