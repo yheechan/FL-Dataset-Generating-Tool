@@ -15,7 +15,7 @@ class WorkerStage02(Worker):
         self.target_code_file_path, self.buggy_code_filename, self.buggy_lineno = self.get_bug_info(self.version_dir)
         assert version_name == self.buggy_code_filename, f"Version name {version_name} does not match with buggy code filename {self.buggy_code_filename}"
     
-        self.failing_tcs_list = self.get_tc_list(self.version_dir, "failing_tcs.txt")
+        self.set_testcases(self.version_dir)
 
         self.buggy_code_file = self.get_buggy_code_file(self.version_dir, self.buggy_code_filename)
 

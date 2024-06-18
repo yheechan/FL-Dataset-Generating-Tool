@@ -153,9 +153,43 @@ class Worker:
                     self.my_env[key] = f"{path_str}:{self.my_env[key]}"
     
 
+    # ++++++++++++++++++++++++++
+    # ++++++ Version Info ++++++
+    # ++++++++++++++++++++++++++
+    def set_testcases(self, version_dir):
+        self.failing_tcs_list = get_tc_list(version_dir / "testsuite_info" / "failing_tcs.txt")
+        self.passing_tcs_list = get_tc_list(version_dir / "testsuite_info" / "passing_tcs.txt")
+        self.excluded_failing_tcs_list = get_tc_list(version_dir / "testsuite_info" / "excluded_failing_tcs.txt")
+        self.excluded_passing_tcs_list = get_tc_list(version_dir / "testsuite_info" / "excluded_passing_tcs.txt")
+        self.ccts_list = get_tc_list(version_dir / "testsuite_info" / "ccts.txt")
+
+    def set_line2function_dict(self, version_dir):
+        line2function_file = version_dir / "line2function_info" / "line2function.json"
+        assert line2function_file.exists(), f"Line2function file does not exist: {line2function_file}"
+
+        with line2function_file.open() as f:
+            line2function_dict = json.load(f)
+
+        self.line2function_dict = line2function_dict
+    
+    def make_key(self, target_code_file_path, buggy_lineno):
+        filename = target_code_file_path.split('/')[-1]
+        function = None
+        for key, value in self.line2function_dict.items():
+            if key.endswith(filename):
+                for func_info in value:
+                    if int(func_info[1]) <= int(buggy_lineno) <= int(func_info[2]):
+                        function = f"{filename}#{func_info[0]}#{buggy_lineno}"
+                        return function
+        function = f"{filename}#FUNCTIONNOTFOUND#{buggy_lineno}"
+        return function
+    
     # ++++++++++++++++++++++++++++++
     # ++++++ Coverage Related ++++++
     # ++++++++++++++++++++++++++++++
+    def set_target_preprocessed_files(self):
+        self.target_preprocessed_files = self.config["target_preprocessed_files"]
+    
     def set_filtered_files_for_gcovr(self):
         self.targeted_files = self.config["target_files"]
         self.targeted_files = [file.split("/")[-1] for file in self.targeted_files]
@@ -230,21 +264,6 @@ class Worker:
     # +++++++++++++++++++++++++++
     # ++++++ Commons Info++++++++
     # +++++++++++++++++++++++++++
-    def get_tc_list(self, target_dir, type):
-        tc_file = target_dir / "testsuite_info" / type
-        assert tc_file.exists(), f"Test case file does not exist: {tc_file}"
-
-        tc_list = []
-        with tc_file.open() as f:
-            lines = f.readlines()
-            for line in lines:
-                line = line.strip()
-                if line != "":
-                    tc_list.append(line)
-        
-        tc_list = sorted(tc_list, key=sort_testcase_script_name)
-        return tc_list
-
     def get_bug_info(self, target_dir):
         bug_info_csv = target_dir / "bug_info.csv"
         assert bug_info_csv.exists(), f"Bug info csv does not exist: {bug_info_csv}"
