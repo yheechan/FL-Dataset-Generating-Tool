@@ -13,7 +13,7 @@ def main():
     args = parser.parse_args()
 
     subject = PrerequisitePreparation(
-        args.subject, args.origin_set_name,
+        args.subject, args.target_set_name,
         args.use_excluded_failing_tcs, args.exclude_ccts, args.verbose
     )
     subject.run()
@@ -21,7 +21,7 @@ def main():
 def make_parser():
     parser = argparse.ArgumentParser(description="Copy subject to working directory")
     parser.add_argument("--subject", type=str, help="Subject name", required=True)
-    parser.add_argument("--origin-set-name", type=str, help="Origin set name", required=True)
+    parser.add_argument("--target-set-name", type=str, help="Target set name to extract prerequisite data (ex: usable_buggy_versions-reduced)", required=True)
     parser.add_argument("--use-excluded-failing-tcs", action="store_true", help="Use excluded failing tcs")
     parser.add_argument("--exclude-ccts", action="store_true", help="Exclude CCTs")
     parser.add_argument("--verbose", action="store_true", help="Verbose mode")

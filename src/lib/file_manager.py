@@ -8,6 +8,7 @@ class FileManager():
         self.name = subject_name
         self.work_dir = work # PATH
         self.verbose = verbose
+        self.experiment_config_dir = configs_dir
 
     # ++++++++++++++++++++++
     # +++++ COMMONS ++++++++
@@ -139,6 +140,27 @@ class FileManager():
         ], self.verbose)
         sp.check_call([
             "rsync", "-t", "-r", f"{self.work_dir}/configurations.json", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}"
+        ])
+
+    def send_experiment_configurations_remote(self, machinesCores_dict):
+        # machinesCores_dict format: {machine_name: [(core, homedir), ...]}
+        tasks = []
+        for machine, coreHomedir_list in machinesCores_dict.items():
+            homedir = coreHomedir_list[0][1]
+            tasks.append((machine, homedir))
+
+        limit = 100
+        print(f"Number of tasks (configurations): {len(tasks)}")
+        with multiprocessing.Pool(processes=limit) as pool:
+            pool.map(self.single_send_experiment_configurations_remote, tasks)
+    
+    def single_send_experiment_configurations_remote(self, task):
+        machine, homedir = task
+        print_command([
+            "rsync", "-t", "-r", f"{self.experiment_config_dir}", f"{machine}:{homedir}FL-dataset-generation-{self.name}"
+        ], self.verbose)
+        sp.check_call([
+            "rsync", "-t", "-r", f"{self.experiment_config_dir}", f"{machine}:{homedir}FL-dataset-generation-{self.name}"
         ])
 
     def make_working_env_local(self):

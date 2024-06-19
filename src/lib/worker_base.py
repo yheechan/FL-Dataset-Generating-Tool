@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 from lib.utils import *
+from lib.experiment import Experiment
 
 class Worker:
     def __init__(self, subject_name, stage_name, worker_env_name, machine, core, verbose=False):
@@ -41,6 +42,11 @@ class Worker:
 
         self.gcovr_exec = Path("~/.local/bin/gcovr").expanduser()
 
+        # set environment variables
+        self.experiment = Experiment()
+        self.max_mutants = self.experiment.experiment_config["max_mutants"]
+        self.number_of_lines_to_mutation_test = self.experiment.experiment_config["number_of_lines_to_mutation_test"]
+
     def read_configs(self):
         configs = None
         config_json = self.work / "configurations.json"
@@ -59,11 +65,12 @@ class Worker:
     def configure_no_cov(self):
         print(f">> Configuring {self.name} without coverage")
         print_command(["bash", self.configure_no_cov_file], self.verbose)
-        sp.check_call(
+        res = sp.run(
             ["bash", self.configure_no_cov_file],
             cwd=self.configure_file_position,
             stderr=sp.PIPE, stdout=sp.PIPE    
         )
+        return res.returncode
     
     def configure_yes_cov(self):
         print(f">> Configuring {self.name} with coverage")
@@ -87,7 +94,7 @@ class Worker:
     def clean_build(self):
         print(f">> Cleaning build for {self.name}")
         print_command(["bash", self.clean_file], self.verbose)
-        sp.check_call(
+        res = sp.run(
             ["bash", self.clean_file],
             cwd=self.clean_build_file_position,
             stderr=sp.PIPE, stdout=sp.PIPE    
@@ -184,6 +191,41 @@ class Worker:
         function = f"{filename}#FUNCTIONNOTFOUND#{buggy_lineno}"
         return function
     
+    def set_lines_executed_by_failing_tc(self, version_dir, target_code_file_path, buggy_lineno):
+        lines_executed_by_failing_tc_file = version_dir / "coverage_info" / "lines_executed_by_failing_tc.json"
+        assert lines_executed_by_failing_tc_file.exists(), f"Lines executed by failing tc file does not exist: {lines_executed_by_failing_tc_file}"
+
+        lines_executed_by_failing_tc_json = json.loads(lines_executed_by_failing_tc_file.read_text())
+
+        executed_lines = {}
+        for target_file in self.config["target_files"]:
+            filename = target_file.split("/")[-1]
+            executed_lines[filename] = {}
+        
+        buggy_filename = target_code_file_path.name
+        executed_buggy_line = False
+        for key, tcs_list in lines_executed_by_failing_tc_json.items():
+            info = key.split("#")
+            filename = info[0].split("/")[-1]
+            function_name = info[1]
+            lineno = info[2]
+
+            if filename not in executed_lines:
+                executed_lines[filename] = {}
+            
+            if lineno not in executed_lines[filename]:
+                executed_lines[filename][lineno] = []
+
+            executed_lines[filename][lineno] = tcs_list
+
+            if filename == buggy_filename and int(lineno) == int(buggy_lineno):
+                executed_buggy_line = True
+        
+        assert executed_buggy_line, f"Buggy line {buggy_lineno} is not executed by any failing test case"
+        self.lines_executed_by_failing_tcs = executed_lines
+        
+        
+    
     # ++++++++++++++++++++++++++++++
     # ++++++ Coverage Related ++++++
     # ++++++++++++++++++++++++++++++
@@ -278,7 +320,6 @@ class Worker:
         return target_code_file, mutant_code_file, buggy_lineno
 
     def get_buggy_code_file(self, target_dir, code_filename):
-        buggy_code_file_dir = target_dir / "buggy_code_file"
-        buggy_code_file = buggy_code_file_dir / code_filename
+        buggy_code_file = target_dir / "buggy_code_file" / code_filename
         assert buggy_code_file.exists(), f"Buggy code file does not exist: {buggy_code_file}"
         return buggy_code_file

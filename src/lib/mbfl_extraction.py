@@ -7,17 +7,13 @@ from lib.utils import *
 from lib.subject_base import Subject
 from lib.file_manager import FileManager
 
-class PrerequisitePreparation(Subject):
+class MBFLExtraction(Subject):
     def __init__(
-            self, subject_name, target_set_name,
-            use_excluded_failing_tcs, exclude_ccts, verbose=False
+            self, subject_name, target_set_name, verbose=False
             ):
-        super().__init__(subject_name, "stage03", verbose)
-        self.prerequisite_data_dir = out_dir / self.name / f"prerequisite_data"
+        super().__init__(subject_name, "stage04", verbose)
+        self.prerequisite_data_dir = out_dir / self.name / f"mfbl_features"
         self.prerequisite_data_dir.mkdir(exist_ok=True)
-
-        self.use_excluded_failing_tcs = use_excluded_failing_tcs
-        self.exclude_ccts = exclude_ccts
 
         self.fileManager = FileManager(self.name, self.work, self.verbose)
 
@@ -28,7 +24,7 @@ class PrerequisitePreparation(Subject):
         # 1. Read configurations and initialize working directory: self.work
         self.initialize_working_directory()
 
-        # 2. get versions from target_set_dir
+        # 2. get versions from set_dir
         self.versions_list = get_dirs_in_dir(self.target_set_dir)
 
         # 4. Assign versions to machines
@@ -38,7 +34,7 @@ class PrerequisitePreparation(Subject):
         self.prepare_for_testing_versions()
 
         # 6. Test versions
-        self.test_versions()
+        # self.test_versions()
 
     
     # +++++++++++++++++++++++++++
