@@ -174,7 +174,7 @@ class PrerequisitePreparation(Subject):
         self.fileManager.send_configurations_remote(self.experiment.machineCores_dict)
         self.fileManager.send_src_remote(self.experiment.machineCores_dict)
         self.fileManager.send_tools_remote(self.tools_dir, self.experiment.machineCores_dict)
-        self.fileManager.send_experiment_config_remote(self.experiment.machineCores_dict)
+        self.fileManager.send_experiment_configurations_remote(self.experiment.machineCores_dict)
     
     def prepare_for_local(self):
         self.working_env = self.fileManager.make_working_env_local()

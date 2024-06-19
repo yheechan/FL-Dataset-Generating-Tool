@@ -142,6 +142,7 @@ class FileManager():
             "rsync", "-t", "-r", f"{self.work_dir}/configurations.json", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}"
         ])
 
+
     def send_experiment_configurations_remote(self, machinesCores_dict):
         # machinesCores_dict format: {machine_name: [(core, homedir), ...]}
         tasks = []

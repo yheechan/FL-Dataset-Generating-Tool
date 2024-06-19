@@ -12,8 +12,8 @@ class MBFLExtraction(Subject):
             self, subject_name, target_set_name, verbose=False
             ):
         super().__init__(subject_name, "stage04", verbose)
-        self.prerequisite_data_dir = out_dir / self.name / f"mfbl_features"
-        self.prerequisite_data_dir.mkdir(exist_ok=True)
+        self.mbfl_features_dir = out_dir / self.name / f"mbfl_features"
+        self.mbfl_features_dir.mkdir(exist_ok=True)
 
         self.fileManager = FileManager(self.name, self.work, self.verbose)
 
@@ -34,7 +34,7 @@ class MBFLExtraction(Subject):
         self.prepare_for_testing_versions()
 
         # 6. Test versions
-        # self.test_versions()
+        self.test_versions()
 
     
     # +++++++++++++++++++++++++++
@@ -47,12 +47,29 @@ class MBFLExtraction(Subject):
             self.test_versions_local()
     
     def test_versions_remote(self):
-        jobs = []
+        # Make batch where:
+        # a single batch is a group of versions that will be tested on the same machine but different cores
+        # ex) batch_dict: {machine1: {"batch_0": {machine1::core1: [machine1, core1, homedir, version1], machine1::core2: [machine1, core2, homedir, version2], ...}}, machine2: {"batch_0": {machine2::core1: [machine2, core1, homedir, version1], machine2::core2: [machine2, core2, homedir, version2], ...}}, ...}
+        batch_dict = {}
         for machine_core, versions in self.versions_assignments.items():
             machine, core, homedir = machine_core.split("::")
+            if machine not in batch_dict:
+                batch_dict[machine] = {}
+
+            idx = 0
+            for version in versions:
+                batch_id = f"batch_{idx}"
+                if batch_id not in batch_dict[machine]:
+                    batch_dict[machine][batch_id] = {}
+                assert machine_core not in batch_dict[machine][batch_id], f"Machine core {machine_core} already exists in batch {batch_id}"
+                batch_dict[machine][batch_id][machine_core] = [machine, core, homedir, version]
+                idx += 1
+        
+        jobs = []
+        for machine, machine_batch_dict in batch_dict.items():
             job = multiprocessing.Process(
-                target=self.test_single_machine_core_remote,
-                args=(machine, core, homedir, versions)
+                target=self.test_single_machine_remote,
+                args=(machine, machine_batch_dict)
             )
             jobs.append(job)
             job.start()
@@ -60,96 +77,185 @@ class MBFLExtraction(Subject):
         for job in jobs:
             job.join()
         
-        print(f">> Finished testing all versions now retrieving versions with its prerequisite data")
-        self.fileManager.collect_data_remote("prerequisite_data", self.prerequisite_data_dir, self.versions_assignments)
+        print(f">> Finished testing all versions now retrieving versions with its mbfl data")
+        self.fileManager.collect_data_remote("mbfl_features", self.mbfl_features_dir, self.versions_assignments)
     
-    def test_single_machine_core_remote(self, machine, core, homedir, versions):
+    def test_single_machine_remote(self, machine, machine_batch_dict):
+        for batch_id, machine_core_dict in machine_batch_dict.items():
+            batch_size = len(machine_core_dict)
+            print(f"Batch ID: {batch_id}")
+            print(f"Batch size: {batch_size}")
+
+            job_args = {}
+            jobs = []
+            for machine_core, (machine, core, homedir, version) in machine_core_dict.items():
+                job = multiprocessing.Process(
+                    target=self.test_single_machine_core_remote,
+                    args=(machine, core, homedir, version)
+                )
+                job_args[job.name] = [machine, core, homedir, version]
+                jobs.append(job)
+                job.start()
+            
+            threshold = len(jobs)*0.8
+            finished_jobs = []
+            terminated_jobs = []
+            entered_termination_phase = False
+            start_term_time = 0
+            while len(jobs) > 0:
+                for job in jobs:
+                    # if finished jobs is more than 80% of the total jobs
+                    # and the remaining jobs don't finish within 10 minutes after the "finished jobs > threshold" condition
+                    # then terminate the remaining jobs
+                    if len(finished_jobs) > threshold and not entered_termination_phase:
+                        entered_termination_phase = True
+                        start_term_time = time.time()
+                        print(f">> ENTERING TERMINATION PHASE for {batch_id} of {machine} <<")
+                        print(f"{batch_id}-{machine} - {len(finished_jobs)} finished jobs out of {len(jobs)}, threshold: {threshold}")
+                    
+                    if entered_termination_phase and time.time() - start_term_time > 600:
+                        print(f">> TERMINATING REMAINING JOBS for {batch_id} of {machine} <<")
+                        for job in jobs:
+                            print(f"Terminating job {job.name}")
+                            job.terminate()
+                            terminated_jobs.append(job)
+                    
+                    # Remove the job from the list if it has finished
+                    if not job.is_alive():
+                        print(f"{batch_id}-{machine} : Job {job.name} has been finished: {job_args[job.name]}")
+                        finished_jobs.append(job)
+                        jobs.remove(job)
+        
+            # killall python3 on the machine
+            if len(terminated_jobs) > 0:
+                cmd = [
+                    "ssh", f"{machine}",
+                    "killall python3"
+                ]
+                print(f"Terminating all python3 processes on {machine}")
+                print_command(cmd, self.verbose)
+                sp.run(cmd, stdout=sp.PIPE, stderr=sp.PIPE)
+    
+    def test_single_machine_core_remote(self, machine, core, homedir, version):
         print(f"Testing on {machine}::{core}")
         subject_name = self.name
         machine_name = machine
         core_name = core
         need_configure = True
 
-        for version in versions:
-            version_name = version.name
+        version_name = version.name
 
-            optional_flag = ""
-            if need_configure:
-                optional_flag = "--need-configure"
-                need_configure = False
-            if self.use_excluded_failing_tcs:
-                optional_flag += " --use-excluded-failing-tcs"
-            if self.exclude_ccts:
-                optional_flag += " --exclude-ccts"
-            if self.verbose:
-                optional_flag += " --verbose"
+        optional_flag = ""
+        if self.verbose:
+            optional_flag += " --verbose"
 
-            cmd = [
-                "ssh", f"{machine_name}",
-                f"cd {homedir}FL-dataset-generation-{subject_name}/src && python3 test_version_prerequisites.py --subject {subject_name} --machine {machine_name} --core {core_name} --version {version_name} {optional_flag}"
-            ]
-            print_command(cmd, self.verbose)
-            res = sp.run(cmd, stdout=sp.PIPE, stderr=sp.PIPE)
+        cmd = [
+            "ssh", f"{machine_name}",
+            f"cd {homedir}FL-dataset-generation-{subject_name}/src && python3 test_version_mbfl_features.py --subject {subject_name} --machine {machine_name} --core {core_name} --version {version_name} {optional_flag}"
+        ]
+        print_command(cmd, self.verbose)
+        res = sp.run(cmd, stdout=sp.PIPE, stderr=sp.PIPE)
 
-            # write stdout and stderr to self.log
-            log_file = self.log / f"{machine_name}-{core_name}.log"
-            with log_file.open("a") as f:
-                f.write(f"\n+++++ results for {version.name} +++++\n")
-                f.write("+++++ STDOUT +++++\n")
-                f.write(res.stdout.decode())
-                f.write("\n+++++ STDERR +++++\n")
-                f.write(res.stderr.decode())
+        # write stdout and stderr to self.log
+        log_file = self.log / f"{machine_name}-{core_name}.log"
+        with log_file.open("a") as f:
+            f.write(f"\n+++++ results for {version.name} +++++\n")
+            f.write("+++++ STDOUT +++++\n")
+            f.write(res.stdout.decode())
+            f.write("\n+++++ STDERR +++++\n")
+            f.write(res.stderr.decode())
     
     def test_versions_local(self):
-        jobs = []
+
+        # Make batch where:
+        # a single batch is a group of versions that will be tested on the same machine but different cores
+        # ex) batch_0: {machine1::core1: [machine1, core1, homedir, version1], machine1::core2: [machine1, core2, homedir, version2], ...}
+        batch_dict = {}
         for machine_core, versions in self.versions_assignments.items():
+            idx = 0
             machine, core, homedir = machine_core.split("::")
-            job = multiprocessing.Process(
-                target=self.test_single_machine_core_local,
-                args=(machine, core, homedir, versions)
-            )
-            jobs.append(job)
-            job.start()
+            machine_core = f"{machine}::{core}"
+            # print(f"Machine core: {machine_core}")
+            for version in versions:
+                batch_id = f"batch_{idx}"
+                if batch_id not in batch_dict:
+                    batch_dict[batch_id] = {}
+                assert machine_core not in batch_dict[batch_id], f"Machine core {machine_core} already exists in batch {batch_id}"
+                batch_dict[batch_id][machine_core] = [machine, core, homedir, version]
+                idx += 1
 
-        for job in jobs:
-            job.join()
+        jobs = []
+        job_args = {}
+        for batch_id, machine_core_dict in batch_dict.items():
+            batch_size = len(machine_core_dict)
+            print(f"Batch ID: {batch_id}")
+            print(f"Batch size: {batch_size}")
 
-    def test_single_machine_core_local(self, machine, core, homedir, versions):
+            for machine_core, (machine, core, homedir, version) in machine_core_dict.items():
+                job = multiprocessing.Process(
+                    target=self.test_single_machine_core_local,
+                    args=(machine, core, homedir, version)
+                )
+                job_args[job.name] = [machine, core, homedir, version]
+                jobs.append(job)
+                job.start()
+            
+            threshold = len(jobs)*0.8
+            finished_jobs = []
+            entered_termination_phase = False
+            start_term_time = 0
+            while len(jobs) > 0:
+                for job in jobs:
+                    # if finished jobs is more than 80% of the total jobs
+                    # and the remaining jobs don't finish within 10 minutes after the "finished jobs > threshold" condition
+                    # then terminate the remaining jobs
+                    if len(finished_jobs) > threshold and not entered_termination_phase:
+                        entered_termination_phase = True
+                        start_term_time = time.time()
+                        print(f">> ENTERING TERMINATION PHASE <<")
+                        print(f"{len(finished_jobs)} finished jobs out of {len(jobs)}, threshold: {threshold}")
+                    
+                    if entered_termination_phase and time.time() - start_term_time > 600:
+                        print(f">> TERMINATING REMAINING JOBS <<")
+                        for job in jobs:
+                            print(f"Terminating job {job.name}")
+                            job.terminate()
+                    
+                    # Remove the job from the list if it has finished
+                    if not job.is_alive():
+                        print(f"Job {job.name} has been finished: {job_args[job.name]}")
+                        finished_jobs.append(job)
+                        jobs.remove(job)
+
+    def test_single_machine_core_local(self, machine, core, homedir, version):
         print(f"Testing on {machine}::{core}")
         subject_name = self.name
         machine_name = machine
         core_name = core
         need_configure = True
 
-        for version in versions:
-            version_name = version.name
-            
-            cmd = [
-                "python3", "test_version_prerequisites.py",
-                "--subject", subject_name, "--machine", machine_name, "--core", core_name,
-                "--version", version_name
-            ]
-            if need_configure:
-                cmd.append("--need-configure")
-                need_configure = False
-            if self.use_excluded_failing_tcs:
-                cmd.append("--use-excluded-failing-tcs")
-            if self.exclude_ccts:
-                cmd.append("--exclude-ccts")
-            if self.verbose:
-                cmd.append("--verbose")
-            
-            print_command(cmd, self.verbose)
-            res = sp.run(cmd, stdout=sp.PIPE, stderr=sp.PIPE, cwd=src_dir)
+        version_name = version.name
+        
+        cmd = [
+            "python3", "test_version_mbfl_features.py",
+            "--subject", subject_name, "--machine", machine_name, "--core", core_name,
+            "--version", version_name
+        ]
 
-            # write stdout and stderr to self.log
-            log_file = self.log / f"{machine_name}-{core_name}.log"
-            with log_file.open("a") as f:
-                f.write(f"\n+++++ results for {version.name} +++++\n")
-                f.write("+++++ STDOUT +++++\n")
-                f.write(res.stdout.decode())
-                f.write("\n+++++ STDERR +++++\n")
-                f.write(res.stderr.decode())
+        if self.verbose:
+            cmd.append("--verbose")
+        
+        print_command(cmd, self.verbose)
+        res = sp.run(cmd, stdout=sp.PIPE, stderr=sp.PIPE, cwd=src_dir)
+
+        # write stdout and stderr to self.log
+        log_file = self.log / f"{machine_name}-{core_name}.log"
+        with log_file.open("a") as f:
+            f.write(f"\n+++++ results for {version.name} +++++\n")
+            f.write("+++++ STDOUT +++++\n")
+            f.write(res.stdout.decode())
+            f.write("\n+++++ STDERR +++++\n")
+            f.write(res.stderr.decode())
 
 
     # +++++++++++++++++++++++++++++
@@ -170,7 +276,7 @@ class MBFLExtraction(Subject):
         self.fileManager.send_configurations_remote(self.experiment.machineCores_dict)
         self.fileManager.send_src_remote(self.experiment.machineCores_dict)
         self.fileManager.send_tools_remote(self.tools_dir, self.experiment.machineCores_dict)
-        self.fileManager.send_experiment_config_remote(self.experiment.machineCores_dict)
+        self.fileManager.send_experiment_configurations_remote(self.experiment.machineCores_dict)
     
     def prepare_for_local(self):
         self.working_env = self.fileManager.make_working_env_local()

@@ -189,7 +189,7 @@ class BuggyMutantCollection(Subject):
         self.fileManager.send_configurations_remote(self.experiment.machineCores_dict)
         self.fileManager.send_src_remote(self.experiment.machineCores_dict)
         self.fileManager.send_tools_remote(self.tools_dir, self.experiment.machineCores_dict)
-        self.fileManager.send_experiment_config_remote(self.experiment.machineCores_dict)
+        self.fileManager.send_experiment_configurations_remote(self.experiment.machineCores_dict)
 
     # MAYBE I can send this as a class of FileManager?
     def prepare_for_local(self):
