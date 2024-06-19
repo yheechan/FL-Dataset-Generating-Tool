@@ -14,7 +14,8 @@ def main():
 
     subject = PrerequisitePreparation(
         args.subject, args.target_set_name,
-        args.use_excluded_failing_tcs, args.exclude_ccts, args.verbose
+        args.use_excluded_failing_tcs, args.exclude_ccts,
+        args.passing_tcs_perc, args.failing_tcs_perc, args.verbose
     )
     subject.run()
 
@@ -24,6 +25,8 @@ def make_parser():
     parser.add_argument("--target-set-name", type=str, help="Target set name to extract prerequisite data (ex: usable_buggy_versions-reduced)", required=True)
     parser.add_argument("--use-excluded-failing-tcs", action="store_true", help="Use excluded failing tcs")
     parser.add_argument("--exclude-ccts", action="store_true", help="Exclude CCTs")
+    parser.add_argument("--passing-tcs-perc", type=float, default=1.0, help="Percentage of passing tcs to use (default: 1.0, range: 0.0 ~ 1.0)")
+    parser.add_argument("--failing-tcs-perc", type=float, default=1.0, help="Percentage of failing tcs to use (default: 1.0, range: 0.0 ~ 1.0)")
     parser.add_argument("--verbose", action="store_true", help="Verbose mode")
     return parser
 

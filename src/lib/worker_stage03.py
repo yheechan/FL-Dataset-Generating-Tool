@@ -1,6 +1,7 @@
 import subprocess as sp
 import json
 import os
+import random
 
 from lib.utils import *
 from lib.worker_base import Worker
@@ -8,12 +9,16 @@ from lib.worker_base import Worker
 class WorkerStage03(Worker):
     def __init__(
             self, subject_name, machine, core, version_name, need_configure,
-            use_excluded_failing_tcs, exclude_ccts, verbose=False):
+            use_excluded_failing_tcs, exclude_ccts,
+            passing_tcs_perc=1.0, failing_tcs_perc=1.0, verbose=False
+    ):
         super().__init__(subject_name, "stage03", "prepare_prerequisites", machine, core, verbose)
         
         self.assigned_works_dir = self.core_dir / f"stage03-assigned_works"
         self.need_configure = need_configure
 
+        self.passing_tcs_perc = passing_tcs_perc
+        self.failing_tcs_perc = failing_tcs_perc
         self.use_excluded_failing_tcs = use_excluded_failing_tcs
         self.exclude_ccts = exclude_ccts
 
@@ -256,6 +261,16 @@ class WorkerStage03(Worker):
         self.ccts_list = []
         if self.use_excluded_failing_tcs:
             self.move_excluded_failing_tcs()
+        if self.passing_tcs_perc < 1.0:
+            self.passing_tcs_list, self.excluded_passing_tcs_list = self.move_tcs(
+                self.passing_tcs_list, self.excluded_passing_tcs_list,
+                "passing_tcs.txt", "excluded_passing_tcs.txt", self.passing_tcs_perc
+            )
+        if self.failing_tcs_perc < 1.0:
+            self.failing_tcs_list, self.excluded_failing_tcs_list = self.move_tcs(
+                self.failing_tcs_list, self.excluded_failing_tcs_list,
+                "failing_tcs.txt", "excluded_failing_tcs.txt", self.failing_tcs_perc
+            )
         
         for tc_script_name in self.failing_tcs_list+self.passing_tcs_list:
             # 4-1. remove past coverage
@@ -320,6 +335,47 @@ class WorkerStage03(Worker):
         
         self.passing_tcs_list = get_tc_list(self.version_dir / "testsuite_info" / "passing_tcs.txt")
         self.ccts_list = get_tc_list(self.version_dir / "testsuite_info" / "ccts.txt")
+    
+    def move_tcs(self, tc_list, excluded_tc_list, tc_file_name, excluded_tc_file_name, perc):
+        tc_set = set(tc_list)
+        excluded_tc_set = set(excluded_tc_list)
+
+        tcs_len = len(tc_list)
+        tcs_len_to_use = int(tcs_len * perc)
+        tcs_len_to_exclude = tcs_len - tcs_len_to_use
+
+        if tcs_len < 10:
+            print(f"Too few test cases {tcs_len} to exclude")
+            return tc_list, excluded_tc_list
+        
+        # if the tcs_len_to_use is less than 10, but the tcs_len is more than 10
+        # then use 10 test cases from tcs_list
+        if tcs_len_to_use < 10:
+            tcs_len_to_use = 10
+            tcs_len_to_exclude = tcs_len - tcs_len_to_use
+        
+        if tcs_len_to_exclude > 0:
+            # randomly select test cases to exclude
+            excluded_tcs = random.sample(tc_list, tcs_len_to_exclude)
+            excluded_tc_set = excluded_tc_set.union(set(excluded_tcs))
+            tc_set = tc_set - set(excluded_tcs)
+
+            with open(self.version_dir / "testsuite_info" / tc_file_name, "w") as f:
+                tc_list = list(tc_set)
+                tc_list = sorted(tc_list, key=sort_testcase_script_name)
+                content = "\n".join(tc_list)
+                f.write(content)
+
+            with open(self.version_dir / "testsuite_info" / excluded_tc_file_name, "w") as f:
+                excluded_tc_list = list(excluded_tc_set)
+                excluded_tc_list = sorted(excluded_tc_list, key=sort_testcase_script_name)
+                content = "\n".join(excluded_tc_list)
+                f.write(content)
+        
+        tc_list = get_tc_list(self.version_dir / "testsuite_info" / tc_file_name)
+        excluded_tc_list = get_tc_list(self.version_dir / "testsuite_info" / excluded_tc_file_name)
+        
+        return tc_list, excluded_tc_list
     
     def move_excluded_failing_tcs(self):
         failing_tcs_set = set(self.failing_tcs_list)

@@ -10,14 +10,18 @@ from lib.file_manager import FileManager
 class PrerequisitePreparation(Subject):
     def __init__(
             self, subject_name, target_set_name,
-            use_excluded_failing_tcs, exclude_ccts, verbose=False
-            ):
+            use_excluded_failing_tcs, exclude_ccts,
+            passing_tcs_perc=1.0, failing_tcs_perc=1.0, verbose=False
+        ):
         super().__init__(subject_name, "stage03", verbose)
         self.prerequisite_data_dir = out_dir / self.name / f"prerequisite_data"
         self.prerequisite_data_dir.mkdir(exist_ok=True)
 
         self.use_excluded_failing_tcs = use_excluded_failing_tcs
         self.exclude_ccts = exclude_ccts
+
+        self.passing_tcs_perc = passing_tcs_perc
+        self.failing_tcs_perc = failing_tcs_perc
 
         self.fileManager = FileManager(self.name, self.work, self.verbose)
 
@@ -38,7 +42,7 @@ class PrerequisitePreparation(Subject):
         self.prepare_for_testing_versions()
 
         # 6. Test versions
-        self.test_versions()
+        # self.test_versions()
 
     
     # +++++++++++++++++++++++++++
@@ -85,6 +89,10 @@ class PrerequisitePreparation(Subject):
                 optional_flag += " --use-excluded-failing-tcs"
             if self.exclude_ccts:
                 optional_flag += " --exclude-ccts"
+            if self.passing_tcs_perc != 1.0:
+                optional_flag += f" --use-passing-tcs {self.passing_tcs_perc}"
+            if self.failing_tcs_perc != 1.0:
+                optional_flag += f" --use-failing-tcs {self.failing_tcs_perc}"
             if self.verbose:
                 optional_flag += " --verbose"
 
@@ -140,6 +148,10 @@ class PrerequisitePreparation(Subject):
                 cmd.append("--use-excluded-failing-tcs")
             if self.exclude_ccts:
                 cmd.append("--exclude-ccts")
+            if self.passing_tcs_perc != 1.0:
+                cmd.append(f"--use-passing-tcs {self.passing_tcs_perc}")
+            if self.failing_tcs_perc != 1.0:
+                cmd.append(f"--use-failing-tcs {self.failing_tcs_perc}")
             if self.verbose:
                 cmd.append("--verbose")
             
