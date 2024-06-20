@@ -63,6 +63,7 @@ class UsableVersionSelection(Subject):
             )
             jobs.append(job)
             job.start()
+            time.sleep(0.5) # to avoid ssh connection error
 
         for job in jobs:
             job.join()

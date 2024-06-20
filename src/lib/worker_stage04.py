@@ -149,7 +149,7 @@ class WorkerStage04(Worker):
             print(f">> Removed mutants on {self.version_dir.name}")
         else:
             # zip the mutant dir
-            cmd = ["zip", "-r", self.version_mutant_zip.name, self.version_mutant_dir.name]
+            cmd = ["zip", "-r", "-q", self.version_mutant_zip.name, self.version_mutant_dir.name]
             print_command(cmd, self.verbose)
             sp.check_call(cmd, stdout=sp.PIPE, stderr=sp.PIPE, cwd=self.mbfl_generated_mutants_dir)
             print(f">> Zipped mutants on {self.version_dir.name}")
@@ -676,8 +676,8 @@ class WorkerStage04(Worker):
         return targetfile_and_mutantdir
     
     def unzip_mutants(self):
-        print_command(["unzip", self.version_mutant_zip, "-d", self.mbfl_generated_mutants_dir], self.verbose)
-        sp.check_call(["unzip", self.version_mutant_zip, "-d", self.mbfl_generated_mutants_dir])
+        print_command(["unzip", "-q", self.version_mutant_zip, "-d", self.mbfl_generated_mutants_dir], self.verbose)
+        sp.check_call(["unzip", "-q", self.version_mutant_zip, "-d", self.mbfl_generated_mutants_dir])
 
         print(f">> Unzipped mutants are saved at {self.version_mutant_dir.name}")
         assert self.version_mutant_dir.exists(), f"Mutant directory {self.version_mutant_dir} does not exist"

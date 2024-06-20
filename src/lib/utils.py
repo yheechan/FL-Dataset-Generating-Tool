@@ -1,5 +1,7 @@
 from pathlib import Path
 import time
+import json
+import csv
 
 # src/lib/utils.py
 root_dir = Path(__file__).resolve().parent.parent.parent
@@ -90,3 +92,96 @@ def get_tc_list(tc_file):
         
         tc_list = sorted(tc_list, key=sort_testcase_script_name)
         return tc_list
+
+def measure_MBFL_feature_value(row, mutant_keys, f2p_or_p2f):
+    feature_value = 0
+
+    for key in mutant_keys:
+        if f2p_or_p2f in key and int(row[key]) != -1:
+            feature_value += int(row[key])
+
+    return feature_value
+
+def analyze_buggy_line_with_f2p_0(mbfl_features_csv_file, buggy_line_key, mutant_keys):
+        target_buggy_file = buggy_line_key.split('#')[0].split('/')[-1]
+        buggy_function_name = buggy_line_key.split('#')[1]
+        buggy_lineno = int(buggy_line_key.split('#')[-1])
+
+        good_mutants = []
+
+        with open(mbfl_features_csv_file, 'r') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                key = row['key']
+                current_target_file = key.split('#')[0].split('/')[-1]
+                current_function_name = key.split('#')[1]
+                current_lineno = int(key.split('#')[-1])
+
+                if current_target_file == target_buggy_file and \
+                    current_function_name == buggy_function_name:
+
+                    feature_value = measure_MBFL_feature_value(row, mutant_keys, 'f2p')
+                    if feature_value != 0:
+                        good_mutants.append(row)
+        
+        if len(good_mutants) == 0:
+            return 0
+        
+        return 1
+
+def avg_killed(row, mutant_keys, f2p_or_p2f):
+    # returns 0 if there is no f2p or p2f in the row
+    # returns the average of f2p or p2f scores if there is f2p or p2f in the row
+    f2p_scores = []
+    for key in mutant_keys:
+        if f2p_or_p2f in key and int(row[key]) != -1:
+            f2p_scores.append(int(row[key]))
+
+    if len(f2p_scores) == 0:
+        return 0
+    avg_score = sum(f2p_scores) / len(f2p_scores)
+
+    return avg_score
+
+def analyze_non_buggy_line_with_f2p_above_th(
+        mbfl_features_csv_file, buggy_line_key, mutant_keys, threshold
+):
+    target_buggy_file = buggy_line_key.split('#')[0].split('/')[-1]
+    buggy_function_name = buggy_line_key.split('#')[1]
+    buggy_lineno = int(buggy_line_key.split('#')[-1])
+
+    bad_line = []
+
+    with open(mbfl_features_csv_file, 'r') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            key = row['key']
+            current_target_file = key.split('#')[0].split('/')[-1]
+            current_function_name = key.split('#')[1]
+            current_lineno = int(key.split('#')[-1])
+
+            num_mutants = int(row['|muse(s)|'])
+
+            num_failing_tcs_at_line = int(row['#_failing_tcs_@line'])
+            perc50 = num_failing_tcs_at_line / 2
+
+            if current_target_file != target_buggy_file or \
+                current_function_name != buggy_function_name or \
+                    current_lineno != buggy_lineno:
+
+                # mutant list which its mutants have f2p == fail_cnt
+                avg_f2p_score = avg_killed(row, mutant_keys, 'f2p')
+
+                # if average f2p of a line is greater than 50% of the failing TCs at the line
+                if avg_f2p_score > perc50:
+                    bad_line.append(row)
+    
+    # if # of bad lines is greater than threshold
+    # then return 0
+    if len(bad_line) > threshold:
+        return 0
+    
+    # if # of bad lines is less than or equal to threshold
+    # then return 1
+    return 1
+    

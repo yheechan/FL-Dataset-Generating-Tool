@@ -1,9 +1,12 @@
 from copy import deepcopy
 import random
 import subprocess as sp
+import csv
 
 from lib.utils import *
 from analysis.individual import Individual
+from lib.experiment import Experiment
+from analysis.rank_utils import *
         
 
 class Analyze:
@@ -11,10 +14,9 @@ class Analyze:
             self, subject_name, set_name, output_csv,
         ):
         self.subject_name = subject_name
+        
         self.set_name = set_name
-
         self.set_dir = out_dir / self.subject_name / self.set_name
-
         self.individual_list = get_dirs_in_dir(self.set_dir)
         self.set_size = len(self.individual_list)
 
@@ -298,8 +300,8 @@ class Analyze:
         total_lines = []
         all_coverage = []
 
-        with open(self.output_csv, "w") as f:
-            f.write(",".join(csv_keys) + "\n")
+        with open(self.output_csv, "w") as out_fp:
+            out_fp.write(",".join(csv_keys) + "\n")
 
             for individual in self.individual_list:
                 print(f"Analyzing {individual.name} for statistics of prerequisites")
@@ -308,8 +310,8 @@ class Analyze:
                 coverage_summary_file = individual.individual_dir / "coverage_summary.csv"
                 assert coverage_summary_file.exists(), f"Coverage summary file {coverage_summary_file} does not exist"
 
-                with open(coverage_summary_file, "r") as f:
-                    lines = f.readlines()
+                with open(coverage_summary_file, "r") as cov_sum_fp:
+                    lines = cov_sum_fp.readlines()
                     assert len(lines) == 2, f"Coverage summary file {coverage_summary_file} is not in correct format"
 
                     line = lines[1].strip()
@@ -331,7 +333,7 @@ class Analyze:
 
                     info.append(coverage)
                     info.insert(0, individual.name)
-                    f.write(",".join(map(str, info)) + "\n")
+                    out_fp.write(",".join(map(str, info)) + "\n")
 
         print(f"\nTotal individual: {self.set_size}")
         print(f"Average # of failing TCs: {sum(failing_tcs) / self.set_size}")
@@ -349,4 +351,63 @@ class Analyze:
         print(f"Max # of passing TCs: {max(passing_tcs)}")
         print(f"Min # of failing TCs: {min(failing_tcs)}")
         print(f"Min # of passing TCs: {min(passing_tcs)}")
-        
+    
+    def remove_versions_mbfl_meeting_criteria(self, criteria):
+        self.experiment = Experiment()
+        self.max_mutants = self.experiment.experiment_config["max_mutants"]
+        self.mutant_keys = get_mutant_keys(self.max_mutants)
+        self.criteriaA_versions = []
+        self.criteriaB_versions = []
+
+        for idx, version_dir in enumerate(self.individual_list):
+            print(f"\n{idx+1}/{len(self.individual_list)}: {version_dir.name}")
+            individual = Individual(self.subject_name, self.set_name, version_dir.name)
+
+            mbfl_features_csv_file = individual.individual_dir / "mbfl_features.csv"
+            assert mbfl_features_csv_file.exists(), f"MBFL features file {mbfl_features_csv_file} does not exist"
+
+            buggy_line_key = get_buggy_line_key_from_data(individual.individual_dir)
+            lines_executed_by_failing_tcs = get_lines_executed_by_failing_tcs_from_data(individual.individual_dir)
+            assert buggy_line_key in lines_executed_by_failing_tcs, f"buggy_line_key {buggy_line_key} not in lines_executed_by_failing_tcs"
+
+            mutation_testing_result_data = get_mutation_testing_results_form_data(individual.individual_dir, buggy_line_key)
+
+            if "criteriaA" in criteria:
+                res = analyze_buggy_line_with_f2p_0(
+                    mbfl_features_csv_file,
+                    buggy_line_key,
+                    self.mutant_keys,
+                )
+
+                if res == 0:
+                    print(f"\t Criteria A satisfied (f2p of buggy line is 0)")
+                    self.criteriaA_versions.append(individual.name)
+            if "criteriaB" in criteria:
+                res = analyze_non_buggy_line_with_f2p_above_th(
+                    mbfl_features_csv_file,
+                    buggy_line_key,
+                    self.mutant_keys,
+                    10
+                )
+
+                if res == 1:
+                    print(f"\t Criteria B satisfied (# of bad lines > 10)")
+            
+        print(f"\n\nCriteria A versions: {len(self.criteriaA_versions)}")
+        print(f"Criteria B versions: {len(self.criteriaB_versions)}")
+
+        ext_name = "-".join(criteria)
+        dir_name = f"{self.set_name}-removed-{ext_name}"
+        removed_versions_dir = out_dir / self.subject_name / dir_name
+        removed_versions_dir.mkdir(exist_ok=True, parents=True)
+
+        original_set = set([version_dir.name for version_dir in self.individual_list])
+        removed_set = set(self.criteriaA_versions).union(set(self.criteriaB_versions))
+        remaining_set = original_set - removed_set
+        print(f"Total original versions: {len(original_set)}")
+        print(f"Total removed versions: {len(removed_set)}")
+        print(f"Total remaining versions: {len(remaining_set)}")
+
+        for idx, version_dir in enumerate(self.individual_list):
+            if version_dir.name not in removed_set:
+                sp.run(["cp", "-r", version_dir, removed_versions_dir])
