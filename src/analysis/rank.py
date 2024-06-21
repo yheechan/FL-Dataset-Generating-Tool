@@ -6,13 +6,18 @@ from lib.utils import *
 from analysis.rank_utils import *
 from analysis.analyze import Analyze
 from analysis.individual import Individual
+from lib.susp_score_formula import sbfl_formulas
 
 
 class Rank(Analyze):
     def __init__(self, subject_name, set_name, output_csv):
         super().__init__(subject_name, set_name, output_csv)
-
         self.experiment = Experiment()
+
+    # +++++++++++++++++++++++
+    # ++++++ Rank MBFL ++++++
+    # +++++++++++++++++++++++
+    def rank_mbfl_features(self):
         self.max_mutants = self.experiment.experiment_config["max_mutants"]
         self.mutant_keys = get_mutant_keys(self.max_mutants)
 
@@ -22,7 +27,6 @@ class Rank(Analyze):
         self.acc5_muse = []
         self.acc10_muse = []
 
-    def rank_mbfl_features(self):
         for idx, version_dir in enumerate(self.individual_list):
             print(f"\n{idx+1}/{len(self.individual_list)}: {version_dir.name}")
 
@@ -40,7 +44,7 @@ class Rank(Analyze):
 
             ranks = {}
             for mbfl_formula in mbfl_formulas:
-                rank_data = get_rank_at_method_level(
+                rank_data = get_mbfl_rank_at_method_level(
                     mbfl_features_csv_file,
                     buggy_line_key,
                     mbfl_formula,
@@ -51,7 +55,7 @@ class Rank(Analyze):
             print(f"\tmet rank: {ranks[met_key][bug_rank_key]}")
             print(f"\tmuse rank: {ranks[muse_key][bug_rank_key]}")
 
-            self.append_results(
+            self.append_mbfl_results(
                 individual.name,
                 buggy_line_key,
                 individual.failing_tcs_list,
@@ -60,10 +64,10 @@ class Rank(Analyze):
                 ranks
             )
         
-        self.print_accuracy()
+        self.print_mbfl_accuracy()
         self.write_rank_results()
     
-    def append_results(
+    def append_mbfl_results(
         self, bug_name, buggy_line_key, failing_tcs,
         lines_executed_by_failing_tcs, mutation_testing_result_data, ranks
     ):
@@ -107,7 +111,7 @@ class Rank(Analyze):
         if ranks[muse_key][bug_rank_key] <= 10:
             self.acc10_muse.append(bug_name)
     
-    def print_accuracy(self):
+    def print_mbfl_accuracy(self):
         print("\n\n")
         print(f"met acc@5: {len(self.acc5_met)}")
         print(f"met acc@5 perc: {len(self.acc5_met)/len(self.bugs_list)}")
@@ -121,6 +125,92 @@ class Rank(Analyze):
         print(f"muse acc@10 perc: {len(self.acc10_muse)/len(self.bugs_list)}")
 
     def write_rank_results(self):
+        with open(self.output_csv, "w") as f:
+            writer = csv.DictWriter(f, fieldnames=self.bugs_list[0].keys())
+            writer.writeheader()
+            for bug in self.bugs_list:
+                writer.writerow(bug)
+
+    # +++++++++++++++++++++++
+    # ++++++ Rank SBFL ++++++
+    # +++++++++++++++++++++++
+    def rank_sbfl_features(self):
+        self.bugs_list = []
+        self.accuracy = {
+            "acc@5": {
+                "Binary": [],
+                "GP13": [],
+                "Jaccard": [],
+                "Naish1": [],
+                "Naish2": [],
+                "Ochiai": [],
+                "Russel+Rao": [],
+                "Wong1": []
+            },
+            "acc@10": {
+                "Binary": [],
+                "GP13": [],
+                "Jaccard": [],
+                "Naish1": [],
+                "Naish2": [],
+                "Ochiai": [],
+                "Russel+Rao": [],
+                "Wong1": []
+            }
+        }
+
+        cnt = 0
+        for idx, version_dir in enumerate(self.individual_list):
+            print(f"\n{idx+1}/{len(self.individual_list)}: {version_dir.name}")
+            individual = Individual(self.subject_name, self.set_name, version_dir.name)
+
+            buggy_line_key = get_buggy_line_key_from_data(individual.individual_dir)
+            key_info = buggy_line_key.split("#")
+            bug_target_file = key_info[0].strip().split("/")[-1]
+            bug_funciton_name = key_info[1].strip()
+            bug_line_num = int(key_info[2].strip())
+
+            cnt += 1
+
+            ranks = {}
+            for sbfl_formula in sbfl_formulas:
+                rank_data = get_sbfl_rank_at_method_level(
+                    individual.individual_dir / "sbfl_features.csv",
+                    buggy_line_key, sbfl_formula
+                )
+                ranks[sbfl_formula] = rank_data
+            
+            write_data = {
+                'bug_name': individual.name,
+                # 'bug_target_file': bug_target_file,
+                # 'bug_function_name': bug_function_name,
+                'key': buggy_line_key
+            }
+
+            for sbfl_formula in sbfl_formulas:
+                for key, value in ranks[sbfl_formula].items():
+                    write_data[key] = value
+
+            self.bugs_list.append(write_data)
+
+            for key in self.accuracy.keys():
+                for formula in sbfl_formulas:
+                    if ranks[formula]["rank"] <= 5:
+                        self.accuracy[key][formula].append(individual.name)
+                    if ranks[formula]["rank"] <= 10:
+                        self.accuracy[key][formula].append(individual.name)
+        
+        self.print_sbfl_accuracy()
+        self.write_sbfl_rank_results()
+    
+    def print_sbfl_accuracy(self):
+        print("\n\n")
+        for key, value in self.accuracy.items():
+            for formula, bugs in value.items():
+                print(f"{key} {formula}: {len(bugs)}")
+                print(f"{key} {formula} perc: {len(bugs)/len(self.bugs_list)}")
+
+    def write_sbfl_rank_results(self):
         with open(self.output_csv, "w") as f:
             writer = csv.DictWriter(f, fieldnames=self.bugs_list[0].keys())
             writer.writeheader()

@@ -40,9 +40,15 @@ $ make -j20
   4. ``extract_mbfl_features.py``
   5. ``extract_sbfl_features.py``
   6. ``combine_fl_features.py``
+* list of executables for dataset generation on a single version of a subject:
+  1. ``test_mutant_buggy_collection.py``: tests a mutant for buggy collections (version saved when considered as buggy)
+  2. ``test_version_usability_check.py``: tests a buggy mutant for usability check (version saved when considered as usable)
+  3. ``test_version_prerequisites.py``: tests a version (from usable_buggy_versions) in order to extract (prepare) prerequisite data
+  4. ``test_version_mbfl_features.py``: tests a version (that includes prerequisite data) in order to extract mbfl features
+  5. ``test_version_sbfl_features.py``: tests a version (set after mbfl feature extraction) in order to extract sbfl features
 * list of executables for dataset analysis and reconstruction:
   * ``ranker.py``
-  * ``anazer.py``
+  * ``analyzer.py``
   * ``validator.py``
 
-last updated June 20, 2024
+last updated June 21, 2024

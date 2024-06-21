@@ -142,3 +142,11 @@ class Validate:
                 if bug_stat == 1:
                     buggy_line_cnt += 1
             assert buggy_line_cnt == 1, f"More than one buggy line in {mbfl_features_csv_file}"
+
+    def validate_sbfl_features(self):
+        for individual in self.individual_list:
+            # VALIDATE: Assert that sbfl_features.csv exists
+            sbfl_features_csv_file = individual / "sbfl_features.csv"
+            assert sbfl_features_csv_file.exists(), f"SBFL features file {sbfl_features_csv_file} does not exist"
+        
+        print(f"All {len(self.individual_list)} individuals have been validated successfully")

@@ -185,3 +185,20 @@ def analyze_non_buggy_line_with_f2p_above_th(
     # then return 1
     return 1
     
+def get_lines_executed_by_failing_tcs_from_data(version_dir):
+    get_lines_executed_by_failing_tcs_file = version_dir / "coverage_info/lines_executed_by_failing_tc.json"
+    assert get_lines_executed_by_failing_tcs_file.exists(), f"lines_executed_by_failing_tc.json does not exist in {version_dir}"
+
+    with open(get_lines_executed_by_failing_tcs_file, "r") as f:
+        lines_executed_by_failing_tcs = json.load(f)
+    
+    return lines_executed_by_failing_tcs
+
+def get_buggy_line_key_from_data(version_dir):
+    buggy_line_key_file = version_dir / "buggy_line_key.txt"
+    assert buggy_line_key_file.exists(), f"buggy_line_key.txt does not exist in {version_dir}"
+    
+    with open(buggy_line_key_file, "r") as f:
+        buggy_line_key = f.readline().strip()
+    
+    return buggy_line_key

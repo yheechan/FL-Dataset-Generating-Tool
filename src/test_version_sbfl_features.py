@@ -1,14 +1,14 @@
 import argparse
 
-from lib.worker_stage04 import WorkerStage04
+from lib.worker_stage05 import WorkerStage05
 
 # This script it to test single version (of subject)
-# in order to mbfl feature data for the version
+# in order to sbfl feature data for the version
 def main():
     parser = make_parser()
     args = parser.parse_args()
 
-    worker = WorkerStage04(
+    worker = WorkerStage05(
         args.subject, args.machine, args.core,
         args.version, args.verbose
     )

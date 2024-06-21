@@ -13,6 +13,8 @@ def main():
 
     if args.mbfl_features:
         subject.rank_mbfl_features()
+    elif args.sbfl_features:
+        subject.rank_sbfl_features()
 
 def make_parser():
     parser = argparse.ArgumentParser(description="Copy subject to working directory")

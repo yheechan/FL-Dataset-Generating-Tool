@@ -82,7 +82,7 @@ class WorkerStage03(Worker):
         self.postprocess_coverage()
 
         # 4. Save the version to self.prerequisite_data_dir
-        self.save_version()
+        self.save_version(self.version_dir, self.prerequisite_data_dir)
     
     def postprocess_coverage(self):
         self.total_tcs = self.failing_tcs_list + self.passing_tcs_list + self.excluded_failing_tcs_list + self.excluded_passing_tcs_list + self.ccts_list
@@ -313,11 +313,6 @@ class WorkerStage03(Worker):
         self.update_ccts()
 
         return 0
-    
-    def save_version(self):
-        print(f">> Saving version {self.version_dir.name} to {self.prerequisite_data_dir}")
-        print_command(["cp", "-r", self.version_dir, self.prerequisite_data_dir], self.verbose)
-        sp.check_call(["cp", "-r", self.version_dir, self.prerequisite_data_dir])
     
     def update_ccts(self):
         if len(self.ccts_list) > 0:

@@ -17,6 +17,8 @@ def main():
         subject.validate_prerequisite_data()
     elif args.validate_mbfl_features:
         subject.validate_mbfl_features()
+    elif args.validate_sbfl_features:
+        subject.validate_sbfl_features()
 
 def make_parser():
     parser = argparse.ArgumentParser(description="Copy subject to working directory")
@@ -25,6 +27,7 @@ def make_parser():
     parser.add_argument("--validate-usable-buggy-versions", action="store_true", help="Validate usable buggy versions")
     parser.add_argument("--validate-prerequisite-data", action="store_true", help="Validate prerequisite data")
     parser.add_argument("--validate-mbfl-features", action="store_true", help="Validate MBFL feature")
+    parser.add_argument("--validate-sbfl-features", action="store_true", help="Validate SBFL feature")
     return parser
 
 if __name__ == "__main__":

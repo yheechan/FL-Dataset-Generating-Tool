@@ -96,12 +96,7 @@ class WorkerStage02(Worker):
             print(f"Buggy line {self.buggy_lineno} is covered by test case {tc_script_name}")
 
         # 5. Save the version
-        self.save_version()
+        self.save_version(self.version_dir, self.usable_buggy_versions_dir)
 
         # 6. Apply patch reverse
         self.apply_patch(self.target_code_file_path, self.buggy_code_file, patch_file, True)
-    
-    def save_version(self):
-        print(f">> Saving version {self.version_dir.name}")
-        print_command(["cp", "-r", self.version_dir, self.usable_buggy_versions_dir], self.verbose)
-        sp.check_call(["cp", "-r", self.version_dir, self.usable_buggy_versions_dir])

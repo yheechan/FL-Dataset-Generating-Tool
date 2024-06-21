@@ -302,6 +302,40 @@ class Worker:
                             return 1
                 return 1
         return 1
+    
+    def get_lines_from_pp_cov(self, pp_cov_file):
+        lines_list = []
+        with open(pp_cov_file, "r") as f:
+            csv_reader = csv.reader(f)
+            next(csv_reader)
+            for row in csv_reader:
+                lines_list.append(row[0])
+        return lines_list
+    
+    def get_lines_from_pp_cov_as_dict(self, pp_cov_file):
+        tc_list = self.failing_tcs_list + self.passing_tcs_list
+        cov_per_line = []
+        check_tc_col = True
+        buggy_line_exists = False
+        with open(pp_cov_file, "r") as f:
+            csv_reader = csv.DictReader(f)
+            for row in csv_reader:
+                line_key = row["key"]
+
+                if line_key == self.buggy_line_key:
+                    buggy_line_exists = True
+
+                cov_per_line.append(row)
+
+                # VALIDATE: pp cov data has all tcs
+                if check_tc_col:
+                    for tc in tc_list:
+                        tc_name = tc.split(".")[0]
+                        if tc_name not in row:
+                            raise Exception(f"Test case {tc_name} is not in coverage data")
+                    check_tc_col = False
+        assert buggy_line_exists, f"Buggy line {self.buggy_line_key} does not exist in postprocessed coverage data"
+        return cov_per_line
 
     # +++++++++++++++++++++++++++
     # ++++++ Commons Info++++++++
@@ -323,3 +357,8 @@ class Worker:
         buggy_code_file = target_dir / "buggy_code_file" / code_filename
         assert buggy_code_file.exists(), f"Buggy code file does not exist: {buggy_code_file}"
         return buggy_code_file
+
+    def save_version(self, version_dir, destination_dir):
+        print(f">> Saving version {version_dir.name} to {destination_dir}")
+        print_command(["cp", "-r", version_dir, destination_dir], self.verbose)
+        sp.check_call(["cp", "-r", version_dir, destination_dir])

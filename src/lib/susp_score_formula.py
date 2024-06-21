@@ -1,5 +1,9 @@
 import math
 
+# ++++++++++++++++++++++++++
+# +++++ measuring MBFL +++++
+# ++++++++++++++++++++++++++
+
 def measure_muse(features, total_p2f, total_f2p, mutant_key_list):
     utilized_mutant_cnt = 0
     line_total_p2f = 0
@@ -62,3 +66,61 @@ def measure_metallaxis(features, mutant_key_list):
 
     final_met_score = max(met_score_list)
     return final_met_score
+
+
+# ++++++++++++++++++++++++++
+# +++++ measuring SBFL +++++
+# ++++++++++++++++++++++++++
+def calculate_spectrum(line, tc_list):
+    executed = 0
+    not_executed = 0
+
+    for tc in tc_list:
+        tc_name = tc.split('.')[0]
+        if line[tc_name] == '1':
+            executed += 1
+        else:
+            not_executed += 1
+    
+    return executed, not_executed
+
+sbfl_formulas = [
+    "Binary", "GP13", "Jaccard", "Naish1",
+    "Naish2", "Ochiai", "Russel+Rao", "Wong1"
+]
+
+def sbfl(e_p, e_f, n_p, n_f, formula="Ochiai"):
+    if formula == "Jaccard":
+        denominator = e_f + n_f + e_p
+        if denominator == 0:
+            return 0
+        return e_f / denominator
+    elif formula == "Binary":
+        if 0 < n_f:
+            return 0
+        elif n_f == 0:
+            return 1
+    elif formula == "GP13":
+        denominator = 2*e_p + e_f
+        if denominator == 0:
+            return 0
+        return e_f + (e_f / denominator)
+    elif formula == "Naish1":
+        if 0 < n_f:
+            return -1
+        elif 0 == n_f:
+            return n_p
+    elif formula == "Naish2":
+        x = e_p / (e_p + n_p + 1)
+        return e_f - x
+    elif formula == "Ochiai":
+        denominator = math.sqrt((e_f + n_f) * (e_f + e_p))
+        if denominator == 0:
+            return 0
+        return e_f / denominator
+    elif formula == "Russel+Rao":
+        return e_f/(e_p + n_p + e_f + n_f)
+    elif formula == "Wong1":
+        return e_f
+    else:
+        raise Exception(f"Unknown formula: {formula}")

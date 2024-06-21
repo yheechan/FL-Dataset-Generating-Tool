@@ -102,7 +102,7 @@ class WorkerStage04(Worker):
         self.zip_mutants()
 
         # 7. Save version
-        self.save_version()
+        self.save_version(self.version_dir, self.mbfl_features_dir)
     
     def reduced_lines_executed_by_failing_tcs(self):
         buggy_code_filename = self.target_code_file_path.name
@@ -193,7 +193,7 @@ class WorkerStage04(Worker):
 
     def measure_mbfl_features(self):
         self.total_num_of_failing_tcs = len(self.failing_tcs_list)
-        self.lines_from_pp_cov = self.get_lines_from_pp_cov()
+        self.lines_from_pp_cov = self.get_lines_from_pp_cov(self.postprocessed_cov_file)
         perfileline_features, total_p2f, total_f2p = self.get_perfileline_features()
 
         # start measurement
@@ -355,16 +355,6 @@ class WorkerStage04(Worker):
         # print(json.dumps(perfileline_features, indent=4))
         
         return perfileline_features, total_p2f, total_f2p
-    
-    def get_lines_from_pp_cov(self):
-        lines_list = []
-        with open(self.postprocessed_cov_file, "r") as f:
-            csv_reader = csv.reader(f)
-            next(csv_reader)
-            for row in csv_reader:
-                lines_list.append(row[0])
-        return lines_list
-
 
     
     def begin_mbfl_process(self):
@@ -681,12 +671,6 @@ class WorkerStage04(Worker):
 
         print(f">> Unzipped mutants are saved at {self.version_mutant_dir.name}")
         assert self.version_mutant_dir.exists(), f"Mutant directory {self.version_mutant_dir} does not exist"
-
-    
-    def save_version(self):
-        print(f">> Saving version {self.version_dir.name} to {self.mbfl_features_dir}")
-        print_command(["cp", "-r", self.version_dir, self.mbfl_features_dir], self.verbose)
-        sp.check_call(["cp", "-r", self.version_dir, self.mbfl_features_dir])
     
     def print_generated_mutants_stats(self):
         total_num_mutants = 0
