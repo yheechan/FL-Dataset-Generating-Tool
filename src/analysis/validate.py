@@ -27,7 +27,6 @@ class Validate:
             # GET: bug info
             target_code_file, mutant_code_file, buggy_lineno = self.get_bug_info(bug_info)
 
-
             # VALIDATE: Assert that testsuite_info/failing_tcs.txt and testsuite_info/passing_tcs.txt exist
             failing_tcs = individual.individual_dir / 'testsuite_info' / 'failing_tcs.txt'
             assert failing_tcs.exists(), f"Failing test cases file {failing_tcs} does not exist"
@@ -110,3 +109,36 @@ class Validate:
         
         assert file_buggy_lineno == buggy_lineno, f"Buggy line key {buggy_line_key} does not match with buggy line number {buggy_lineno}"
         return buggy_line_key
+
+    def validate_mbfl_features(self):
+        for individual in self.individual_list:
+            individual_name = individual.name
+            print(f"Validating MBFL features for {individual_name}")
+            individual = Individual(self.subject_name, self.set_name, individual_name)
+
+            # VALIDATE: Assert that mbfl_featuers.csv exists
+            mbfl_features_csv_file = individual.individual_dir / "mbfl_features.csv"
+            assert mbfl_features_csv_file.exists(), f"MBFL features file {mbfl_features_csv_file} does not exist"
+
+            # VALIDATE: Assert that there is only one buggy line
+            self.check_one_buggy_line(mbfl_features_csv_file)
+
+            # VALIDATE: Assert that selected_mutants.csv exists
+            selected_mutants_csv_file = individual.individual_dir / "selected_mutants.csv"
+            assert selected_mutants_csv_file.exists(), f"Selected mutants file {selected_mutants_csv_file} does not exist"
+
+            # VALIDATE: Assert that mutation_testing_results.csv exists
+            mutation_testing_results_csv_file = individual.individual_dir / "mutation_testing_results.csv"
+            assert mutation_testing_results_csv_file.exists(), f"Mutation testing results file {mutation_testing_results_csv_file} does not exist"
+        
+        print(f"All {len(self.individual_list)} individuals have been validated successfully")
+    
+    def check_one_buggy_line(self, mbfl_features_csv_file):
+        with open(mbfl_features_csv_file, "r") as f:
+            reader = csv.DictReader(f)
+            buggy_line_cnt = 0
+            for row in reader:
+                bug_stat = int(row["bug"])
+                if bug_stat == 1:
+                    buggy_line_cnt += 1
+            assert buggy_line_cnt == 1, f"More than one buggy line in {mbfl_features_csv_file}"
