@@ -32,15 +32,15 @@ class Rank(Analyze):
 
             individual = Individual(self.subject_name, self.set_name, version_dir.name)
 
-            mbfl_features_csv_file = individual.individual_dir / "mbfl_features.csv"
+            mbfl_features_csv_file = individual.dir_path / "mbfl_features.csv"
             assert mbfl_features_csv_file.exists(), f"MBFL features file {mbfl_features_csv_file} does not exist"
 
-            buggy_line_key = get_buggy_line_key_from_data(individual.individual_dir)
-            lines_executed_by_failing_tcs = get_lines_executed_by_failing_tcs_from_data(individual.individual_dir)
+            buggy_line_key = get_buggy_line_key_from_data(individual.dir_path)
+            lines_executed_by_failing_tcs = get_lines_executed_by_failing_tcs_from_data(individual.dir_path)
 
             assert buggy_line_key in lines_executed_by_failing_tcs, f"buggy_line_key {buggy_line_key} not in lines_executed_by_failing_tcs"
 
-            mutation_testing_result_data = get_mutation_testing_results_form_data(individual.individual_dir, buggy_line_key)
+            mutation_testing_result_data = get_mutation_testing_results_form_data(individual.dir_path, buggy_line_key)
 
             ranks = {}
             for mbfl_formula in mbfl_formulas:
@@ -164,7 +164,7 @@ class Rank(Analyze):
             print(f"\n{idx+1}/{len(self.individual_list)}: {version_dir.name}")
             individual = Individual(self.subject_name, self.set_name, version_dir.name)
 
-            buggy_line_key = get_buggy_line_key_from_data(individual.individual_dir)
+            buggy_line_key = get_buggy_line_key_from_data(individual.dir_path)
             key_info = buggy_line_key.split("#")
             bug_target_file = key_info[0].strip().split("/")[-1]
             bug_funciton_name = key_info[1].strip()
@@ -175,7 +175,7 @@ class Rank(Analyze):
             ranks = {}
             for sbfl_formula in sbfl_formulas:
                 rank_data = get_sbfl_rank_at_method_level(
-                    individual.individual_dir / "sbfl_features.csv",
+                    individual.dir_path / "sbfl_features.csv",
                     buggy_line_key, sbfl_formula
                 )
                 ranks[sbfl_formula] = rank_data
@@ -195,9 +195,9 @@ class Rank(Analyze):
 
             for key in self.accuracy.keys():
                 for formula in sbfl_formulas:
-                    if ranks[formula]["rank"] <= 5:
-                        self.accuracy[key][formula].append(individual.name)
-                    if ranks[formula]["rank"] <= 10:
+                    bug_rank_key = f"rank of buggy function ({formula})"
+                    thresh = 5 if key == "acc@5" else 10
+                    if ranks[formula][bug_rank_key] <= thresh:
                         self.accuracy[key][formula].append(individual.name)
         
         self.print_sbfl_accuracy()

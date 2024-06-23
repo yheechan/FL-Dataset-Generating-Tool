@@ -13,10 +13,6 @@ def main():
 
     if args.usable_buggy_versions:
         subject.usable_buggy_versions()
-    elif args.reduce_testsuite_size != 0:
-        subject.reduce_testsuite_size(args.reduce_testsuite_size)
-    elif args.appropriate_version_with_all_failing_tcs:
-        subject.appropriate_version_with_all_failing_tcs()
     elif args.prerequisite_data:
         subject.prerequisite_data()
     elif len(args.remove_versions_mbfl) != 0:
@@ -29,8 +25,6 @@ def make_parser():
     parser.add_argument("--output-csv", type=str, help="Output csv name", required=True)
     
     parser.add_argument("--usable-buggy-versions", action="store_true", help="Get test case statistics")
-    parser.add_argument("--reduce-testsuite-size", type=int, default=0, help="Reduce test suite size (from usable_buggy_versions stage)")
-    parser.add_argument("--appropriate-version-with-all-failing-tcs", action="store_true", help="Get appropriate versions with all failing test cases (from usable_buggy_versions stage)")
     parser.add_argument("--prerequisite-data", action="store_true", help="Get prerequisite data")
 
     parser.add_argument("--remove-versions-mbfl", type=str, choices=["criteriaA", "criteriaB"], nargs="+", help="Remove versions based on MBFL criteria")
