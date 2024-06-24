@@ -11,6 +11,12 @@ muse_key = "muse susp. score"
 mbfl_formulas = [met_key, muse_key]
 bug_rank_key = "rank of buggy function (function level)"
 
+def get_mutant_keys_as_pairs(max_mutants):
+    mutant_keys = []
+    for i in range(1, max_mutants+1):
+        mutant_keys.append((f"m{i}:p2f", f"m{i}:f2p"))
+    return mutant_keys
+
 def get_mutant_keys(max_mutants):
     mutant_keys = []
     for i in range(1, max_mutants+1):

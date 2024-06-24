@@ -27,7 +27,6 @@ def make_parser():
     
     parser.add_argument("--reduce-testsuite-size", type=int, default=0, help="Reduce test suite size (from usable_buggy_versions stage)")
     parser.add_argument("--appropriate-version-with-all-failing-tcs", action="store_true", help="Get appropriate versions with all failing test cases (from usable_buggy_versions stage)")
-
     parser.add_argument("--remove-versions-mbfl", type=str, choices=["criteriaA", "criteriaB"], nargs="+", help="Remove versions based on MBFL criteria")
     parser.add_argument("--combine-mbfl-sbfl", action="store_true", help="Combine MBFL and SBFL features (give set-name of SBFL features directory)")
     return parser

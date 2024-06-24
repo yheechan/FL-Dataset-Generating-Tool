@@ -5,7 +5,7 @@
 본 데이터셋은 libxml2 오프 소스 프로젝트를 대상으로 결함 위치 탐지 모델에 활용될 수 있는 학습 데이터를 제공합니다. 이 데이터셋은 프로그램의 동적 특성을 분석하여 스펙트럼 기반 (SBFL: Spectrum-Based Fault Localization) 및 변이 기반 (MBFL: Mutation-Based Fault Localization) 특징 데이터를 포함하고 있습니다.
 
 
-## 2. 데이터셋에 사용된 libxml2의 규모 요약
+## 2. FL 데이터셋 구축에 사용된 libxml2 파일 규모 요약
 * 소스 코드 파일 개수: 5개
 * 함수 개수: 918개
 * 소스 코드 라인 개수: 33,227줄
@@ -15,21 +15,21 @@
 
 ### 3.1 디렉토리 구조
 * ``buggy_code_file_per_bug_version/:`` 각 버그 버전에 대한 버그가 있는 소스 코드 파일
-    * ``buggy_code_file_per_bug_version/original_version/``: 버그가 없는 원본 소스 코드 파일과 테스트 케이스 소스 코드가 포함된 디렉토리
+    * ``└──/original_version/``: 버그가 없는 원본 소스 코드 파일들이 포함된 디렉토리
 * ``buggy_line_key_per_bug_version/``: 각 버그 버전의 버기 라인을 식별하는 고유 키 값
 * ``bug_version_mutation_info.csv``: 각 버그 버전에 생성된 인공 버그의 변형 정보
-* ``document.md``: 데이터셋의 상세 내용을 설명하는 문서
+* ``document-libxml2.md``: 데이터셋의 상세 내용을 설명하는 문서
 * ``FL_features_per_bug_version/``: 버그 버전 별로 SBFL과 MBFL 특징 정보를 포함한 학습 데이터 **(학습 데이터로 사용)**
 * ``FL_features_per_bug_version_with_susp_scores/``: 버그 버전 별로 SBFL과 MBFL 특징 정보에 더해, Metallaxis와 MUSE 공식에 적용하여 계산된 읨심도 점수를 포함하는 데이터 파일 (MBFL 의심도 점수 검증 할 때 사용)
 * ``libxml2.zip``: libxml2 프로젝트 리포지토리 압축 파일
 * ``postprocessed_coverage_per_bug_version/``: 각 버그 버전의 테스트 케이스들의 커버리지 정보
 * ``susp_score.py``: 하나의 버그 버전에 대한 Metallaxis와 MUSE 의심도를 계산해주는 도구
 * ``test_case_info_per_bug_version/``: 각 버그 버전 별로 사용된 테스트 케이스 분류 정보
-    * ``ccts.txt``: 버기 라인을 실행 했으나 우연히 통과한 (coincidentally correct)  테스트 케이스
-    * ``excluded_failing_tcs.txt``: 동적 특징 추출에 제외된 실패 (failing) 테스트 케이스
-    * ``excluded_passing_tcs.txt``: 동적 특징 추출에 제외된 통과 (passing) 테스트 케이스
-    * ``failing_tcs.txt``: 동적 특징 추출에 사용된 실패 (failing) 테스트 케이스
-    * ``passing_tcs.txt``: 동적 특징 추출에 사용된 통과 (passing) 테스트 케이스
+    * ``├──ccts.txt``: 버기 라인을 실행 했으나 우연히 통과한 (coincidentally correct)  테스트 케이스
+    * ``├──/excluded_failing_tcs.txt``: 동적 특징 추출에 제외된 실패 (failing) 테스트 케이스
+    * ``├──/excluded_passing_tcs.txt``: 동적 특징 추출에 제외된 통과 (passing) 테스트 케이스
+    * ``├──/failing_tcs.txt``: 동적 특징 추출에 사용된 실패 (failing) 테스트 케이스
+    * ``└──/passing_tcs.txt``: 동적 특징 추출에 사용된 통과 (passing) 테스트 케이스
 ```
 fl_dataset-240419-v1/
     ├── buggy_code_file_per_bug_version/
@@ -49,7 +49,7 @@ fl_dataset-240419-v1/
 유형 | 개수
 --- | ---
 실제 버그 | 6개
-인공 버그 | 156개
+인공 버그 | 146개
 총 버그 | 152개
 
 ### 4.2 실제 버그 (총 3개)
@@ -62,23 +62,23 @@ bug4 | [gitlab issue #711](https://gitlab.gnome.org/GNOME/libxml2/-/issues/711) 
 bug5 | [gitlab issue #406](https://gitlab.gnome.org/GNOME/libxml2/-/issues/306) | parser.c | 2320 | assertion failure
 bug6 | [gitlab issue #318](https://gitlab.gnome.org/GNOME/libxml2/-/issues/318) | HTMLparser.c | 3034 | assertion failure
 
-### 4.3 인공 버그 (총 162개)
+### 4.3 인공 버그 (총 146개)
 * ``bug_version_mutation_info.csv`` 파일에는 각 인공 버그의 상세 정보가 기록되어 있습니다. 이 파일은 각 버그 버전에 대한 다음 정보를 포함합니다:
     * 버그 버전
-    * 변형 소스 코드 파일
-    * 변형 소스 코드 라인 번호
-    * 변형 연산자
-    * 변형 전 소스 코드
-    * 변형 후 소스 코드
+    * 변형 소스 코드 파일 이름
+    * 변형 소스 코드 라인 위치 (Line#, Col#)
+    * 변형 연산자 (Mutation Operator)
+    * 변형 전 소스 코드 정보 (Before Mutation)
+    * 변형 후 소스 코드 정보 (After Mutation)
 
 
 ## 5. 검증된 데이터와 검증 방법
-* ``FL_features_per_bug_version/`` 디렉토리: 버그 버전 별 오류 탐지 데이터셋
+* ``FL_features_per_bug_version/`` 디렉토리: 버그 버전 별 결함 위치 탐지 데이터셋
     * 각 CSV 파일은 ``bug`` 열의 값이 ``1``인 행은 유일하게 한 하나만 존재하는지 검증합니다.
-    * 스펙트럼 기반 특징 데이터 (``ep``, ``ef``, ``np``, ``nf``)의 합계가 실패(failing) 및 통과(passing) 테스트 케이스의 총수와 일치하는지 검증합니다. 버기 라인을 실행했으나 우연히 통과하는 테스트 케이스는 제외합니다.
+    * 스펙트럼 기반 특징 데이터 (``ep``, ``ef``, ``np``, ``nf``)의 합계가 통과와 실패하는 테스트 케이스의 총 개수와 일치하는지 검증합니다.
     * 변이 기반 특징 데이터로부터 **Metallaxis**와 **MUSE** 공식에 올바르게 적용 가능한것을 검증합니다.
-<!-- * ``buggy_code_file_per_bug_version/`` 디렉토리: 버그 버전 별 소스 코드 파일
-    * 인공적으로 생성된 버그(변형)가 각 버그 버전의 소스 코드 파일에 지정된 위치에 올바르게 삽입되었는지 검증합니다. -->
+* ``buggy_code_file_per_bug_version/`` 디렉토리: 버그 버전 별 버그가 포함 된 소스 코드 파일
+    * 인공적으로 생성된 버그(변형)가 각 버그 버전의 소스 코드 파일에 지정된 위치에 올바르게 삽입되었는지 검증합니다.
 * ``test_case_info_per_bug_version/`` 디렉토리: 각 버그 버전 별 실패한 테스트 케이스 정보
     * 각 버그 버전 별 실패(failing) 테스트 케이스가 해당 버그에서 버그가 있는 코드 라인을 실행하였는지 검증합니다.
 
@@ -115,7 +115,6 @@ bug6 | [gitlab issue #318](https://gitlab.gnome.org/GNOME/libxml2/-/issues/318) 
 
 
 ## 7. 변이 기반 라인의 의심도 계산
-
 ### 7.1 변이 기반 의심도 공식 설명
 * **Metallaxis**
     * $\max_{m \in \text{mut}_\text{killed}(s)} \frac{|f_P(s) \cap p_m|}{\sqrt{totalFailing_\text{TCs} \times (({|f_P(s) \cap p_m|}) + ({|p_P(s) \cap f_m|}) )}}$
@@ -133,8 +132,8 @@ bug6 | [gitlab issue #318](https://gitlab.gnome.org/GNOME/libxml2/-/issues/318) 
 
 
 ### 7.2 ``susp_score.py`` 사용 방법
-* 해당 도구는 하나의 버그 버전의 오류 탐지 데이터를 주고 Metallaxis와 MUSE 의심도 점수를 계산해주는 도구입니다.
-* 입력: 오류 탐지 데이터 CSV 파일 (절대 경로)
+* 해당 도구는 하나의 버그 버전의 결함 위치 탐지 데이터를 주고 Metallaxis와 MUSE 의심도 점수를 계산해주는 도구입니다.
+* 입력: 결함 위치 탐지 데이터 CSV 파일 (절대 경로)
 * 출력: 라인 별 Metallaxis와 MUSE 의심도 점수가 담긴 ``susp_score.csv`` 파일
 * 사용 명령 예시:
     ```
@@ -144,16 +143,18 @@ bug6 | [gitlab issue #318](https://gitlab.gnome.org/GNOME/libxml2/-/issues/318) 
 
 
 ## 8. 테스트 케이스 소스 코드 정보
-### 8.1 테스트 케이스 유츄 방법
-* ``libxml2/`` 프로젝트 리포지토리에 ``runtest_tc_lists.csv`` 파일을 확인한다
-* 각 테스트 케이스는 다음 특징 정보로 구성 된다:
-    * ``<test_funcname>``: 테스트 케이스의 실행 함수 명칭
-    * ``<filename>, <result>, <error>, <option>``: 테스트 케이스의 실행 함수의 인풋 인자
-* ``runtest_tc_lists.csv``에 담긴 정보로 부터 ``runtest.c`` 소스 코드에서 테스트 케이스의 실행 함수 유츄 가능
+### 8.1 libxml2 테스트 케이스 유추 방법
+1. ``libxml2.zip`` 압축 파일 풀어 libxml2 리포지토리 도출
+2. ``libxml2/`` 프로젝트 리포지토리에 ``runtest_tc_lists.csv`` 파일을 참고
+    * ``runtest_tc_lists.csv``에 테스트 케이스 별 특징 구성:
+        * ``<test_funcname>``: 테스트 케이스의 실행 함수 이름
+        * ``<filename>, <result>, <error>, <option>``: 테스트 케이스의 실행 함수의 입력 인자 값
+4. ``runtest_tc_lists.csv``에 담긴 정보로 부터 ``libxml2/runtest.c`` 소스 코드에서 테스트 케이스의 실행 함수 유추
 
 
-## 9. 데이터셋의 오류 탐지 정확도 평가 (총 152개 버그 버전, 총 918개 함수)
-* 각 오류 탐지 공식 별 **함수 단위**로 버기 함수 탐지 정확도 결과
+
+## 9. 데이터셋의 결함 위치 탐지 정확도 평가 (총 152개 버그 버전, 총 918개 함수)
+* 각 결함 위치 탐지 공식 별 **함수 단위**로 버기 함수 탐지 정확도 결과
 
 ### 9.1 스펙트럼 기반 정확도 (SBFL)
 SBFL 공식 | ``acc@5`` 버그 개수 | ``acc@5`` 정확도 백분율 | ``acc@10`` 버그 개수 | ``acc@10`` 정확도 백분율
@@ -173,4 +174,3 @@ MBFL 공식 | ``acc@5`` 버그 개수 | ``acc@5`` 정확도 백분율 | ``acc@10
 --- | --- | --- | --- | --- |
 Metallaxis | 117 | 76.97% | 143 | 94.08%
 MUSE | 122 | 80.26% | 140 | 92.11%
-

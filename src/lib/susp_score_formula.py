@@ -4,6 +4,20 @@ import math
 # +++++ measuring MBFL +++++
 # ++++++++++++++++++++++++++
 
+def return_f2p_p2f_values(feature, p2f_m, f2p_m):
+    if type(feature[p2f_m]) == str or type(feature[f2p_m]) == str:
+        if feature[p2f_m] == "-1" or feature[f2p_m] == "-1":
+            p2f = -1
+            f2p = -1
+        else:
+            p2f = int(feature[p2f_m])
+            f2p = int(feature[f2p_m])
+    else:
+        p2f = feature[p2f_m]
+        f2p = feature[f2p_m]
+
+    return p2f, f2p
+
 def measure_muse(features, total_p2f, total_f2p, mutant_key_list):
     utilized_mutant_cnt = 0
     line_total_p2f = 0
@@ -12,8 +26,7 @@ def measure_muse(features, total_p2f, total_f2p, mutant_key_list):
     final_muse_score = 0.0
 
     for p2f_m, f2p_m in mutant_key_list:
-        p2f = features[p2f_m]
-        f2p = features[f2p_m]
+        p2f, f2p = return_f2p_p2f_values(features, p2f_m, f2p_m)
 
         if p2f == -1 or f2p == -1:
             continue
@@ -46,12 +59,15 @@ def measure_muse(features, total_p2f, total_f2p, mutant_key_list):
     return muse_data
 
 def measure_metallaxis(features, mutant_key_list):
-    tot_failing_tcs = features['# of totfailed_TCs']
+    if type(features['# of totfailed_TCs']) == str:
+        tot_failing_tcs = int(features['# of totfailed_TCs'])
+    else:
+        tot_failing_tcs = features['# of totfailed_TCs']
+
     met_score_list = []
 
     for p2f_m, f2p_m in mutant_key_list:
-        p2f = features[p2f_m]
-        f2p = features[f2p_m]
+        p2f, f2p = return_f2p_p2f_values(features, p2f_m, f2p_m)
 
         if p2f == -1 or f2p == -1:
             continue
@@ -64,6 +80,8 @@ def measure_metallaxis(features, mutant_key_list):
 
         met_score_list.append(score)
 
+    if len(met_score_list) == 0:
+        return 0.0
     final_met_score = max(met_score_list)
     return final_met_score
 

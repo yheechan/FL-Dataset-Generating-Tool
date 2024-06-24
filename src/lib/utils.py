@@ -36,7 +36,7 @@ not_using_operators_in_buggy_mutant_collection = [
     "IndVarLogNeg", "IndVarIncDec", "IndVarRepReq", "IndVarRepCon", 
     "IndVarRepPar", "IndVarRepGlo", "IndVarRepExt", "IndVarRepLoc",
     "SSDL", "CovAllNod", "CovAllEdg", "STRP", "STRI", "VDTR",
-    "RetStaDel", "FunCalDel"
+    "RetStaDel", "FunCalDel", "SMVB"
 ]
 
 not_using_operators_in_mbfl = [
@@ -67,6 +67,9 @@ crash_codes = [
 def sort_testcase_script_name(tc_script):
     tc_filename = tc_script.split('.')[0]
     return int(tc_filename[2:])
+
+def sort_bug_id(bug_id):
+    return int(bug_id[3:])
 
 def get_dirs_in_dir(directory):
     return [d for d in directory.iterdir() if d.is_dir()]

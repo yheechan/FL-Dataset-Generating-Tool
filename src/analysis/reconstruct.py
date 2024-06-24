@@ -287,7 +287,7 @@ class Reconstruct:
 
         bug_version_mutation_info = self.fl_dataset_dir / "bug_version_mutation_info.csv"
         bug_version_mutation_info_fp = bug_version_mutation_info.open("w")
-        bug_version_mutation_info_fp.write(",,,,,Before Mutation,,,,,After Mutation\n")
+        bug_version_mutation_info_fp.write(",,,,Before Mutation,,,,,After Mutation\n")
         bug_version_mutation_info_fp.write("bug_id,target_file_name,Buggy Code Filename,Mutation Operator,Start Line#,Start Col#,End Line#,End Col#,Target Token,Start Line#,Start Col#,End Line#,End Col#,Mutated Token,Extra Info\n")
 
         for idx, version_dir in enumerate(self.individual_list):
@@ -344,6 +344,7 @@ class Reconstruct:
             assert sbfl_feature_file.exists(), f"SBFL feature file {sbfl_feature_file} does not exist"
             assert mbfl_feature_file.exists(), f"MBFL feature file {mbfl_feature_file} does not exist"
 
+            # 5. combine SBFL and MBFL features
             combine_sbfl_mbfl_features(
                 bug_id, sbfl_feature_file, mbfl_feature_file,
                 self.fl_dataset_dir, self.mutant_keys
@@ -352,7 +353,7 @@ class Reconstruct:
 
             mutant_info_csv_file = individual.dir_path / "mutant_info.csv"
 
-            # 5. write <fl-dataset-dir>/bug_version_mutation_info.csv
+            # 6. write <fl-dataset-dir>/bug_version_mutation_info.csv
             write_bug_version_mutation_info(
                 bug_id, target_file_name, bug_code_filename,
                 self.fl_dataset_dir,

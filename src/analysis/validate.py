@@ -1,6 +1,8 @@
 import csv
 
 from lib.utils import *
+from analysis.rank_utils import *
+from lib.susp_score_formula import *
 from analysis.individual import Individual
 
 class Validate:
@@ -12,9 +14,11 @@ class Validate:
 
         self.set_dir = out_dir / self.subject_name / self.set_name
 
-        self.individual_list = get_dirs_in_dir(self.set_dir)
-    
+    # ++++++++++++++++++++++++++++++++++++++++++++
+    # ++++ VALIDATE USABLE BUGGY VERSION DATA ++++
+    # ++++++++++++++++++++++++++++++++++++++++++++
     def validate_usable_buggy_versions(self):
+        self.individual_list = get_dirs_in_dir(self.set_dir)
         for individual in self.individual_list:
             individual_name = individual.name
             print(f"Validating usable buggy versions for {individual_name}")
@@ -37,7 +41,11 @@ class Validate:
             buggy_code_file = individual.dir_path / 'buggy_code_file' / f"{bug_code_filename}"
             assert buggy_code_file.exists(), f"Buggy code file {buggy_code_file} does not exist"
 
+    # ++++++++++++++++++++++++++++++++++++
+    # ++++ VALIDATE PREREQUISITE DATA ++++
+    # ++++++++++++++++++++++++++++++++++++
     def validate_prerequisite_data(self):
+        self.individual_list = get_dirs_in_dir(self.set_dir)
         for individual in self.individual_list:
             individual_name = individual.name
             print(f"Validating prerequisite data for {individual_name}")
@@ -103,7 +111,11 @@ class Validate:
         assert file_buggy_lineno == buggy_lineno, f"Buggy line key {buggy_line_key} does not match with buggy line number {buggy_lineno}"
         return buggy_line_key
 
+    # ++++++++++++++++++++++++++++++++
+    # ++++ VALIDATE MBFL FEATURES ++++
+    # ++++++++++++++++++++++++++++++++
     def validate_mbfl_features(self):
+        self.individual_list = get_dirs_in_dir(self.set_dir)
         for individual in self.individual_list:
             individual_name = individual.name
             print(f"Validating MBFL features for {individual_name}")
@@ -136,10 +148,216 @@ class Validate:
                     buggy_line_cnt += 1
             assert buggy_line_cnt == 1, f"More than one buggy line in {mbfl_features_csv_file}"
 
+    # ++++++++++++++++++++++++++++++++
+    # ++++ VALIDATE SBFL FEATURES ++++
+    # ++++++++++++++++++++++++++++++++
     def validate_sbfl_features(self):
+        self.individual_list = get_dirs_in_dir(self.set_dir)
         for individual in self.individual_list:
             # VALIDATE: Assert that sbfl_features.csv exists
             sbfl_features_csv_file = individual / "sbfl_features.csv"
             assert sbfl_features_csv_file.exists(), f"SBFL features file {sbfl_features_csv_file} does not exist"
         
         print(f"All {len(self.individual_list)} individuals have been validated successfully")
+
+
+    # ++++++++++++++++++++++++++++++++
+    # ++++ VALIDATE FL FEATURES ++++
+    # ++++++++++++++++++++++++++++++++
+    def validate_fl_features(self):
+
+        bug_version_mutation_info_file = self.set_dir / "bug_version_mutation_info.csv"
+        assert bug_version_mutation_info_file.exists(), f"Bug version mutation info file {bug_version_mutation_info_file} does not exist"
+
+        bugs = {}
+        with open(bug_version_mutation_info_file, "r") as f:
+            lines = f.readlines()
+            for line in lines[2:]:
+                line = line.strip()
+                info = line.split(",")
+                bug_id = info[0]
+                assert bug_id not in bugs, f"Duplicate bug id {bug_id}"
+                bugs[bug_id] = line
+
+        bug_keys = list(bugs.keys())
+        bug_keys = sorted(bug_keys, key=sort_bug_id)
+
+        for idx, bug in enumerate(bug_keys):
+            print(f"Validating FL features for {bug} ({idx+1}/{len(bugs)})")
+            fl_features_file = self.set_dir / f"FL_features_per_bug_version/{bug}.fl_features.csv"
+            assert fl_features_file.exists(), f"FL features file {fl_features_file} does not exist"
+
+            # VALIDATE: that there is only one row with "bug" column as 1
+            self.check_one_buggy_line(fl_features_file)
+            print(f"\t VAL01: One buggy line check passed")
+
+
+
+
+            failing_tcs_file = self.set_dir / f"test_case_info_per_bug_version/{bug}/failing_tcs.txt"
+            assert failing_tcs_file.exists(), f"Failing test cases file {failing_tcs_file} does not exist"
+            passing_tcs_file = self.set_dir / f"test_case_info_per_bug_version/{bug}/passing_tcs.txt"
+            assert passing_tcs_file.exists(), f"Passing test cases file {passing_tcs_file} does not exist"
+
+            failing_tcs_list = get_tc_list(failing_tcs_file)
+            passing_tcs_list = get_tc_list(passing_tcs_file)
+            num_utilized_tcs = len(failing_tcs_list) + len(passing_tcs_list)
+
+            # VALIDATE: that the ep, ef, np, nf values from fl_features_file (csv) add up to num_utilized_tcs
+            self.check_spectrum2num_utilized_tcs(fl_features_file, num_utilized_tcs)
+            print(f"\t VAL02: Spectrum to number of utilized test cases check passed")
+
+
+
+
+            buggy_line_key_file = self.set_dir / f"buggy_line_key_per_bug_version/{bug}.buggy_line_key.txt"
+            assert buggy_line_key_file.exists(), f"Buggy line key file {buggy_line_key_file} does not exist"
+
+            with open(buggy_line_key_file, "r") as f:
+                buggy_line_key = f.readline().strip()
+            
+            postprocessed_coverage_file = self.set_dir / f"postprocessed_coverage_per_bug_version/{bug}.cov_data.csv"
+            assert postprocessed_coverage_file.exists(), f"Postprocessed coverage file {postprocessed_coverage_file} does not exist"
+
+            # VALIDATE: that all failing tcs execute the buggy line
+            res = self.check_failing_tcs(postprocessed_coverage_file, failing_tcs_list, buggy_line_key)
+            assert res, f"Failing test cases do not execute the buggy line in {postprocessed_coverage_file}"
+            print(f"\t VAL03: Failing test cases execute buggy line check passed")
+
+
+
+
+            num_failing_tcs = len(failing_tcs_list)
+            fl_features_file_with_susp = self.set_dir / f"FL_features_per_bug_version_with_susp_scores/{bug}.fl_features_with_susp_scores.csv"
+            assert fl_features_file_with_susp.exists(), f"FL features file with suspicious scores {fl_features_file_with_susp} does not exist"
+            
+            # VALIDATE: that with mutation features from fl_features_file,
+            # the met and muse score from fl_features_file_with_susp can be derived
+            self.check_met_muse(fl_features_file, fl_features_file_with_susp, num_failing_tcs)
+            print(f"\t VAL04: MET and MUSE score check passed")
+
+
+            bug_info = bugs[bug]
+            target_code_file_name = self.get_target_code_file_name(bug_info)
+            buggy_code_file = self.set_dir / f"buggy_code_file_per_bug_version/{bug}/{target_code_file_name}"
+            assert buggy_code_file.exists(), f"Buggy code file {buggy_code_file} does not exist"
+
+            # VALIDATE: that the mutated code exists in the buggy code file
+            self.check_mutated_code(buggy_code_file, bug_info, buggy_line_key)
+            print(f"\t VAL05: Mutated code check passed")
+
+            # if idx == 7:
+            #     break
+
+        print(f"All {len(bugs)} bugs have been validated successfully")
+    
+    def check_mutated_code(self, buggy_code_file, bug_info, buggy_line_key):
+        written_buggy_lineno = int(buggy_line_key.split("#")[-1])
+
+        info = bug_info.split(",")
+        bug_id = info[0]
+        target_code_file_name = info[1]
+        buggy_code_file_name = info[2]
+        
+        mut_op = info[3]
+        if mut_op == "":
+            return
+
+        buggy_lineno = int(info[4])
+        assert written_buggy_lineno == buggy_lineno, f"Buggy line number {written_buggy_lineno} does not match with buggy line number {buggy_lineno}"
+
+        before_mutation = info[8]
+        after_mutation = info[13]
+        
+        # print(f"bug_id: {bug_id}")
+        # print(f"target_code_file_name: {target_code_file_name}")
+        # print(f"line_no: {buggy_lineno}")
+        # print(f"before_mutation: {before_mutation}")
+        # print(f"after_mutation: {after_mutation}")
+
+        with open(buggy_code_file, "r") as f:
+            lines = f.readlines()
+            buggy_line = lines[buggy_lineno-1].strip()
+            assert after_mutation in buggy_line, f"Mutated code {after_mutation} not found in buggy code file {buggy_code_file}"
+
+
+
+
+
+    
+    def get_target_code_file_name(self, bug_info):
+        info = bug_info.split(",")
+        bug_id = info[0]
+        target_code_file_name = info[1]
+        return target_code_file_name
+    
+    def check_met_muse(self, fl_features_file, fl_features_file_with_susp, num_failing_tcs):
+        max_mutants = self.get_max_mutants_from_feature_file(fl_features_file)
+        mutant_keys = get_mutant_keys_as_pairs(max_mutants)
+        tot_failed_TCs, total_p2f, total_f2p = self.measure_required_info(fl_features_file, mutant_keys)
+
+        # score format: key: formula_key, value: score
+        scores = {}
+        with open(fl_features_file, "r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                met_score = measure_metallaxis(row, mutant_keys)
+                muse_data = measure_muse(row, total_p2f, total_f2p, mutant_keys)
+                muse_score = muse_data[muse_key]
+                scores[row["key"]] = {
+                    "met": met_score,
+                    "muse": muse_score
+                }
+
+        with open(fl_features_file_with_susp, "r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                key = row["key"]
+                met_score = float(row[met_key])
+                muse_score = float(row[muse_key])
+                assert scores[key]["met"] == met_score, f"MET score for {key} does not match"
+                assert scores[key]["muse"] == muse_score, f"MUSE score for {key} does not match"
+    
+    def measure_required_info(self, fl_features_file, mutant_keys):
+        tot_failed_TCs = self.get_tot_failed_TCs(fl_features_file)
+
+        total_p2f = 0
+        total_f2p = 0
+        with open(fl_features_file, "r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                for p2f_m, f2p_m in mutant_keys:
+                    if row[p2f_m] == "-1" and row[f2p_m] == "-1":
+                        continue
+                    p2f = int(row[p2f_m])
+                    f2p = int(row[f2p_m])
+                    total_p2f += p2f
+                    total_f2p += f2p
+        
+        return tot_failed_TCs, total_p2f, total_f2p
+    
+    def get_tot_failed_TCs(self, fl_features_file):
+        with open(fl_features_file, "r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                num_failing_tcs = int(row["# of totfailed_TCs"])
+                return num_failing_tcs
+    
+    def get_max_mutants_from_feature_file(self, fl_features_file):
+        with open(fl_features_file, "r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                max_mutants = int(row["# of mutants"])
+                return max_mutants
+        
+    
+    def check_spectrum2num_utilized_tcs(self, fl_features_file, num_utilized_tcs):
+        with open(fl_features_file, "r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                ep = int(row["ep"])
+                ef = int(row["ef"])
+                np = int(row["np"])
+                nf = int(row["nf"])
+                assert ep + ef + np + nf == num_utilized_tcs, f"Sum of ep, ef, np, nf is not equal to {num_utilized_tcs} in {fl_features_file}"
+    
