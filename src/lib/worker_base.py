@@ -26,6 +26,7 @@ class Worker:
         self.clean_build_file_position = self.core_dir / self.config["build_script_working_directory"]
         
         self.compile_command_file = self.core_dir / self.config["compile_command_path"]
+        self.subject_lang = self.config["subject_language"]
 
         # configure and build files
         self.configure_no_cov_file = self.configure_file_position / "configure_no_cov_script.sh"
@@ -235,11 +236,15 @@ class Worker:
     def set_filtered_files_for_gcovr(self):
         self.targeted_files = self.config["target_files"]
         self.targeted_files = [file.split("/")[-1] for file in self.targeted_files]
-        self.filtered_files = "|".join(self.targeted_files)
+        filtered_targeted_files = ["(.+/)?"+file+"$" for file in self.targeted_files]
+        self.filtered_files = "|".join(filtered_targeted_files)
 
         self.target_gcno_gcda = []
         for target_file in self.targeted_files:
-            filename = target_file.split(".")[0]
+            if self.subject_lang == "C":
+                filename = target_file.split(".")[0]
+            else:
+                filename = target_file.split(".")[0] + ".cpp"
             gcno_file = "*" + filename + ".gcno"
             gcda_file = "*" + filename + ".gcda"
             self.target_gcno_gcda.append(gcno_file)
@@ -261,6 +266,7 @@ class Worker:
         for target_file in self.target_gcno_gcda:
             cmd.extend(["!", "-name", target_file])
         cmd.extend(["-delete"])
+        print_command(cmd, self.verbose)
         sp.check_call(cmd, cwd=core_repo_dir, stderr=sp.PIPE, stdout=sp.PIPE)
     
     def generate_coverage_json(self, core_repo_dir, cov_dir, tc_script_name):
@@ -274,6 +280,7 @@ class Worker:
             "--gcov-executable", "llvm-cov gcov",
             "--json", "-o", raw_cov_file.__str__()
         ]
+        print_command(cmd, self.verbose)
         sp.check_call(cmd, cwd=core_repo_dir, stderr=sp.PIPE, stdout=sp.PIPE)
         return raw_cov_file
 
@@ -283,13 +290,14 @@ class Worker:
         
         target_file = target_file.name
 
-        filename_list = [file["file"] for file in cov_data["files"]]
+        filename_list = [file["file"].split("/")[-1] for file in cov_data["files"]]
 
         if target_file not in filename_list:
             return -2
         
         for file in cov_data["files"]:
-            if file["file"] == target_file:
+            filename = file["file"].split("/")[-1]
+            if filename == target_file:
                 lines = file["lines"]
                 for line in lines:
                     if line["line_number"] == int(buggy_lineno):

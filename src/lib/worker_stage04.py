@@ -639,7 +639,7 @@ class WorkerStage04(Worker):
             str(target_file),
             "-o", str(mutant_dir),
             "-ll", str(self.max_mutants),
-            "-l", "2",
+            "-l", "5",
             "-d", unused_ops,
             "-i", executed_lines,
             "-p", str(compile_command)
@@ -657,8 +657,9 @@ class WorkerStage04(Worker):
             target_file_path = self.core_dir / target_file
             assert target_file_path.exists(), f"Target file {target_file_path} does not exist"
 
-            target_file_name = target_file.replace("/", "-")
-            single_file_mutant_dir = self.version_mutant_dir / target_file_name
+            target_file_name = target_file.split("/")[-1]
+            # single_file_mutant_dir = self.version_mutant_dir / target_file_name
+            single_file_mutant_dir = self.version_mutant_dir / f"{self.name}-{target_file_name}"
             print_command(["mkdir", "-p", single_file_mutant_dir], self.verbose)
             single_file_mutant_dir.mkdir(exist_ok=True, parents=True)
 

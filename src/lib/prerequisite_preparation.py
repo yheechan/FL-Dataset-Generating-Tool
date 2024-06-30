@@ -150,9 +150,11 @@ class PrerequisitePreparation(Subject):
             if self.exclude_ccts:
                 cmd.append("--exclude-ccts")
             if self.passing_tcs_perc != 1.0:
-                cmd.append(f"--passing-tcs-perc {self.passing_tcs_perc}")
+                cmd.append("--passing-tcs-perc")
+                cmd.append(str(self.passing_tcs_perc))
             if self.failing_tcs_perc != 1.0:
-                cmd.append(f"--failing-tcs-perc {self.failing_tcs_perc}")
+                cmd.append("--failing-tcs-perc")
+                cmd.append(str(self.failing_tcs_perc))
             if self.verbose:
                 cmd.append("--verbose")
             

@@ -43,7 +43,7 @@ class WorkerStage02(Worker):
 
         # 4. Test version
         self.test_version()
-        self.clean_build()
+        # self.clean_build()
     
     def test_version(self):
         
@@ -80,10 +80,13 @@ class WorkerStage02(Worker):
                 self.core_repo_dir, self.cov_dir, tc_script_name,
             )
 
+
             # 4-5 Check if the buggy line is coveraged
             buggy_line_covered = self.check_buggy_line_covered(
                 tc_script_name, raw_cov_file, self.target_code_file_path, self.buggy_lineno
             )
+            # self.apply_patch(self.target_code_file_path, self.buggy_code_file, patch_file, True)
+            # return
             if buggy_line_covered == 1:
                 print(f"Buggy line {self.buggy_lineno} is NOT covered by test case {tc_script_name}")
                 self.apply_patch(self.target_code_file_path, self.buggy_code_file, patch_file, True)

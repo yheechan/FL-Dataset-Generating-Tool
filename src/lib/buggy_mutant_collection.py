@@ -291,20 +291,20 @@ class BuggyMutantCollection(Subject):
         for target_mutants_dir in self.mutants_dir.iterdir():
             target_file = target_mutants_dir.name.replace('-', '/')
             # TEMPORARY
-            if "HTMLparser.c" not in target_file:
-                continue
+            # if "HTMLparser.c" not in target_file:
+            #     continue
 
             target_mutants = list(target_mutants_dir.glob(subject_lang))
             for mutant in target_mutants:
                 mutants_list.append((target_file, mutant))
 
-                # TEMPORARY
-                if len(mutants_list) >= 201:
-                    break
+                # # TEMPORARY
+                # if len(mutants_list) >= 256:
+                #     break
 
-            # TEMPORARY
-            if len(mutants_list) >= 201:
-                break
+            # # TEMPORARY
+            # if len(mutants_list) >= 256:
+            #     break
         
         return mutants_list
 

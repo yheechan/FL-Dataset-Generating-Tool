@@ -29,7 +29,7 @@ class Validate:
             assert bug_info.exists(), f"Bug info file {bug_info} does not exist"
 
             # GET: bug info
-            target_code_file, bug_code_filename, buggy_lineno = individual.get_bug_info(bug_info)
+            target_code_file, bug_code_filename, buggy_lineno = individual.get_bug_info()
 
             # VALIDATE: Assert that testsuite_info/failing_tcs.txt and testsuite_info/passing_tcs.txt exist
             failing_tcs = individual.dir_path / 'testsuite_info' / 'failing_tcs.txt'
