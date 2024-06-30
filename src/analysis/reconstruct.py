@@ -214,6 +214,8 @@ class Reconstruct:
         self.criteriaA_versions = []
         self.criteriaB_versions = []
 
+        self.op2critA = {}
+
         for idx, version_dir in enumerate(self.individual_list):
             print(f"\n{idx+1}/{len(self.individual_list)}: {version_dir.name}")
             individual = Individual(self.subject_name, self.set_name, version_dir.name)
@@ -237,6 +239,14 @@ class Reconstruct:
                 if res == 0:
                     print(f"\t Criteria A satisfied (f2p of buggy line is 0)")
                     self.criteriaA_versions.append(individual.name)
+
+                    # Get operator from mutant_info.csv
+                    if "issue" not in individual.name:
+                        mutant_info_file = individual.dir_path / "mutant_info.csv"
+                        op = get_operator_from_mutant_info_file(mutant_info_file)
+                        if op not in self.op2critA:
+                            self.op2critA[op] = 0
+                        self.op2critA[op] += 1
             if "criteriaB" in criteria:
                 res = analyze_non_buggy_line_with_f2p_above_th(
                     mbfl_features_csv_file,
@@ -245,8 +255,9 @@ class Reconstruct:
                     10
                 )
 
-                if res == 1:
+                if res == 0:
                     print(f"\t Criteria B satisfied (# of bad lines > 10)")
+                    self.criteriaB_versions.append(individual.name)
             
         print(f"\n\nCriteria A versions: {len(self.criteriaA_versions)}")
         print(f"Criteria B versions: {len(self.criteriaB_versions)}")
@@ -262,6 +273,10 @@ class Reconstruct:
         print(f"Total original versions: {len(original_set)}")
         print(f"Total removed versions: {len(removed_set)}")
         print(f"Total remaining versions: {len(remaining_set)}")
+
+        print(f"Operation from criteria A:")
+        for op, cnt in self.op2critA.items():
+            print(f"\t{op}: {cnt}")
 
         for idx, version_dir in enumerate(self.individual_list):
             if version_dir.name not in removed_set:

@@ -11,6 +11,14 @@ muse_key = "muse susp. score"
 mbfl_formulas = [met_key, muse_key]
 bug_rank_key = "rank of buggy function (function level)"
 
+def get_operator_from_mutant_info_file(mutant_info_file):
+    with open(mutant_info_file, 'r') as f:
+        lines = f.readlines()
+        line = lines[2].strip()
+        info = line.split(',')
+        operator = info[1]
+    return operator
+
 def get_mutant_keys_as_pairs(max_mutants):
     mutant_keys = []
     for i in range(1, max_mutants+1):
