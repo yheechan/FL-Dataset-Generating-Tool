@@ -6,6 +6,17 @@
   * required to install "all" packages of LLVM ($ sudo ./llvm.sh 13 all)
 
 * python 3.8
+  * numpy
+  * csv
+  * json
+  * math
+  * argparse
+  * time
+  * multiprocessing
+  * subprocess
+  * random
+  * pathlib
+  * os
 * gcovr 6.0
 * bear 2.3.11
 * GNU make 4.1
@@ -17,6 +28,8 @@
 
 * VIM - Vi IMproved 8.0
 * OpenSSH_7.6p1 Ubuntu-4ubuntu0.7, OpenSSL 1.0.2n
+* Visual Studio Code
+* tmux 2.6
 
 ## Build Step
 ### 1. Build MUSICUP
