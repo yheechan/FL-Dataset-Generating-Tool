@@ -41,12 +41,12 @@ class Worker:
         # test case directory
         self.testsuite_dir = self.core_dir / self.config["test_case_directory"]
 
-        self.gcovr_exec = Path("~/.local/bin/gcovr").expanduser()
-
         # set environment variables
         self.experiment = Experiment()
         self.max_mutants = self.experiment.experiment_config["max_mutants"]
         self.number_of_lines_to_mutation_test = self.experiment.experiment_config["number_of_lines_to_mutation_test"]
+
+        self.gcovr_exec = Path(self.experiment.experiment_config["abs_path_to_gcovr_executable"]).expanduser()
 
     def read_configs(self):
         configs = None
