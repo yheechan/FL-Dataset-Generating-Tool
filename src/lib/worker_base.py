@@ -274,14 +274,30 @@ class Worker:
         file_name = f"{tc_name}.raw.json"
         raw_cov_file = cov_dir / file_name
         raw_cov_file = raw_cov_file.resolve()
-        cmd = [
-            self.gcovr_exec.__str__(),
+        cmd = [self.gcovr_exec.__str__()]
+        if self.config["cov_compiled_with_clang"] == True:
+            cmd.extend(["--gcov-executable", "llvm-cov gcov"])
+            cov_cwd=core_repo_dir
+        else:
+            obj_dir = self.core_dir / self.config["gcovr_object_root"]
+            src_root_dir = self.core_dir / self.config["gcovr_source_root"]
+            if self.experiment.experiment_config["gcovr_version"] < 7.2:
+                cmd.extend([
+                    "--object-directory", obj_dir.__str__(),
+                    "--root", src_root_dir.__str__(),
+                ])
+            else:
+                cmd.extend([
+                    "--root-object-directory", obj_dir.__str__(),
+                    "--root", src_root_dir.__str__(),
+                ])
+            cov_cwd=obj_dir
+        cmd.extend([
             "--filter", self.filtered_files,
-            "--gcov-executable", "llvm-cov gcov",
             "--json", "-o", raw_cov_file.__str__()
-        ]
+        ])
         print_command(cmd, self.verbose)
-        sp.check_call(cmd, cwd=core_repo_dir, stderr=sp.PIPE, stdout=sp.PIPE)
+        sp.check_call(cmd, cwd=cov_cwd, stderr=sp.PIPE, stdout=sp.PIPE)
         return raw_cov_file
 
     def check_buggy_line_covered(self, tc_script_name, raw_cov_file, target_file, buggy_lineno):

@@ -17,7 +17,7 @@
   * random
   * pathlib
   * os
-* gcovr 6.0
+* gcovr 6.0 (and above)
 * bear 2.3.11
 * GNU make 4.1
 * cmake 3.10.2
@@ -65,4 +65,4 @@ $ make -j20
   * ``validator.py``
   * ``reconstructor.py``
 
-last updated June 21, 2024
+last updated July 04, 2024
