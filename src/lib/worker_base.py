@@ -288,7 +288,7 @@ class Worker:
                 ])
             else:
                 cmd.extend([
-                    "--root-object-directory", obj_dir.__str__(),
+                    "--gcov-object-directory", obj_dir.__str__(),
                     "--root", src_root_dir.__str__(),
                 ])
             cov_cwd=obj_dir
