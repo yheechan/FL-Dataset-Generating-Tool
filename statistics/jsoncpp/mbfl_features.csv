@@ -1,19 +1,21 @@
 bug_name,buggy_line_key,# of failing Tcs,# of lines executed by failing TCs,# of mutants,# of uncompilable mutants,# of mutans on buggy line,# of uncompilable mutants on buggy line,# of compilable mutants on buggy line,total p2f (all mutants),total f2p (all mutants),# of functions,# of function with same highest met score,met score of highest rank,rank of buggy function (function level) (met),met score of buggy function,# of function with same highest muse score,muse score of highest rank,rank of buggy function (function level) (muse),muse score of buggy function
-json_reader.MUT316.cpp,"json_reader.cpp#Reader::decodeDouble(class Json::Reader::Token & token, class Json::Value & decoded)#610",1,415,349,57,12,8,4,353,5,305,2,1.0,2,1.0,1,0.0833333333333333,2,0.0333333333333333
-json_reader.MUT439.cpp,"json_reader.cpp#Reader::pushError(const class Json::Value & value, const Json::String & message)#825",1,354,327,70,12,0,12,398,1,305,1,1.0,1,1.0,1,0.0384615384615384,1,0.0384615384615384
-json_reader.MUT47.cpp,json_reader.cpp#Reader::readValue()#173,1,425,347,56,12,1,11,368,0,305,305,0.0,305,0.0,303,0.0,303,0.0
-json_reader.MUT274.cpp,json_reader.cpp#Reader::readArray(class Json::Reader::Token & token)#536,3,451,362,61,12,6,6,406,9,305,1,1.0,1,1.0,1,0.1285714285714285,1,0.1285714285714285
-json_reader.MUT874.cpp,"json_reader.cpp#OurReader::decodeString(class Json::OurReader::Token & token, Json::String & decoded)#1696",1,404,339,90,12,7,5,674,1,305,1,1.0,1,1.0,1,0.0833333333333333,1,0.0833333333333333
-json_reader.MUT724.cpp,json_reader.cpp#OurReader::readString()#1425,10,650,330,85,12,0,12,420,0,305,305,0.0,305,0.0,304,0.0,304,0.0
-json_reader.MUT545.cpp,json_reader.cpp#OurReader::readValue()#1139,10,780,386,74,12,7,5,213,74,305,1,1.0,1,1.0,1,0.0844444444444444,1,0.0844444444444444
-json_reader.MUT9.cpp,"json_reader.cpp#Reader::parse(const std::string & document, class Json::Value & root, _Bool collectComments)#97",9,538,372,43,6,0,6,387,19,305,1,1.0,1,1.0,1,0.0642857142857142,1,0.0642857142857142
-json_reader.MUT481.cpp,"json_reader.cpp#OurReader::parse(const char * beginDoc, const char * endDoc, class Json::Value & root, _Bool collectComments)#1035",3,520,442,78,12,0,12,319,6,305,1,1.0,1,1.0,1,0.0659340659340659,1,0.0659340659340659
-json_reader.MUT722.cpp,json_reader.cpp#OurReader::readString()#1422,10,723,344,97,12,0,12,315,0,305,305,0.0,305,0.0,303,0.0,303,0.0
-json_reader.MUT831.cpp,"json_reader.cpp#OurReader::decodeNumber(class Json::OurReader::Token & token, class Json::Value & decoded)#1623",3,610,361,76,12,2,10,553,3,305,1,0.5773502691896258,1,0.5773502691896258,1,0.0454545454545454,1,0.0454545454545454
-json_reader.MUT159.cpp,"json_reader.cpp#Reader::match(const Json::Reader::Char * pattern, int patternLength)#329",2,484,396,51,4,0,4,670,0,305,305,0.0,305,0.0,303,0.0,303,0.0
-json_reader.MUT843.cpp,"json_reader.cpp#OurReader::decodeDouble(class Json::OurReader::Token & token, class Json::Value & decoded)#1653",3,647,344,61,12,8,4,305,2,305,1,0.5773502691896258,1,0.5773502691896258,1,0.1333333333333333,1,0.1333333333333333
-json_reader.MUT787.cpp,json_reader.cpp#OurReader::readArray(class Json::OurReader::Token & token)#1524,6,804,327,81,12,1,11,310,33,305,1,1.0,1,1.0,1,0.0784313725490196,1,0.0784313725490196
-json_reader.MUT499.cpp,json_reader.cpp#OurReader::readValue()#1065,2,575,396,84,12,6,6,605,2,305,1,1.0,1,1.0,1,0.0952380952380952,1,0.0952380952380952
-json_reader.MUT505.cpp,json_reader.cpp#OurReader::readValue()#1075,8,689,347,67,12,7,5,238,40,305,1,1.0,1,1.0,1,0.1382113821138211,1,0.1382113821138211
-json_reader.MUT57.cpp,json_reader.cpp#Reader::readValue()#188,1,425,343,34,12,0,12,268,0,305,305,0.0,305,0.0,305,0.0,305,0.0
-json_reader.MUT319.cpp,json_reader.cpp#Reader::decodeString(class Json::Reader::Token & token)#619,1,425,406,37,12,0,12,385,0,305,305,0.0,305,0.0,304,0.0,304,0.0
+json_value.MUT323.cpp,json_value.cpp#Value::resize(Json::Value::ArrayIndex newSize)#916,4,229,161,35,5,3,2,338,0,303,303,0.0,303,0.0,302,0.0,302,0.0
+json_value.MUT427.cpp,"json_value.cpp#Value::removeIndex(Json::Value::ArrayIndex index, class Json::Value * removed)#1207",1,374,171,33,5,0,5,214,1,303,1,1.0,1,1.0,1,0.0833333333333333,1,0.0833333333333333
+json_value.MUT409.cpp,"json_value.cpp#Value::removeMember(const char * begin, const char * end, class Json::Value * removed)#1173",4,301,168,34,5,3,2,260,0,303,303,0.0,303,0.0,302,0.0,302,0.0
+json_value.MUT337.cpp,json_value.cpp#Value::operator[](Json::Value::ArrayIndex index)#958,10,1028,187,43,4,0,4,52,0,303,303,0.0,303,0.0,303,0.0,303,0.0
+json_value.MUT391.cpp,json_value.cpp#Value::append(const class Json::Value & value)#1126,1,342,179,32,5,1,4,284,0,303,303,0.0,303,0.0,302,0.0,302,0.0
+json_value.MUT24.cpp,"json_value.cpp#decodePrefixedString(_Bool isPrefixed, const char * prefixed, unsigned int * length, const char ** value)#159",10,577,169,35,5,0,5,150,0,303,303,0.0,303,0.0,302,0.0,302,0.0
+json_value.MUT134.cpp,json_value.cpp#Value::operator<(const class Json::Value & other)#513,1,183,145,33,5,2,3,362,0,303,303,0.0,303,0.0,302,0.0,302,0.0
+json_value.MUT278.cpp,json_value.cpp#Value::isConvertibleTo(enum Json::ValueType other)#829,6,478,158,25,5,0,5,254,16,303,1,1.0,1,1.0,1,0.1568627450980392,1,0.1568627450980392
+json_value.MUT486.cpp,json_value.cpp#Value::isIntegral()#1341,3,360,177,31,5,1,4,357,4,303,1,0.8164965809277261,1,0.8164965809277261,1,0.16,1,0.16
+json_value.MUT223.cpp,json_value.cpp#Value::asInt64()#710,2,337,162,11,5,0,5,290,2,303,1,1.0,1,1.0,1,0.1111111111111111,1,0.1111111111111111
+json_value.MUT320.cpp,json_value.cpp#Value::resize(Json::Value::ArrayIndex newSize)#912,4,214,168,38,5,0,5,390,7,303,1,1.0,1,1.0,1,0.1458333333333333,1,0.1458333333333333
+json_value.MUT168.cpp,json_value.cpp#Value::operator==(const class Json::Value & other)#572,10,911,184,33,5,0,5,217,9,303,1,0.9486832980505138,1,0.9486832980505138,1,0.15,1,0.15
+json_value.MUT577.cpp,json_value.cpp#Path::resolve(const class Json::Value & root)#1577,1,474,170,41,5,0,5,202,1,303,1,1.0,1,1.0,1,0.0833333333333333,1,0.0833333333333333
+json_value.MUT588.cpp,"json_value.cpp#Path::resolve(const class Json::Value & root, const class Json::Value & defaultValue)#1601",1,467,173,42,5,0,5,268,0,303,303,0.0,303,0.0,302,0.0,302,0.0
+json_value.MUT387.cpp,json_value.cpp#Value::operator[](const Json::String & key)#1111,10,782,177,57,4,0,4,231,0,303,303,0.0,303,0.0,303,0.0,303,0.0
+json_value.MUT473.cpp,json_value.cpp#Value::isInt64()#1311,2,336,126,10,5,1,4,238,8,303,1,1.0,1,1.0,1,0.0888888888888888,1,0.0888888888888888
+json_value.MUT559.cpp,"json_value.cpp#Path::makePath(const Json::String & path, const Json::Path::InArgs & in)#1538",1,476,178,37,5,0,5,186,7,303,1,1.0,1,1.0,1,0.0833333333333333,1,0.0833333333333333
+json_value.MUT462.cpp,json_value.cpp#Value::isUInt()#1287,2,342,174,13,5,0,5,326,1,303,1,0.7071067811865475,1,0.7071067811865475,1,0.0833333333333333,1,0.0833333333333333
+json_value.MUT126.cpp,json_value.cpp#Value::operator<(const class Json::Value & other)#493,1,163,137,39,5,0,5,493,0,303,303,0.0,303,0.0,302,0.0,302,0.0
+json_value.MUT495.cpp,json_value.cpp#Value::isArray()#1370,10,967,194,29,5,0,5,177,6,303,1,0.4472135954999579,1,0.4472135954999579,1,0.1428571428571428,1,0.1428571428571428
