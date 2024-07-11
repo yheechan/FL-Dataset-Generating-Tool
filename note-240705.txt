@@ -1,0 +1,20 @@
+# Configure command for no-coverage
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_FLAGS="-O0" -DCMAKE_CXX_FLAGS="-O0"
+
+# Configure command for coverage
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_FLAGS="-O0 -fprofile-arcs -ftest-coverage --save-temps" -DCMAKE_C_FLAGS="-O0 -fprofile-arcs -ftest-coverage --save-temps" .
+make -j20
+cp libNSCored.so ../Testsuite/lib/NSCore/libs/lnx/
+cd ../Testsuite/
+cmake .
+make -j20
+gcovr --gcov-object-directory "/mnt/storage2/yangheechan/NSFW_cfg/linux_cmake/NSCore/CMakeFiles/NSCored.dir/mnt/storage2/yangheechan/NSFW_cfg/NSCore/src/cfg/" --root "/mnt/storage2/yangheechan/NSFW_cfg/NSCore/" --json -o raw.json
+
+# make html coverage report
+gcovr --gcov-object-directory "/mnt/storage2/yangheechan/NSFW_cfg/linux_cmake/NSCore/" --root "/mnt/storage2/yangheechan/NSFW_cfg/NSCore/" --html-details -o html/
+
+# initiate single executable test case scripts
+./Testsuited --tcs2csv CfgTestSuite
+./Testsuited --all-tcs CfgTestSuite
+./make_tc_scripts.py
+./execute_measure_tcs.py
