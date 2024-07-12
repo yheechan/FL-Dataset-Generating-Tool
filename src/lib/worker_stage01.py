@@ -56,8 +56,8 @@ class WorkerStage01(Worker):
             self.apply_patch(self.target_file_code_file, self.assigned_mutant_code_file, patch_file, True)
             return
 
-        # 5. Don't save the mutant if all test cases pass
-        if len(self.failing_tcs) == 0:
+        # 5. Don't save the mutant if all test cases pass or all test cases fail
+        if len(self.failing_tcs) == 0 or len(self.passing_tcs) == 0:
             print(f"Mutant {self.assigned_mutant_code_file.name} is not killed")
             self.apply_patch(self.target_file_code_file, self.assigned_mutant_code_file, patch_file, True)
             return
