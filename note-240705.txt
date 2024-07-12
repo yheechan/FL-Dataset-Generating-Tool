@@ -12,6 +12,10 @@ gcovr --gcov-object-directory "/mnt/storage2/yangheechan/NSFW_cfg/linux_cmake/NS
 
 # make html coverage report
 gcovr --gcov-object-directory "/mnt/storage2/yangheechan/NSFW_cfg/linux_cmake/NSCore/" --root "/mnt/storage2/yangheechan/NSFW_cfg/NSCore/" --html-details -o html/
+gcovr --gcov-object-directory "/mnt/storage2/yangheechan/NSFW_cfg/linux_cmake/NSCore/CMakeFiles/NSCored.dir/mnt/storage2/yangheechan/NSFW_cfg/NSCore/src/datetime/" --root "/mnt/storage2/yangheechan/NSFW_cfg/NSCore/" --html-details -o html-datetime-spec/
+
+# clean gcda
+find . -type f -name *.gcda -delete
 
 # initiate single executable test case scripts
 ./Testsuited --tcs2csv CfgTestSuite
