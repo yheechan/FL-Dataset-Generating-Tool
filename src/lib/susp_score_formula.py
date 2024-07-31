@@ -107,7 +107,17 @@ sbfl_formulas = [
     "Naish2", "Ochiai", "Russel+Rao", "Wong1"
 ]
 
-def sbfl(e_p, e_f, n_p, n_f, formula="Ochiai"):
+pp_sbfl_formulas = [
+    "ER1a", "ER5a", "ER5c", "ER1b", "ER5b",
+    "Ochiai", "Jaccard", "AMPLE",
+    "Hamannn", "Dice", "M1", "M2", 
+    "Hamming", "Goodman", "Euclid",
+    "Wong1", "Wong2",
+    "GP2", "GP3", "GP13", "GP19",
+    "Tarantula", "Russel+Rao",
+]
+
+def sbfl(e_p, e_f, n_p, n_f, formula="Ochiai", fails=0, passes=0):
     if formula == "Jaccard":
         denominator = e_f + n_f + e_p
         if denominator == 0:
@@ -140,5 +150,106 @@ def sbfl(e_p, e_f, n_p, n_f, formula="Ochiai"):
         return e_f/(e_p + n_p + e_f + n_f)
     elif formula == "Wong1":
         return e_f
+    elif formula == "ER1a":
+        if n_f > 0:
+            return -1
+        else:
+            return n_p
+    elif formula == "ER5a":
+        return (e_f - ((e_f) / (e_p + n_p + 1)))
+    elif formula == "ER5c":
+        if e_f < fails:
+            return 0
+        else:
+            return e_p
+    elif formula == "ER1b":
+        denominator = e_p + n_p + 1
+        if denominator == 0:
+            return 0
+        return e_f - (e_p / denominator)
+    elif formula == "ER5b":
+        denominator = e_f + n_f + e_p + n_p
+        if denominator == 0:
+            return 0
+        return e_f / denominator
+    elif formula == "AMPLE":
+        a = e_f / fails
+        b = e_p / passes
+        c = a - b
+        return abs(c)
+    elif formula == "Hamannn":
+        numerator = e_f + n_p + e_p + n_f
+        denominator = passes + fails
+        if denominator == 0:
+            return 0
+        return numerator / denominator
+    elif formula == "Dice":
+        numerator = 2*e_f
+        denominator = e_f + e_p + n_f
+        if denominator == 0:
+            return 0
+        return numerator / denominator
+    elif formula == "M1":
+        numerator = e_f + n_p
+        denominator = e_f + e_p
+        if denominator == 0:
+            return 0
+        return numerator / denominator
+    elif formula == "M2":
+        numerator = e_f
+        denominator = e_f + n_p + 2*n_f + 2*e_p
+        if denominator == 0:
+            return 0
+        return numerator / denominator
+    elif formula == "Hamming":
+        return e_f + n_p
+    elif formula == "Goodman":
+        numerator = 2*e_f - n_f - e_p
+        denominator = 2*e_f + n_f + e_p
+        if denominator == 0:
+            return 0
+        return numerator / denominator
+    elif formula == "Euclid":
+        return math.sqrt(e_f + n_p)
+    elif formula == "Wong2":
+        return e_f - e_p
+    elif formula == "GP2":
+        a = e_f
+        b = math.sqrt(e_p + n_p)
+        c = math.sqrt(e_p)
+        return 2 * (a + b) + c
+    elif formula == "GP3":
+        a = e_f ** 2
+        b = math.sqrt(e_p)
+        c = abs(a - b)
+        return math.sqrt(c)
+    elif formula == "GP19":
+        a = e_p - e_f + fails + passes
+        b = abs(a)
+        return e_f * math.sqrt(b)
+    elif formula == "Tarantula":
+        a_numerator = e_f
+        a_denominator = e_f + n_f
+        a = 0
+        if a_denominator != 0:
+            a = a_numerator / a_denominator
+        
+        b_numerator = e_f
+        b_denominator = e_f + n_f
+        b = 0
+        if b_denominator != 0:
+            b = b_numerator / b_denominator
+        
+        c_numerator = e_p
+        c_denominator = e_p + n_p
+        c = 0
+        if c_denominator != 0:
+            c = c_numerator / c_denominator
+        
+        numerator = a
+        denominator = b + c
+        if denominator == 0:
+            return 0
+        return numerator / denominator
     else:
         raise Exception(f"Unknown formula: {formula}")
