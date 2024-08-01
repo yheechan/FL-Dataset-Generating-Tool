@@ -31,7 +31,7 @@ class Postprocessor:
             pp_data = self.process_feature_csv(feature_csv)
             pp_csv = self.pp_fl_features_dir / feature_csv.name
             self.write_pp_data_to_csv(pp_data, pp_csv)
-            break
+            # break
     
     def process_feature_csv(self, feature_csv):
         bug_id = feature_csv.name.split(".")[0]

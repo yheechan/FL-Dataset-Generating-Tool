@@ -112,9 +112,12 @@ pp_sbfl_formulas = [
     "Ochiai", "Jaccard", "AMPLE",
     "Hamannn", "Dice", "M1", "M2", 
     "Hamming", "Goodman", "Euclid",
-    "Wong1", "Wong2",
+    "Wong1", "Wong2", "Wong3",
     "GP2", "GP3", "GP13", "GP19",
     "Tarantula", "Russel+Rao",
+    "SorensenDice", "Kulczynski1", "Kulczynski2",
+    "SimpleMatching", "RogersTanimoto", "Sokal", "Anderberg",
+    "Ochiai2", "Zoltar"
 ]
 
 def sbfl(e_p, e_f, n_p, n_f, formula="Ochiai", fails=0, passes=0):
@@ -213,6 +216,15 @@ def sbfl(e_p, e_f, n_p, n_f, formula="Ochiai", fails=0, passes=0):
         return math.sqrt(e_f + n_p)
     elif formula == "Wong2":
         return e_f - e_p
+    elif formula == "Wong3":
+        right_h = 0
+        if e_p <= 2:
+            right_h = e_p
+        elif e_p > 2 and e_p <= 10:
+            right_h = 2 + 0.1*(e_p - 2)
+        else:
+            right_h = 2.8 + 0.01*(e_p - 10)
+        return e_f - right_h
     elif formula == "GP2":
         a = e_f
         b = math.sqrt(e_p + n_p)
@@ -248,6 +260,78 @@ def sbfl(e_p, e_f, n_p, n_f, formula="Ochiai", fails=0, passes=0):
         
         numerator = a
         denominator = b + c
+        if denominator == 0:
+            return 0
+        return numerator / denominator
+    elif formula == "SorensenDice":
+        numerator = 2*e_f
+        denominator = 2*e_f + e_p + n_f
+        if denominator == 0:
+            return 0
+        return numerator / denominator
+    elif formula == "Kulczynski1":
+        numerator = e_f
+        denominator = n_f + e_p
+        if denominator == 0:
+            return 0
+        return numerator / denominator
+    elif formula == "Kulczynski2":
+        a_numerator = e_f
+        a_denominator = e_f + n_f
+        a = 0
+        if a_denominator != 0:
+            a = a_numerator / a_denominator
+        
+        b_numerator = e_f
+        b_denominator = e_f + e_p
+        b = 0
+        if b_denominator != 0:
+            b = b_numerator / b_denominator
+        return (a + b) / 2
+    elif formula == "SimpleMatching":
+        numerator = e_f + n_p
+        denominator = e_p + e_f + n_p + n_f
+        if denominator == 0:
+            return 0
+        return numerator / denominator
+    elif formula == "RogersTanimoto":
+        numerator = e_f + n_p
+        denominator = e_f + n_p + 2*n_f + 2*e_p
+        if denominator == 0:
+            return 0
+        return numerator / denominator
+    elif formula == "Sokal":
+        numerator = 2*e_f + 2*n_p
+        denominator = 2*e_f + 2*n_p + n_f + e_p
+        if denominator == 0:
+            return 0
+        return numerator / denominator
+    elif formula == "Anderberg":
+        numerator = e_f
+        denominator = e_f + 2*e_p + 2*n_f
+        if denominator == 0:
+            return 0
+        return numerator / denominator
+    elif formula == "Ochiai2":
+        numerator = e_f * n_p
+        den_a = e_f + e_p
+        den_b = n_f + n_p
+        den_c = e_f + n_p
+        den_d = e_p + n_f
+        denominator = math.sqrt(den_a * den_b * den_c * den_d)
+        if denominator == 0:
+            return 0
+        return numerator / denominator
+    elif formula == "Zoltar":
+        numerator = e_f
+        
+        den_right_numerator = 10000 * n_f * e_p
+        den_right_denominator = e_f
+        den_right = 0
+        if den_right_denominator != 0:
+            den_right = den_right_numerator / den_right_denominator
+        
+        denominator = e_f + e_p + n_f + den_right
         if denominator == 0:
             return 0
         return numerator / denominator
