@@ -3,6 +3,7 @@ import torch
 
 from ml.postprocessor import Postprocessor
 from ml.trainer import Trainer
+from ml.inference import Inference
 
 def handle_postprocess(args):
         if len(args.subject2setname_pair) == 0:
@@ -68,6 +69,32 @@ def handle_train(args):
         )
         trainer.run()
 
+def handle_inference(args):
+    # Target dataset
+    if len(args.subject2setname_pair) == 0:
+        print("Error: No subject2setname pair is provided.")
+        print("Example: --subject2setname-pair jsoncpp:FL-dataset-jsoncpp-240803-v2 libxml2:FL-dataset-libxml2")
+        exit(1)
+    pair_list = [pair.split(":") for pair in args.subject2setname_pair]
+
+    # Project name
+    if args.project_name == None:
+        print("Error: Project name is not provided.")
+        print("Example: --project-name FL-model-240803-v1")
+        exit(1)
+    project_name = args.project_name
+
+    # device
+    device = args.device
+    if torch.cuda.is_available() and args.device == "cpu":
+        device = "cuda"
+    
+    inference = Inference(
+        # config param
+        project_name, pair_list,
+        device=device
+    )
+    inference.run()
 
 def main():
     parser = make_parser()
@@ -77,6 +104,8 @@ def main():
         handle_postprocess(args)
     elif args.train == True:
         handle_train(args)
+    elif args.inference == True:
+         handle_inference(args)
         
         
 
@@ -84,8 +113,10 @@ def make_parser():
     parser = argparse.ArgumentParser(description="Copy subject to working directory")
     parser.add_argument("--subject2setname-pair", type=str, nargs="+", help="Subject name and its FL dataset directory file name pair(s). EX: jsoncpp:FL-dataset-jsoncpp-240803-v2 libxml2:FL-dataset-libxml2", required=True)
 
+    # 1. Postprocess FL features
     parser.add_argument("--postprocess-fl-features", action="store_true", help="Formulate FL dataset with features for machine learning.")
 
+    # 2. Train the model
     parser.add_argument("--train", action="store_true", help="Train the model.")
     # config param
     parser.add_argument("--project-name", type=str, help="Project name.")
@@ -102,6 +133,10 @@ def make_parser():
     parser.add_argument("--dropout", type=float, default=0.2, help="Dropout. Default is 0.2.")
     parser.add_argument("--stack-size", type=int, default=3, help="Stack size (has to be > 2). Default is 3.")
     parser.add_argument("--output-size", type=int, default=1, help="Output size. Default is 1.")
+
+    # 3. Inference the model
+    parser.add_argument("--inference", action="store_true", help="Inference the model.")
+
 
     return parser
 

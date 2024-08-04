@@ -20,7 +20,6 @@ class FL_Dataset(Dataset):
         return key, features, label
 
     def make_data_list(self):
-        print(f"Making dataset: {self.name}")
         data_list = []
         for subject, feature_csv in self.raw_data_list:
             data = self.load_data(feature_csv)

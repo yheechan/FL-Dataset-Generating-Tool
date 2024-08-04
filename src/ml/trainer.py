@@ -20,7 +20,7 @@ class Trainer(EngineBase):
                  train_ratio, validate_ratio, test_ratio,
                  random_seed=42,
                  # training param
-                 epoch=3, batch_size=64, learning_rate=1e-3, device="cuda",
+                 epoch=3, batch_size=64, learning_rate=1e-3, device="cpu",
                  # model param
                  input_size=35, hidden_size=64, dropout=0.2, stack_size=3, output_size=1):
         super().__init__()
@@ -58,7 +58,8 @@ class Trainer(EngineBase):
         
         self.project_out_dir, \
         self.model_line_susp_score_dir, \
-        self.model_function_susp_score_dir = self.initialize_project_directory(self.project_name)
+        self.model_function_susp_score_dir, \
+        self.bug_keys_dir = self.initialize_project_directory(self.project_name)
 
     def run(self):
         # 0. Save Parameter as json
@@ -66,8 +67,8 @@ class Trainer(EngineBase):
 
         # 1. Dataset Splitting
         self.raw_dataset = self.load_raw_dataset(
-            self.project_out_dir,
-            self.params["config_param"]["dataset_pair_list"]
+            self.params["config_param"]["dataset_pair_list"],
+            self.bug_keys_dir
         )
         self.raw_train_set, \
         self.raw_val_set, \
@@ -90,13 +91,7 @@ class Trainer(EngineBase):
         print(f"Made loaders: train({len(self.train_loader)}), validate({len(self.validate_loader)})")
 
         # 4. Model Making
-        self.mlp_model = MLP_Model(
-            input_size=self.params["model_param"]["input_size"],
-            hidden_size=self.params["model_param"]["hidden_size"],
-            dropout=self.params["model_param"]["dropout"],
-            stack_size=self.params["model_param"]["stack_size"],
-            output_size=self.params["model_param"]["output_size"]
-        )
+        self.mlp_model = self.load_model(self.params["model_param"])
         self.mlp_model.to(self.params["training_param"]["device"])
         print(f"Made model: {self.mlp_model}")
         
@@ -111,7 +106,13 @@ class Trainer(EngineBase):
         self.start_training()
 
         # 7. Testing
-        self.start_testing()
+        self.start_testing(
+            self.project_name, self.project_out_dir,
+            self.raw_test_set, self.mlp_model,
+            "test-accuracy.csv", self.params,
+            self.model_line_susp_score_dir,
+            self.model_function_susp_score_dir, self.bug_keys_dir
+        )
 
         # 8. Save Model
         self.save_model(self.project_out_dir, self.mlp_model, self.params["config_param"]["project_name"])
@@ -135,75 +136,6 @@ class Trainer(EngineBase):
         # Save loss graph and csv
         self.draw_loss_graph(self.project_out_dir, train_loss, validate_loss)
         self.write_loss_to_csv(self.project_out_dir, train_loss, validate_loss)
-    
-    def start_testing(self):
-        print(f"[{self.project_name}] Testing model...")
-        size = len(self.raw_test_set)
-
-        acc_5 = []
-        acc_10 = []
-        accuracy_results = {}
-
-        # testing loop
-        for idx, (subject, feature_csv) in enumerate(self.raw_test_set):
-            target_name = f"{subject}-{feature_csv.name}"
-            print(f"\nTesting {target_name} ({idx+1}/{size})")
-            rank = self.test_instr(subject, feature_csv)
-            print(f"\tRank: {rank}")
-
-            accuracy_results[target_name] = rank
-
-            if int(rank) <= 5:
-                acc_5.append((subject, feature_csv.name))
-            if int(rank) <= 10:
-                acc_10.append((subject, feature_csv.name))
-        
-        print(f"acc@5: {len(acc_5)}")
-        print(f"acc@5 perc.: {len(acc_5)/size}")
-        print(f"acc@10: {len(acc_10)}")
-        print(f"acc@10 perc.: {len(acc_10)/size}")
-        
-        print("Done!")
-
-        # Save accuracy results
-        self.write_test_accuracy_to_csv(self.project_out_dir, accuracy_results, "test-accuracy.csv")
-    
-    # ==============================
-    # Inference loop
-    # ==============================
-    def test_instr(self, subject, feature_csv):
-        bug_id = feature_csv.name.split(".")[0]
-        buggy_line_key = self.get_buggy_line_key(self.project_out_dir, subject, bug_id)
-        print(f"\tBuggy Line Key: {buggy_line_key}")
-
-        # 1. Dataset Making
-        test_dataset = FL_Dataset("test", [(subject, feature_csv)])
-
-        # 2. DataLoader Making
-        test_loader = DataLoader(
-            test_dataset, batch_size=self.params["training_param"]["batch_size"], shuffle=False
-        )
-
-        # 3. Testing
-        line_susp = self.infer_with_model(self.mlp_model, test_loader, self.params["training_param"]["device"])
-
-        # 4. write line_susp to csv
-        # key: susp. score
-        line_susp_file = self.write_line_susp_scores(
-            self.model_line_susp_score_dir, line_susp, subject, bug_id
-        )
-
-        # 5. get rank of buggy function
-        function_susp = self.get_function_level_results(line_susp, buggy_line_key)
-
-        # 6. write function_susp to csv
-        # [function_name, {susp.: susp. score, rank: rank}]
-        self.write_function_susp_scores(self.model_function_susp_score_dir, function_susp, subject, bug_id)
-
-        # 7. get rank of buggy function
-        rank = self.get_rank_of_buggy_function(function_susp, buggy_line_key)
-
-        return rank
 
 
     # ==============================

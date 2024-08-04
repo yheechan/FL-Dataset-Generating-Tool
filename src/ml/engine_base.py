@@ -4,9 +4,13 @@ import shutil
 import torch
 import pandas as pd
 import matplotlib.pyplot as plt
+from torch.utils.data import DataLoader
 
 import lib.config as config
 from lib.utils import *
+from ml.mlp_model import MLP_Model
+from ml.dataset import FL_Dataset
+
 
 class EngineBase:
     def __init__(
@@ -17,6 +21,81 @@ class EngineBase:
     # ===============================
     # Infer with model
     # ===============================
+    def start_testing(
+            self, project_name, project_out_dir, raw_test_set, model, filename, params,
+            line_suspend_score_dir, function_susp_score_dir, bug_keys_dir
+    ):
+        print(f"[{project_name}] Start Testing...")
+        size = len(raw_test_set)
+
+        acc_5 = []
+        acc_10 = []
+        accuracy_results = {}
+
+        # testing loop
+        for idx, (subject, feature_csv) in enumerate(raw_test_set):
+            target_name = f"{subject}-{feature_csv.name}"
+            print(f"\nTesting {target_name} ({idx+1}/{size})")
+            rank = self.test_instr(
+                model, project_out_dir, subject, feature_csv, params,
+                line_suspend_score_dir, function_susp_score_dir, bug_keys_dir
+            )
+            print(f"\tRank: {rank}")
+
+            accuracy_results[target_name] = rank
+
+            if int(rank) <= 5:
+                acc_5.append((subject, feature_csv.name))
+            if int(rank) <= 10:
+                acc_10.append((subject, feature_csv.name))
+
+        print(f"acc@5: {len(acc_5)}")
+        print(f"acc@5 perc.: {len(acc_5)/size}")
+        print(f"acc@10: {len(acc_10)}")
+        print(f"acc@10 perc.: {len(acc_10)/size}")
+
+        print("Done!")
+
+        # Save accuracy results
+        self.write_test_accuracy_to_csv(project_out_dir, accuracy_results, filename)
+    
+    def test_instr(
+            self, model, project_out_dir, subject, feature_csv, params,
+            line_suspend_score_dir, function_susp_score_dir, bug_keys_dir
+        ):
+        bug_id = feature_csv.name.split(".")[0]
+        buggy_line_key = self.get_buggy_line_key(bug_keys_dir, subject, bug_id)
+        # print(f"\tBuggy Line Key: {buggy_line_key}")
+
+        # 1. Dataset Making
+        test_dataset = FL_Dataset("test", [(subject, feature_csv)])
+
+        # 2. DataLoader Making
+        test_loader = DataLoader(
+            test_dataset, batch_size=params["training_param"]["batch_size"], shuffle=False
+        )
+
+        # 3. Testing
+        line_susp = self.infer_with_model(model, test_loader, params["training_param"]["device"])
+
+        # 4. write line_susp to csv
+        # key: susp. score
+        line_susp_file = self.write_line_susp_scores(
+            line_suspend_score_dir, line_susp, subject, bug_id
+        )
+
+        # 5. get rank of buggy function
+        function_susp = self.get_function_level_results(line_susp, buggy_line_key)
+
+        # 6. write function_susp to csv
+        # [function_name, {susp.: susp. score, rank: rank}]
+        self.write_function_susp_scores(function_susp_score_dir, function_susp, subject, bug_id)
+
+        # 7. get rank of buggy function
+        rank = self.get_rank_of_buggy_function(function_susp, buggy_line_key)
+
+        return rank
+
     def infer_with_model(self, model, dataset, device):
         model.eval()
         with torch.no_grad():
@@ -38,8 +117,7 @@ class EngineBase:
     # ===============================
     # Util API
     # ===============================
-    def get_buggy_line_key(self, project_out_dir, subject, bug_id):
-        bug_keys_dir = project_out_dir / "bug_keys"
+    def get_buggy_line_key(self, bug_keys_dir, subject, bug_id):
         buggy_line_key_txt = bug_keys_dir / f"{subject}-{bug_id}.buggy_line_key.txt"
         assert buggy_line_key_txt.exists(), f"Error: {buggy_line_key_txt} does not exist."
         
@@ -110,7 +188,7 @@ class EngineBase:
         config.set_seed(seed)
 
     # ===============================
-    # get/read/initalize 
+    # get/read/initalize/load
     # ===============================
     def get_project_dir(self, project_name):
         project_dir = out_dir / project_name
@@ -119,7 +197,7 @@ class EngineBase:
         return project_dir
     
     def initialize_project_directory(self, project_name):
-        project_dir = out_dir / project_name
+        project_dir = out_dir / project_name / "train"
         project_dir.mkdir(parents=True, exist_ok=True)
 
         model_line_susp_score_dir = project_dir / "model_line_susp_score"
@@ -128,7 +206,10 @@ class EngineBase:
         model_function_susp_score_dir = project_dir / "model_function_susp_score"
         model_function_susp_score_dir.mkdir(parents=True, exist_ok=True)
 
-        return project_dir, model_line_susp_score_dir, model_function_susp_score_dir
+        bug_keys_dir = project_dir / "bug_keys"
+        bug_keys_dir.mkdir(parents=True, exist_ok=True)
+
+        return project_dir, model_line_susp_score_dir, model_function_susp_score_dir, bug_keys_dir
 
     def read_parameter_file(self, project_dir):
         param_file = project_dir / "parameters.json"
@@ -143,6 +224,29 @@ class EngineBase:
         model.load_state_dict(torch.load(model_file))
         return model
 
+    def initialize_test_dirs(self, project_out_dir):
+        project_out_dir = project_out_dir / "infer"
+
+        test_line_susp_score_dir = project_out_dir / "test_line_susp_score"
+        test_line_susp_score_dir.mkdir(parents=True, exist_ok=True)
+
+        test_function_susp_score_dir = project_out_dir / "test_function_susp_score"
+        test_function_susp_score_dir.mkdir(parents=True, exist_ok=True)
+
+        test_bug_keys_dir = project_out_dir / "test_bug_keys"
+        test_bug_keys_dir.mkdir(parents=True, exist_ok=True)
+
+        return project_out_dir, test_line_susp_score_dir, test_function_susp_score_dir, test_bug_keys_dir
+    
+    def load_model(self, params):
+        model = MLP_Model(
+            params["input_size"],
+            params["hidden_size"],
+            params["dropout"],
+            params["stack_size"],
+            params["output_size"]
+        )
+        return model
     # ===============================
     # Write/Save results
     # ===============================
@@ -206,7 +310,7 @@ class EngineBase:
     # ===============================
     # Related to dataset
     # ===============================
-    def load_raw_dataset(self, project_out_dir, dataset_pair_list):
+    def load_raw_dataset(self, dataset_pair_list, bug_keys_dir):
         raw_dataset = []
 
         for subject, dataset_name in dataset_pair_list:
@@ -221,19 +325,18 @@ class EngineBase:
             )
 
             for feature_csv in feature_csv_list:
-                self.copy_buggy_keys(project_out_dir, subject, dataset_dir, feature_csv)
+                self.copy_buggy_keys(subject, dataset_dir, feature_csv, bug_keys_dir)
                 raw_dataset.append((subject, feature_csv))
         
         random.shuffle(raw_dataset)
         return raw_dataset
     
-    def copy_buggy_keys(self, project_out_dir, subject, dataset_dir, feature_csv):
+    def copy_buggy_keys(self, subject, dataset_dir, feature_csv, bug_keys_dir):
         bug_id = feature_csv.name.split(".")[0]
         buggy_line_key_txt = dataset_dir / "buggy_line_key_per_bug_version" / f"{bug_id}.buggy_line_key.txt"
         assert buggy_line_key_txt.exists(), f"Error: {buggy_line_key_txt} does not exist."
-        
-        bug_keys_dir = project_out_dir / "bug_keys"
-        bug_keys_dir.mkdir(exist_ok=True, parents=True)
+
+        assert bug_keys_dir.exists(), f"Error: {bug_keys_dir} does not exist."
 
         buggy_keys_csv = bug_keys_dir / f"{subject}-{buggy_line_key_txt.name}"
         shutil.copy(buggy_line_key_txt, buggy_keys_csv)
