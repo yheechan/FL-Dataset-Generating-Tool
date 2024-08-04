@@ -1,5 +1,6 @@
 import csv
 import json
+import shutil
 
 from lib.utils import *
 from lib.susp_score_formula import *
@@ -21,6 +22,8 @@ class Postprocessor:
         self.feature_csv_list = sorted(self.feature_csv_list, key=lambda x: int(x.name.split(".")[0][3:]))
         
         self.pp_fl_features_dir = self.dataset_dir / "PP_FL_features_per_bug_version"
+        if self.pp_fl_features_dir.exists():
+            shutil.rmtree(self.pp_fl_features_dir)
         self.pp_fl_features_dir.mkdir(exist_ok=True, parents=True)
 
     def run(self):
