@@ -15,7 +15,14 @@ class Linear_Model(nn.Module):
         return out
 
 class MLP_Model(nn.Module):
-    def __init__(self, input_size, hidden_size, dropout, stack_size, output_size):
+    def __init__(
+            self,
+            input_size,
+            hidden_size,
+            dropout,
+            stack_size,
+            output_size
+    ):
         super(MLP_Model, self).__init__()
         self.in_fc = Linear_Model(input_size, dropout, hidden_size)
 
