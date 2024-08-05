@@ -89,10 +89,16 @@ def handle_inference(args):
     if torch.cuda.is_available() and args.device == "cpu":
         device = "cuda"
     
+    # Inference name
+    if args.inference_name == None:
+        print("Error: Inference name is not provided.")
+        print("Example: --inference-name libxml2-inference-v1")
+        exit(1)
+    
     inference = Inference(
         # config param
         project_name, pair_list,
-        device=device
+        device, args.inference_name
     )
     inference.run()
 
@@ -136,6 +142,7 @@ def make_parser():
 
     # 3. Inference the model
     parser.add_argument("--inference", action="store_true", help="Inference the model.")
+    parser.add_argument("--inference-name", type=str, help="Inference name.")
 
 
     return parser

@@ -128,6 +128,7 @@ class Trainer(EngineBase):
             print(f"\nEpoch {epoch+1}/{epoch_size}")
             avg_train_loss = self.train_loop()
             avg_validate_loss = self.validate_loop()
+            print(f"EPOCH {epoch+1} TRAIN LOSS: {avg_train_loss}, VALIDATE LOSS: {avg_validate_loss}")
             train_loss.append(avg_train_loss)
             validate_loss.append(avg_validate_loss)
         
@@ -207,6 +208,5 @@ class Trainer(EngineBase):
             total_loss += loss.item()
 
         avg_validate_loss = np.mean(total_validate_loss)
-        print(f"Validation Error: \n Avg loss: {avg_validate_loss:>8f} \n")
 
         return avg_validate_loss

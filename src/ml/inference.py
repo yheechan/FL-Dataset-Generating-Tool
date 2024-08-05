@@ -8,10 +8,11 @@ from ml.dataset import FL_Dataset
 class Inference(EngineBase):
     def __init__(
             self, project_name, dataset_pair_list,
-            device
+            device, inference_name
     ):
         super().__init__()
 
+        self.inference_name = inference_name
         self.project_name = project_name
         self.project_out_dir = self.get_project_dir(self.project_name)
         assert self.project_out_dir != None, f"Project {self.project_name} does not exist."
@@ -27,7 +28,7 @@ class Inference(EngineBase):
         self.project_out_dir, \
         self.test_line_susp_score_dir, \
         self.test_function_susp_score_dir, \
-        self.test_bug_keys_dir = self.initialize_test_dirs(self.project_out_dir)
+        self.test_bug_keys_dir = self.initialize_test_dirs(self.project_out_dir, self.inference_name)
     
     def run(self):
         # 1. Load raw dataset

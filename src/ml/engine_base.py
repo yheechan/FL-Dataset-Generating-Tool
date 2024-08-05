@@ -58,6 +58,7 @@ class EngineBase:
 
         # Save accuracy results
         self.write_test_accuracy_to_csv(project_out_dir, accuracy_results, filename)
+        self.write_test_accuracy_to_txt(project_out_dir, acc_5, acc_10, size)
     
     def test_instr(
             self, model, project_out_dir, subject, feature_csv, params,
@@ -224,8 +225,8 @@ class EngineBase:
         model.load_state_dict(torch.load(model_file))
         return model
 
-    def initialize_test_dirs(self, project_out_dir):
-        project_out_dir = project_out_dir / "infer"
+    def initialize_test_dirs(self, project_out_dir, inference_name):
+        project_out_dir = project_out_dir / inference_name
 
         test_line_susp_score_dir = project_out_dir / "test_line_susp_score"
         test_line_susp_score_dir.mkdir(parents=True, exist_ok=True)
@@ -306,6 +307,15 @@ class EngineBase:
     def save_model(self, project_out_dir, model, project_name):
         model_file = project_out_dir / f"{project_name}.pth"
         torch.save(model.state_dict(), model_file)
+    
+    def write_test_accuracy_to_txt(self, project_out_dir, acc_5, acc_10, size):
+        fl_acc_txt = project_out_dir / "fl_acc.txt"
+        with open(fl_acc_txt, "w") as f:
+            f.write(f"Total # of bug versions: {size}\n")
+            f.write(f"acc@5: {len(acc_5)}\n")
+            f.write(f"acc@5 perc.: {len(acc_5)/size}\n")
+            f.write(f"acc@10: {len(acc_10)}\n")
+            f.write(f"acc@10 perc.: {len(acc_10)/size}")
 
     # ===============================
     # Related to dataset
