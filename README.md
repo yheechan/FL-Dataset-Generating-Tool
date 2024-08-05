@@ -65,4 +65,42 @@ $ make -j20
   * ``validator.py``
   * ``reconstructor.py``
 
-last updated July 04, 2024
+## First attempt of training and infering using a model
+```
+time python3 machine_learning.py --subject2setname-pair libxml2:FL-dataset-libxml2 --train --project-name model-240805-libxml2-v1 --train-validate-test-ratio 6 1 3 --epoch 10 --batch-size 1024 --stack-size 5
+== Train
+Total # of bug versions: 46
+acc@5: 42
+acc@5 perc.: 0.9130434782608695
+acc@10: 44
+acc@10 perc.: 0.9565217391304348
+
+time python3 machine_learning.py --subject2setname-pair libxml2:FL-dataset-libxml2 --inference --project-name model-240805-libxml2-v1 --inference-name infer-libxml2-v1
+== Infer
+Total # of bug versions: 152
+acc@5: 135
+acc@5 perc.: 0.8881578947368421
+acc@10: 144
+acc@10 perc.: 0.9473684210526315
+
+~~~~
+
+time python3 machine_learning.py --subject2setname-pair jsoncpp:FL-dataset-jsoncpp-240803-v2 --train --project-name model-240805-jsoncpp-v1 --train-validate-test-ratio 6 1 3 --epoch 10 --batch-size 1024
+==Train
+Total # of bug versions: 50
+acc@5: 45
+acc@5 perc.: 0.9
+acc@10: 48
+acc@10 perc.: 0.96
+
+time python3 machine_learning.py --subject2setname-pair jsoncpp:FL-dataset-jsoncpp-240803-v2 --inference --project-name model-240805-jsoncpp-v1 --inference-name infer-jsoncpp-v1
+==Infer
+Total # of bug versions: 165
+acc@5: 156
+acc@5 perc.: 0.9454545454545454
+acc@10: 161
+acc@10 perc.: 0.9757575757575757
+
+```
+
+last updated Aug 05, 2024
