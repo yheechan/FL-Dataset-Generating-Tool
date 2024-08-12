@@ -2,13 +2,14 @@ from copy import deepcopy
 import random
 import subprocess as sp
 import csv
+import shutil # 2024-08-08 combin-mbfl-trials
 
 from lib.utils import *
 from analysis.individual import Individual
 from lib.experiment import Experiment
 from analysis.rank_utils import *
 from analysis.reconstruct_utils import *
-        
+from lib.susp_score_formula import *
 
 class Reconstruct:
     def __init__(
@@ -207,7 +208,7 @@ class Reconstruct:
         print(f"Number of buggy versions included: {included_buggy_version_cnt}")
         print(f"Number of buggy versions excluded: {excluded_buggy_version_cnt}")
     
-    def remove_versions_mbfl_meeting_criteria(self, criteria):
+    def remove_versions_mbfl_meeting_criteria(self, criteria, trialName=None):
         self.experiment = Experiment()
         self.max_mutants = self.experiment.experiment_config["max_mutants"]
         self.mutant_keys = get_mutant_keys(self.max_mutants)
@@ -227,7 +228,7 @@ class Reconstruct:
             lines_executed_by_failing_tcs = get_lines_executed_by_failing_tcs_from_data(individual.dir_path)
             assert buggy_line_key in lines_executed_by_failing_tcs, f"buggy_line_key {buggy_line_key} not in lines_executed_by_failing_tcs"
 
-            mutation_testing_result_data = get_mutation_testing_results_form_data(individual.dir_path, buggy_line_key)
+            mutation_testing_result_data = get_mutation_testing_results_form_data(individual.dir_path, buggy_line_key, trialName)
 
             if "criteriaA" in criteria:
                 res = analyze_buggy_line_with_f2p_0(
@@ -374,5 +375,184 @@ class Reconstruct:
                 self.fl_dataset_dir,
                 mutant_info_csv_file, bug_version_mutation_info_fp
             )
+
+            # 7. copy generated_mutants-mbfl
+            self.generated_mutants_zip_file = out_dir / self.subject_name / f"generated_mutants-mbfl" / f"{individual.name}.zip"
+            assert self.generated_mutants_zip_file.exists(), f"zip file for {bug_id}-{individual.name} does not exist"
+            copy_generated_mutants(bug_id, self.generated_mutants_zip_file, self.fl_dataset_dir)
         
         bug_version_mutation_info_fp.close()
+
+    def combine_mutation_testing_results_csv(self, individual, past_trials): # 2024-08-09
+        mutation_testing_results_csv_list = [individual.dir_path / f"mutation_testing_results-{trial}.csv" for trial in past_trials]
+
+        header = None
+        total_rows = []
+        for result_csv in mutation_testing_results_csv_list:
+            with open(result_csv, "r") as f:
+                lines = f.readlines()
+                if header == None:
+                    header = lines[0].strip()
+                total_rows.extend([line.strip() for line in lines[1:]])
+        with open(individual.dir_path / "mutation_testing_results.csv", "w") as f:
+            f.write(header+"\n")
+            content = "\n".join(total_rows)
+            f.write(content)
+
+    def get_mbfl_features_form_trial_csv(self, individual, past_trials): # 2024-08-07 add-mbfl
+        trials_mbfl_results_csv_list = [individual.dir_path / f"mbfl_features-{trial}.csv" for trial in past_trials]
+        list_of_csv_rows = []
+        length_check = []
+        total_f2p = 0
+        total_p2f = 0
+        for mbfl_results in trials_mbfl_results_csv_list:
+            with open(mbfl_results, "r") as f:
+                reader = csv.DictReader(f)
+                row_list = []
+                mut_keys = []
+                for row in reader:
+                    max_mutant_cnt = int(row["# of mutants"])
+                    if len(mut_keys) == 0:
+                        mut_keys = get_mutant_keys(max_mutant_cnt)
+                    assert len(mut_keys) == max_mutant_cnt*2
+
+                    for mut_key in mut_keys:
+                        cnt = int(row[mut_key])
+                        if cnt == -1: continue
+                        if "p2f" in mut_key:
+                            total_p2f += cnt
+                        elif "f2p" in mut_key:
+                            total_f2p += cnt
+                    row_list.append(row)
+                list_of_csv_rows.append(row_list)
+                length_check.append(len(row_list))
+        print(f"total_f2p: {total_f2p}")
+        print(f"total_p2f: {total_p2f}")
+        
+        # validate that the csv files have the same length of rows
+        for length in length_check:
+            assert length_check[0] == length
+    
+        return list_of_csv_rows, total_f2p, total_p2f
+
+    def combine_mbfl_trials(self, past_trials): # 2024-08-07 add-mbfl
+        new_set_name = f"{self.set_dir.name}-combined-trials"
+        new_set_dir = self.set_dir.parent / new_set_name
+        shutil.copytree(self.set_dir, new_set_dir)
+        self.set_dir = new_set_dir
+        self.set_name = new_set_name
+        self.individual_list = get_dirs_in_dir(self.set_dir)
+        
+        for idx, version_dir in enumerate(self.individual_list):
+            print(f"\n{idx+1}/{len(self.individual_list)}: {version_dir.name}")
+            individual = Individual(self.subject_name, self.set_name, version_dir.name)
+
+            list_of_csv_rows, total_f2p, total_p2f = self.get_mbfl_features_form_trial_csv(individual, past_trials)
+            self.combine_mutation_testing_results_csv(individual, past_trials)
+
+            # save total max mutant on keys
+            key2max_mutant = {}
+            
+            mutKeysAsPairs_trial = {}
+            total_max_mutant_cnt = 0
+            total_key_pair_list = []
+            total_key_list = []
+            final_mbfl_features = []
+            for zipped in zip(*list_of_csv_rows):
+                main_key = zipped[0]["key"]
+                main_tot_failed_cnt = int(zipped[0]["# of totfailed_TCs"])
+                # main_failing_tcs_on_line = int(zipped[0]["#_failing_tcs_@line"])
+                total_failing_tcs_on_line = 0
+                main_bug = int(zipped[0]["bug"])
+
+                total_num_max_mutants = 0
+                mutant_keys = []
+                trial_idx = 0
+                # for each trial
+                mutant_results_Per_trial = {}
+                line_features = {}
+                for row in zipped:
+                    key = row["key"]
+                    tot_failed_cnt = int(row["# of totfailed_TCs"])
+                    failing_tcs_on_line = int(row["#_failing_tcs_@line"])
+                    total_failing_tcs_on_line += failing_tcs_on_line
+                    bug = int(row["bug"])
+                    assert key == main_key
+                    assert tot_failed_cnt == main_tot_failed_cnt
+                    # assert failing_tcs_on_line == main_failing_tcs_on_line
+                    assert bug == main_bug
+
+                    if "key" not in line_features:
+                        line_features["key"] = key
+                    if "# of totfailed_TCs" not in line_features:
+                        line_features["# of totfailed_TCs"] = tot_failed_cnt
+                    # if "#_failing_tcs_@line" not in line_features:
+                    #     line_features["#_failing_tcs_@line"] = failing_tcs_on_line
+                    if "bug" not in line_features:
+                        line_features["bug"] = bug
+
+                    max_mutant_cnt = int(row["# of mutants"])
+                    # save max_mutants for each trial
+                    if trial_idx not in mutKeysAsPairs_trial:
+                        mutKeysAsPairs_trial[trial_idx] = get_mutant_keys_as_pairs(max_mutant_cnt)
+                    
+                    # save mut results
+                    if trial_idx not in mutant_results_Per_trial:
+                        mutant_results_Per_trial[trial_idx] = {}
+                    for p2f_m, f2p_m in mutKeysAsPairs_trial[trial_idx]:
+                        assert p2f_m not in mutant_results_Per_trial[trial_idx]
+                        assert f2p_m not in mutant_results_Per_trial[trial_idx]
+                        mutant_results_Per_trial[trial_idx][p2f_m] = int(row[p2f_m])
+                        mutant_results_Per_trial[trial_idx][f2p_m] = int(row[f2p_m])
+                    
+                    trial_idx += 1
+                
+                if total_max_mutant_cnt == 0:
+                    for idx in mutKeysAsPairs_trial:
+                        total_max_mutant_cnt += len(mutKeysAsPairs_trial[idx])
+                assert total_max_mutant_cnt != 0
+                line_features["# of mutants"] = total_max_mutant_cnt
+                line_features["#_failing_tcs_@line"] = total_failing_tcs_on_line
+                if len(total_key_pair_list) == 0:
+                    total_key_pair_list = get_mutant_keys_as_pairs(total_max_mutant_cnt)
+                    total_key_list = get_mutant_keys(total_max_mutant_cnt)
+                assert len(total_key_pair_list) != 0
+
+                
+                # add m<n>:f2p m<n>:p2f till ~ total_max_mutant_cnt
+                key_idx = 0
+                for idx in mutKeysAsPairs_trial:
+                    for i, (p2f_m, f2p_m) in enumerate(mutKeysAsPairs_trial[idx]):
+                        p2f_token, f2p_token = total_key_pair_list[key_idx]
+                        key_idx += 1
+                        assert p2f_token not in line_features
+                        assert f2p_token not in line_features
+                        line_features[p2f_token] = mutant_results_Per_trial[idx][p2f_m]
+                        line_features[f2p_token] = mutant_results_Per_trial[idx][f2p_m]
+
+                met_score = measure_metallaxis(line_features, total_key_pair_list)
+                line_features['met susp. score'] = met_score
+
+                muse_data = measure_muse(line_features, total_p2f, total_f2p, total_key_pair_list)
+                for key, value in muse_data.items():
+                    line_features[key] = value
+                
+                # print(json.dumps(line_features, indent=2))
+                final_mbfl_features.append(line_features)
+            mbfl_features_csv_file = individual.dir_path / "mbfl_features.csv"
+            self.write_results(mbfl_features_csv_file, final_mbfl_features, total_key_list)
+        print("Done!")
+    
+    def write_results(self, csv_file, mbfl_features_list, total_key_list): # 2024-08-07 add-mbfl
+        fieldnames = ['key', '# of totfailed_TCs', '#_failing_tcs_@line', '# of mutants'] + total_key_list + [
+            '|muse(s)|', 'total_f2p', 'total_p2f', 'line_total_f2p', 'line_total_p2f',
+            'muse_1', 'muse_2', 'muse_3', 'muse_4', 'muse susp. score', 'met susp. score',
+            'bug'
+        ]
+
+        with open(csv_file, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+
+            for line in mbfl_features_list:
+                writer.writerow(line)

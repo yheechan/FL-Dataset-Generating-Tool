@@ -294,7 +294,8 @@ class Worker:
             cov_cwd=obj_dir
         cmd.extend([
             "--filter", self.filtered_files,
-            "--json", "-o", raw_cov_file.__str__()
+            "--json", "-o", raw_cov_file.__str__(),
+            "--gcov-ignore-parse"
         ])
         print_command(cmd, self.verbose)
         sp.check_call(cmd, cwd=cov_cwd, stderr=sp.PIPE, stdout=sp.PIPE)

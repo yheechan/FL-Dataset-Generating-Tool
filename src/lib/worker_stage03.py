@@ -42,6 +42,9 @@ class WorkerStage03(Worker):
         self.prerequisite_data_dir = out_dir / f"{self.name}" / "prerequisite_data"
         self.prerequisite_data_dir.mkdir(exist_ok=True, parents=True)
 
+        self.allPassisCCTdir = out_dir / f"{self.name}" / "allPassisCCT"
+        self.allPassisCCTdir.mkdir(exist_ok=True, parents=True)
+
         self.cov_dir = self.core_dir / "coverage" / self.version_dir.name
         if self.cov_dir.exists():
             print_command(["rm", "-rf", self.cov_dir], self.verbose)
@@ -68,13 +71,17 @@ class WorkerStage03(Worker):
 
         # 1. Extract line2function mapping 
         res = self.extract_line2function()
+        self.set_line2function_dict(self.version_dir)
         if res != 0:
             print(f"Failed to extract line2function on {self.version_dir.name}")
             return
 
         # 2. Measure coverage
         res = self.measure_coverage()
-        if res != 0:
+        if res == 2:
+            print(f"All passing TCs in {self.version_dir.name} is a CCT...!")
+            return
+        elif res != 0:
             print(f"Failed to measure coverage on {self.version_dir.name}")
             return
 
@@ -175,6 +182,17 @@ class WorkerStage03(Worker):
             json.dump(lines_execed_by_tc, f)
         
         print(f"Executed lines by test cases are saved at {lines_execed_by_tc_file.name}")
+    
+    def write_initialization_lines(self, lines_execed_at_initialization, filename):
+        self.version_coverage_dir = self.version_dir / "coverage_info"
+        print_command(["mkdir", "-p", self.version_coverage_dir], self.verbose)
+        self.version_coverage_dir.mkdir(exist_ok=True)
+
+        lines_execed_on_init_file = self.version_coverage_dir / filename
+        with open(lines_execed_on_init_file, "w") as f:
+            content = "\n".join(lines_execed_at_initialization)
+            f.write(content)
+        print(f"Lines executed on initialization saved at {lines_execed_on_init_file.name}")
 
     def write_postprocessed_coverage(self,):
         cov_csv_file = self.version_coverage_dir / f"postprocessed_coverage.csv"
@@ -306,13 +324,74 @@ class WorkerStage03(Worker):
                     self.ccts_list.append(tc_script_name)
                     os.remove(raw_cov_file)
         
+        # 2024-08-12 SAVE INITIALIZATION CODE COVERAGE
+        self.save_initialization_code_coverage()
+        
         # 5. Apply patch reverse
         self.apply_patch(self.target_code_file_path, self.buggy_code_file, patch_file, True)
 
         # 6. Write ccts.txt file
         self.update_ccts()
 
+        if len(self.passing_tcs_list) == 0:
+            log_file = self.allPassisCCTdir / f"{self.version_dir.name}"
+            with open(log_file, "w") as fp:
+                log = f"{self.version_dir.name},allPassisCCT"
+                fp.write(log)
+            return 2
+
         return 0
+    
+    def save_initialization_code_coverage(self): # 2024-08-12 SAVE INITIALIZATION CODE COVERAGE
+        # 4-1. remove past coverage
+        self.remove_all_gcda(self.core_repo_dir)
+
+        # 4-2. Run test case
+        # cd ../../../
+        res = sp.run(
+            f"timeout 5s ./NSFW_LNX_TESTd.out -C script/msg -# nothing",
+            shell=True, cwd=self.testsuite_dir.parent.parent.parent, # 2024-08-12 CHANGE THIS MANUALLY
+            stderr=sp.PIPE, stdout=sp.PIPE,
+            env=self.my_env
+        )
+        
+        # 4-3. Remove untarged files for coverage
+        self.remove_untargeted_files_for_gcovr(self.core_repo_dir)
+
+        # 4-4. Collect coverage
+        tc_script_name = "initialization"
+        raw_cov_file = self.generate_coverage_json(
+            self.core_repo_dir, self.cov_dir, tc_script_name,
+        )
+
+        # 4-5. Check if the buggy line is coveraged
+        buggy_line_covered = self.check_buggy_line_covered(
+            tc_script_name, raw_cov_file, self.target_code_file_path, self.buggy_lineno
+        )
+        if buggy_line_covered == 1:
+            print(f">> Buggy line {self.buggy_lineno} is NOT covered by failing TC {tc_script_name}")
+        if buggy_line_covered == -2:
+            print(f">> Failed to check coverage for failing TC {tc_script_name}")
+        if buggy_line_covered == 0:
+            print(f">> Buggy line {self.buggy_lineno} is covered by failing TC {tc_script_name}")
+
+        # make list of lines 2 keys
+        lines2keys_intialization = []
+        tc_cov_json = json.load(raw_cov_file.open())
+        for file in tc_cov_json["files"]:
+            filename = file["file"]
+            for i in range(len(file["lines"])):
+                line = file["lines"][i]
+                lineno = line["line_number"]
+                key = self.make_key(filename, lineno)
+
+                covered = 1 if line["count"] > 0 else 0
+
+                if covered == 1:
+                    lines2keys_intialization.append(key)
+        
+        self.write_initialization_lines(lines2keys_intialization, "lines_executed_at_initialization.txt")
+
     
     def update_ccts(self):
         if len(self.ccts_list) > 0:

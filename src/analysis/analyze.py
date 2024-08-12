@@ -2,6 +2,7 @@ from copy import deepcopy
 import random
 import subprocess as sp
 import csv
+import json
 
 from lib.utils import *
 from analysis.individual import Individual
@@ -100,13 +101,18 @@ class Analyze:
             print(f"# of individuals with none failing TC: {len(none_failing_tcs)}")
             print(f"# of individuals with non passing TC: {len(non_passing_tcs)}")
 
-    def prerequisite_data(self):
+    def prerequisite_data(self, removed_initialization_coverage=False):
         csv_keys = [
             "buggy_version_name", "#_failing_TCs", "#_passing_TCs",
             "#_excluded_failing_TCs", "#_excluded_passing_TCs",
             "#_CCTs", "#_total_TCs",
             "#_lines_executed_by_failing_TCs", "#_lines_executed_by_passing_TCs",
-            "#_total_lines_executed", "#_total_lines", "coverage"
+            "#_total_lines_executed", "#_total_lines", "coverage", "#_lines_executed_on_initialization",
+            "#_funcs_executed_on_initialization",
+            "#_funcs_executed_by_failing_TCs", 
+            "#_distinct_funcs_executed_by_failing_TCs",
+            "#_distinct_lines_executed_by_failing_TCs",
+            "#_funcs", "#_files"
         ]
         failing_tcs = []
         passing_tcs = []
@@ -119,6 +125,12 @@ class Analyze:
         total_lines_executed = []
         total_lines = []
         all_coverage = []
+        total_funcs_executed_by_failing_tcs = []
+        total_lines_executed_on_initialization = []
+        total_distinct_funcs_executed_by_failing_tcs = []
+        total_distinct_lines_executed_by_failing_tcs = []
+        total_files = []
+        total_funcs = []
 
         with open(self.output_csv, "w") as out_fp:
             out_fp.write(",".join(csv_keys) + "\n")
@@ -153,7 +165,66 @@ class Analyze:
 
                     info.append(coverage)
                     info.insert(0, individual.name)
-                    out_fp.write(",".join(map(str, info)) + "\n")
+
+                # 2024-08-05: Measure # of functions executed by failing TCss
+                lines_executed_by_failing_tcs_dict = get_lines_executed_by_failing_tcs_from_data(individual.dir_path)
+                # 2024-08-12: measure distinct lines by failing TCs
+                lines_from_initialization = []
+                if removed_initialization_coverage:
+                    lines_from_initialization = get_lines_executed_on_initialization(individual.dir_path)
+                info.append(len(lines_from_initialization))
+                funcs_from_initialization = []
+                for key in lines_from_initialization:
+                    file_nm = key.split("#")[0]
+                    func = key.split("#")[1]
+                    lineno = int(key.split("#")[-1])
+                    if func not in funcs_from_initialization:
+                        funcs_from_initialization.append(func)
+                info.append(len(funcs_from_initialization))
+                total_lines_executed_on_initialization.append(len(funcs_from_initialization))
+
+                funcs_by_failing_tcs = []
+                distinct_funcs_by_failing_tcs = []
+                distinct_lines_by_failing_tcs = []
+                for key in lines_executed_by_failing_tcs_dict:
+                    file_nm = key.split("#")[0]
+                    func = key.split("#")[1]
+                    lineno = int(key.split("#")[-1])
+                    if func not in funcs_by_failing_tcs:
+                        funcs_by_failing_tcs.append(func)
+                    
+                    if func not in funcs_from_initialization and func not in distinct_funcs_by_failing_tcs:
+                        distinct_funcs_by_failing_tcs.append(func)
+                    if key not in lines_from_initialization and key not in distinct_lines_by_failing_tcs:
+                        distinct_lines_by_failing_tcs.append(key)
+
+                info.append(len(funcs_by_failing_tcs))
+                info.append(len(distinct_funcs_by_failing_tcs))
+                info.append(len(distinct_lines_by_failing_tcs))
+
+                total_funcs_executed_by_failing_tcs.append(len(funcs_by_failing_tcs))
+                total_distinct_funcs_executed_by_failing_tcs.append(len(distinct_funcs_by_failing_tcs))
+                total_distinct_lines_executed_by_failing_tcs.append(len(distinct_lines_by_failing_tcs))
+
+                # 2024-08-05: Measure total # of files/functions of targetted files
+                pp_cov_line_list = get_postprocessed_coverage_csv_file_from_data(individual.dir_path)
+                funcs = []
+                files = []
+                for line in pp_cov_line_list[1:]:
+                    key = line["key"]
+                    file_nm = key.split("#")[0]
+                    func = key.split("#")[1]
+                    lineno = int(key.split("#")[-1])
+                    if func not in funcs:
+                        funcs.append(func)
+                    if file_nm not in files:
+                        files.append(file_nm)
+                total_funcs.append(len(funcs))
+                total_files.append(len(files))
+                info.append(len(funcs))
+                info.append(len(files))
+                
+                out_fp.write(",".join(map(str, info)) + "\n")
 
         print(f"\nTotal individual: {self.set_size}")
         print(f"Average # of failing TCs: {sum(failing_tcs) / self.set_size}")
@@ -171,3 +242,48 @@ class Analyze:
         print(f"Max # of passing TCs: {max(passing_tcs)}")
         print(f"Min # of failing TCs: {min(failing_tcs)}")
         print(f"Min # of passing TCs: {min(passing_tcs)}")
+        print(f"Average # of functions executed by failing TCs: {sum(total_funcs_executed_by_failing_tcs) / self.set_size}")
+        print(f"Average # of funcs: {sum(total_funcs) / self.set_size}")
+        print(f"Average # of files: {sum(total_files) / self.set_size}")
+        print(f"Average # lines executed on initialization: {sum(total_lines_executed_on_initialization) / self.set_size}")
+        print(f"Average # distinct funcs executed by failing TCs: {sum(total_distinct_funcs_executed_by_failing_tcs) / self.set_size}")
+        print(f"Average # distinct lines executed by failing TCs: {sum(total_distinct_lines_executed_by_failing_tcs) / self.set_size}")
+
+
+    def crashed_buggy_mutants(self,):
+        stat_dict = {}
+        self.individual_list = get_files_in_dir(self.set_dir)
+
+        for individual_file in self.individual_list:
+            filename = individual_file.name
+            info = filename.split("-")
+            version_name = info[0]
+            target_file = version_name.split(".")[0] + "." + version_name.split(".")[2]
+            stage = info[2]
+
+            if target_file not in stat_dict:
+                stat_dict[target_file] = {}
+            
+            with open(individual_file, "r") as fp:
+                lines = fp.readlines()
+                line_info = lines[0].strip().split(",")
+                line_name = line_info[0]
+                line_crash_type = line_info[1]
+                line_exit_num = line_info[2]
+
+                crash_id = f"{line_crash_type}:{line_exit_num}"
+                if crash_id not in stat_dict[target_file]:
+                    stat_dict[target_file][crash_id] = 0
+                stat_dict[target_file][crash_id] += 1
+        
+        txt_name = self.output_csv.name.split(".")[0] + ".txt"
+        self.output_txt = self.stat_dir / txt_name
+
+        with open(self.output_txt, "w") as fp:
+            for target in stat_dict:
+                fp.write(f"file: {target}\n")
+                print(f"file: {target}")
+                for crash_id in stat_dict[target]:
+                    fp.write(f"\tcrash id: {crash_id}, count: {stat_dict[target][crash_id]}\n")
+                    print(f"\tcrash id: {crash_id}, count: {stat_dict[target][crash_id]}")
+                

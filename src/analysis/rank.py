@@ -17,7 +17,7 @@ class Rank(Analyze):
     # +++++++++++++++++++++++
     # ++++++ Rank MBFL ++++++
     # +++++++++++++++++++++++
-    def rank_mbfl_features(self):
+    def rank_mbfl_features(self, trialName=None):
         self.max_mutants = self.experiment.experiment_config["max_mutants"]
         self.mutant_keys = get_mutant_keys(self.max_mutants)
 
@@ -40,7 +40,7 @@ class Rank(Analyze):
 
             assert buggy_line_key in lines_executed_by_failing_tcs, f"buggy_line_key {buggy_line_key} not in lines_executed_by_failing_tcs"
 
-            mutation_testing_result_data = get_mutation_testing_results_form_data(individual.dir_path, buggy_line_key)
+            mutation_testing_result_data = get_mutation_testing_results_form_data(individual.dir_path, buggy_line_key, trialName)
 
             ranks = {}
             for mbfl_formula in mbfl_formulas:

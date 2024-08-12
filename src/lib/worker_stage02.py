@@ -30,6 +30,11 @@ class WorkerStage02(Worker):
         self.usable_buggy_versions_dir = out_dir / f"{self.name}" / "usable_buggy_versions"
         self.usable_buggy_versions_dir.mkdir(exist_ok=True, parents=True)
 
+        self.crashed_buggy_mutants_dir = out_dir / f"{self.name}" / "crashed_buggy_mutants"
+        self.crashed_buggy_mutants_dir.mkdir(exist_ok=True, parents=True)
+
+        self.mutant_name = self.version_dir.name
+
     def run(self):
         print(f"Testing version {self.version_dir.name} on {self.machine}::{self.core}")
 
@@ -43,7 +48,7 @@ class WorkerStage02(Worker):
 
         # 4. Test version
         self.test_version()
-        # self.clean_build()
+        self.clean_build()
     
     def test_version(self):
         
@@ -70,6 +75,13 @@ class WorkerStage02(Worker):
             if res == 0:
                 print(f"Test case {tc_script_name} passed")
                 self.apply_patch(self.target_code_file_path, self.buggy_code_file, patch_file, True)
+                # TODO: write crash code of mutant to directory
+                crash_mutant_file = self.crashed_buggy_mutants_dir / f"{self.mutant_name}-nonDetP2F-s2"
+                with open(crash_mutant_file, "w") as fp:
+                    error_str = "not-defined-nonDetP2F"
+                    if res in crash_codes_dict:
+                        error_str = crash_codes_dict[res]
+                    fp.write(f"{self.mutant_name},{error_str},{res}")
                 return
             
             # 4-3 Remove untarged files for coverage
@@ -90,10 +102,24 @@ class WorkerStage02(Worker):
             if buggy_line_covered == 1:
                 print(f"Buggy line {self.buggy_lineno} is NOT covered by test case {tc_script_name}")
                 self.apply_patch(self.target_code_file_path, self.buggy_code_file, patch_file, True)
+                # TODO: write crash code of mutant to directory
+                crash_mutant_file = self.crashed_buggy_mutants_dir / f"{self.mutant_name}-notCov-s2"
+                with open(crash_mutant_file, "w") as fp:
+                    error_str = "not-defined-notCov"
+                    if res in crash_codes_dict:
+                        error_str = crash_codes_dict[res]
+                    fp.write(f"{self.mutant_name},{error_str},{res}")
                 return
             if buggy_line_covered == -2:
                 print(f"File {self.target_code_file_path} is not in the coverage")
                 self.apply_patch(self.target_code_file_path, self.buggy_code_file, patch_file, True)
+                # TODO: write crash code of mutant to directory
+                crash_mutant_file = self.crashed_buggy_mutants_dir / f"{self.mutant_name}-covFileNon-s2"
+                with open(crash_mutant_file, "w") as fp:
+                    error_str = "not-defined-covFileNon"
+                    if res in crash_codes_dict:
+                        error_str = crash_codes_dict[res]
+                    fp.write(f"{self.mutant_name},{error_str},{res}")
                 return
             
             print(f"Buggy line {self.buggy_lineno} is covered by test case {tc_script_name}")

@@ -1,6 +1,9 @@
 import subprocess as sp
 import random
 import csv
+import time
+import shutil
+import filecmp
 
 from lib.utils import *
 from lib.worker_base import Worker
@@ -8,10 +11,13 @@ from lib.susp_score_formula import *
 
 class WorkerStage04(Worker):
     def __init__(
-            self, subject_name, machine, core, version_name, verbose=False):
-        super().__init__(subject_name, "stage04", "extracting_mbfl_features", machine, core, verbose)
+            self, subject_name, machine, core, version_name, trial, verbose=False, past_trials=None):
+        self.trial = trial
+        self.past_trials = past_trials
+        self.stage_name = f"stage04-{trial}" # 2024-08-07 add-mbfl
+        super().__init__(subject_name, self.stage_name, "extracting_mbfl_features", machine, core, verbose)
         
-        self.assigned_works_dir = self.core_dir / f"stage04-assigned_works"
+        self.assigned_works_dir = self.core_dir / f"{self.stage_name}-assigned_works" # 2024-08-07 add-mbfl
         self.version_name = version_name
 
         self.version_dir = self.assigned_works_dir / version_name
@@ -36,7 +42,7 @@ class WorkerStage04(Worker):
         self.mbfl_features_dir = out_dir / f"{self.name}" / "mbfl_features"
         self.mbfl_features_dir.mkdir(exist_ok=True, parents=True)
 
-        self.mbfl_generated_mutants_dir = out_dir / f"{self.name}" / "generated_mutants-mbfl"
+        self.mbfl_generated_mutants_dir = out_dir / f"{self.name}" / f"generated_mutants-mbfl-{self.trial}"
         self.mbfl_generated_mutants_dir.mkdir(exist_ok=True, parents=True)
 
         self.version_mutant_zip = self.mbfl_generated_mutants_dir / f"{self.version_name}.zip"
@@ -45,12 +51,26 @@ class WorkerStage04(Worker):
         self.postprocessed_cov_file = self.version_dir / "coverage_info" / "postprocessed_coverage.csv"
         assert self.postprocessed_cov_file.exists(), f"Postprocessed coverage file {self.postprocessed_cov_file} does not exist"
 
+        self.mutant2tcs_results_dir = self.version_dir / f"mutant2tcs_results-{self.trial}"
+        self.mutant2tcs_results_dir.mkdir(exist_ok=True, parents=True)
+
+        self.selected_mutant_filename = f"selected_mutants-{self.trial}.csv"
+        self.mutation_testing_results_filename = f"mutation_testing_results-{self.trial}.csv"
+        self.mbfl_features_filename = f"mbfl_features-{self.trial}.csv" # 2024-08-07 add-mbfl
+
     def run(self):
         print(f"Testing version {self.version_dir.name} on {self.machine}::{self.core}")
 
-        if self.number_of_lines_to_mutation_test > 0:
+        self.selected_mutants_file = self.version_dir / self.selected_mutant_filename
+        if self.number_of_lines_to_mutation_test > 0 and not self.selected_mutants_file.exists() and self.past_trials == None:
             self.lines_executed_by_failing_tcs = self.reduced_lines_executed_by_failing_tcs()
         # self.print_lines_executed_by_failing_tcs()
+        elif self.past_trials != None: # 2024-08-07 add-mbfl
+            self.past_selected_mutants = self.get_past_selected_mutants()
+            # print(json.dumps(self.past_selected_mutants, indent=2))
+            self.print_lines_executed_by_failing_tcs()
+            self.lines_executed_by_failing_tcs = self.reduced_lines_executed_by_failing_tcs_based_on_past_trial()
+            self.print_lines_executed_by_failing_tcs()
 
         # 1. Generate mutants
         if not self.version_mutant_zip.exists() and not self.version_mutant_dir.exists():
@@ -59,10 +79,23 @@ class WorkerStage04(Worker):
                 print(f"Failed to generate mutants on {self.version_dir.name}")
                 return
         elif self.version_mutant_zip.exists() and not self.version_mutant_dir.exists():
-            self.unzip_mutants()
+            self.unzip_mutants(self.version_mutant_zip, self.mbfl_generated_mutants_dir, self.version_mutant_dir)
         elif not self.version_mutant_zip.exists() and self.version_mutant_dir.exists():
             print(f"Mutants are already generated on {self.version_dir.name}")
         self.targetfile_and_mutantdir = self.initialize_mutants_dir()
+
+        # unzip past mutation files
+        if self.past_trials != None: # 2024-08-07 add-mbfl
+            for past_trial_name in self.past_trials:
+                past_mbfl_generated_mutants_dir = out_dir / f"{self.name}" / f"generated_mutants-mbfl-{past_trial_name}"
+                assert past_mbfl_generated_mutants_dir.exists(), f"{past_mbfl_generated_mutants_dir} doesn't exists"
+
+                past_version_mutant_zip = past_mbfl_generated_mutants_dir / f"{self.version_name}.zip"
+                past_version_mutant_dir = past_mbfl_generated_mutants_dir / self.version_name
+                if past_version_mutant_zip.exists() and not past_version_mutant_dir.exists():
+                    self.unzip_mutants(past_version_mutant_zip, past_mbfl_generated_mutants_dir, past_version_mutant_dir)
+                elif not past_version_mutant_zip.exists() and past_version_mutant_dir.exists():
+                    print(f"Mutants are already generated on {past_version_mutant_dir.name}")
         
         # 2. Reset subject repo
         self.clean_build()
@@ -74,18 +107,30 @@ class WorkerStage04(Worker):
 
         # 2. Select mutants
         # format of selected_fileline2mutants: {filename: {lineno: [[TC1.sh, TC2.sh, ...], [mutant_line_info1, mutant_line_info2, ...]]}}
-        self.selected_fileline2mutants = self.select_mutants()
-        self.print_selected_mutants_stats()
+        if not self.selected_mutants_file.exists() and self.past_trials == None: # 2024-08-07 add-mbfl
+            self.selected_fileline2mutants = self.select_mutants()
+            self.print_selected_mutants_stats()
 
-        # !!!!!!!==============> THIS PART IS REMOVED BECUASE WE REDUCED LINES AT THE BEGINNING
-        # if self.number_of_lines_to_mutation_test > 0:
-        #     self.selected_fileline2mutants = self.reduced_selected_mutants()
-        #     self.print_selected_mutants_stats()
-        
-        # 3. Save selected mutants information
-        self.save_selected_mutants_info()
+            # !!!!!!!==============> THIS PART IS REMOVED BECUASE WE REDUCED LINES AT THE BEGINNING
+            # if self.number_of_lines_to_mutation_test > 0:
+            #     self.selected_fileline2mutants = self.reduced_selected_mutants()
+            #     self.print_selected_mutants_stats()
+            
+            # 3. Save selected mutants information
+            self.save_selected_mutants_info()
+        elif not self.selected_mutants_file.exists() and self.past_trials != None: # 2024-08-07 add-mbfl
+            self.selected_fileline2mutants = self.select_mutants_comparing_to_past_trials()
+            self.print_selected_mutants_stats()
 
-        # # 4. Get selected mutants
+            # !!!!!!!==============> THIS PART IS REMOVED BECUASE WE REDUCED LINES AT THE BEGINNING
+            # if self.number_of_lines_to_mutation_test > 0:
+            #     self.selected_fileline2mutants = self.reduced_selected_mutants()
+            #     self.print_selected_mutants_stats()
+            
+            # 3. Save selected mutants information
+            self.save_selected_mutants_info()
+
+        # 4. Get selected mutants
         self.selected_mutants = self.get_selected_mutants()
         self.print_selected_mutants_info()
 
@@ -98,11 +143,40 @@ class WorkerStage04(Worker):
         # 6. process to csv
         self.process2csv(self.mbfl_features)
 
-        # 8. Zip mutant dir
-        self.zip_mutants()
+        # # 8. Zip mutant dir
+        self.zip_mutants(self.version_mutant_zip, self.mbfl_generated_mutants_dir, self.version_mutant_dir)
+        # unzip past mutation files
+        if self.past_trials != None: # 2024-08-07 add-mbfl
+            for past_trial_name in self.past_trials:
+                past_mbfl_generated_mutants_dir = out_dir / f"{self.name}" / f"generated_mutants-mbfl-{past_trial_name}"
+                assert past_mbfl_generated_mutants_dir.exists(), f"{past_mbfl_generated_mutants_dir} doesn't exists"
+
+                past_version_mutant_zip = past_mbfl_generated_mutants_dir / f"{self.version_name}.zip"
+                past_version_mutant_dir = past_mbfl_generated_mutants_dir / self.version_name
+                self.zip_mutants(past_version_mutant_zip, past_mbfl_generated_mutants_dir, past_version_mutant_dir)
 
         # 7. Save version
         self.save_version(self.version_dir, self.mbfl_features_dir)
+
+    def reduced_lines_executed_by_failing_tcs_based_on_past_trial(self): # 2024-08-07 add-mbfl
+        reduced_dict = {}
+        for filename, fileline2tcs in self.lines_executed_by_failing_tcs.items():
+            filename_last = filename.split("/")[-1]
+
+            # file is in past selected file
+            if filename_last in self.past_selected_mutants.keys():
+                if filename not in reduced_dict:
+                    reduced_dict[filename] = {}
+                
+                for line, tcs in fileline2tcs.items():
+                    # lineno is in past selected line
+                    if line in self.past_selected_mutants[filename_last].keys():
+                        if line not in reduced_dict[filename]:
+                            reduced_dict[filename][line] = tcs
+        for filename in self.lines_executed_by_failing_tcs.keys():
+            if filename not in reduced_dict:
+                reduced_dict[filename] = {}
+        return reduced_dict
     
     def reduced_lines_executed_by_failing_tcs(self):
         buggy_code_filename = self.target_code_file_path.name
@@ -142,23 +216,23 @@ class WorkerStage04(Worker):
         return reduced_dict
         
     
-    def zip_mutants(self):
-        if self.version_mutant_zip.exists():
+    def zip_mutants(self, version_mutant_zip, mbfl_generated_mutants_dir, version_mutant_dir):
+        if version_mutant_zip.exists():
             # remove the mutant dir
-            sp.check_call(["rm", "-rf", self.version_mutant_dir], stdout=sp.PIPE, stderr=sp.PIPE)
+            sp.check_call(["rm", "-rf", version_mutant_dir], stdout=sp.PIPE, stderr=sp.PIPE)
             print(f">> Removed mutants on {self.version_dir.name}")
         else:
             # zip the mutant dir
-            cmd = ["zip", "-r", "-q", self.version_mutant_zip.name, self.version_mutant_dir.name]
+            cmd = ["zip", "-r", "-q", version_mutant_zip.name, version_mutant_dir.name]
             print_command(cmd, self.verbose)
-            sp.check_call(cmd, stdout=sp.PIPE, stderr=sp.PIPE, cwd=self.mbfl_generated_mutants_dir)
+            sp.check_call(cmd, stdout=sp.PIPE, stderr=sp.PIPE, cwd=mbfl_generated_mutants_dir)
             print(f">> Zipped mutants on {self.version_dir.name}")
 
-            sp.check_call(["rm", "-rf", self.version_mutant_dir], stdout=sp.PIPE, stderr=sp.PIPE)
+            sp.check_call(["rm", "-rf", version_mutant_dir], stdout=sp.PIPE, stderr=sp.PIPE)
             print(f">> Removed mutants on {self.version_dir.name}")
     
     def get_selected_mutants(self):
-        self.selected_mutants_file = self.version_dir / "selected_mutants.csv"
+        self.selected_mutants_file = self.version_dir / self.selected_mutant_filename
         assert self.selected_mutants_file.exists(), f"Selected mutants file {self.selected_mutants_file} does not exist"
 
         selected_mutants = {}
@@ -189,6 +263,43 @@ class WorkerStage04(Worker):
                 })
 
         return selected_mutants
+    
+    def get_past_selected_mutants(self): # 2024-08-07 add-mbfl
+        cnt = 0
+        selected_mutants = {}
+        for past_trial_name in self.past_trials:
+            past_selected_mutants_file = self.version_dir / f"selected_mutants-{past_trial_name}.csv"
+            assert past_selected_mutants_file.exists(), f"{past_selected_mutants_file} doesn't exist"
+
+            with open(past_selected_mutants_file, "r") as f:
+                lines = f.readlines()
+                mutants = lines[2:]
+                for mutant_line in mutants:
+                    mutant_line = mutant_line.strip()
+                    info = mutant_line.split(",")
+
+                    target_filename = info[0]
+                    mutant_id = info[1]
+                    lineno = info[2]
+                    failing_tcs_at_line = info[3]
+                    mutant_name = info[4]
+
+                    if target_filename not in selected_mutants:
+                        selected_mutants[target_filename] = {}
+                    
+                    if lineno not in selected_mutants[target_filename]:
+                        cnt += 1
+                        selected_mutants[target_filename][lineno] = []
+                    
+                    selected_mutants[target_filename][lineno].append({
+                        'mutant_id': mutant_id,
+                        '#_failing_tcs_@line': failing_tcs_at_line,
+                        'mutant_name': mutant_name,
+                        "trial_name": past_trial_name
+                    })
+        print(f"total line from past {cnt}")
+        return selected_mutants
+
 
 
     def measure_mbfl_features(self):
@@ -201,7 +312,7 @@ class WorkerStage04(Worker):
         return mbfl_features
     
     def process2csv(self, mbfl_features):
-        csv_file = self.version_dir / 'mbfl_features.csv'
+        csv_file = self.version_dir / self.mbfl_features_filename
 
         mutant_key_default = {}
         for i in range(1, self.max_mutants+1):
@@ -246,6 +357,9 @@ class WorkerStage04(Worker):
                 else:
                     default['bug'] = buggy_stat
                     writer.writerow({'key': line, **default})
+        
+        final_file = csv_file.parent / "mbfl_features.csv"
+        shutil.copy(csv_file, final_file) # 2024-08-07 add-mbfl
     
     def measure_mbfl_scores(self, perfileline_features, total_p2f, total_f2p):
         mbfl_features = {}
@@ -307,7 +421,7 @@ class WorkerStage04(Worker):
         return mbfl_features
     
     def get_perfileline_features(self):
-        self.mutation_testing_results = self.version_dir / "mutation_testing_results.csv"
+        self.mutation_testing_results = self.version_dir / self.mutation_testing_results_filename
         assert self.mutation_testing_results.exists(), f"Mutation testing result file {self.mutation_testing_results} does not exist"
 
         perfileline_features = {}
@@ -366,7 +480,7 @@ class WorkerStage04(Worker):
             print(f">> # of {type} test cases: {len(tcs)}")
         
         # 1. Initiate version results csv file
-        self.mutation_testing_results = self.version_dir / "mutation_testing_results.csv"
+        self.mutation_testing_results = self.version_dir / self.mutation_testing_results_filename
         self.mutation_testing_results_fp = self.mutation_testing_results.open("w")
         self.mutation_testing_results_fp.write("target_file,mutant_id,lineno,#_failing_tcs_@line,Mutant Filename,build_result,p2f,p2p,f2p,f2f,p2f_tcs,p2p_tcs,f2p_tcs,f2f_tcs\n")
 
@@ -425,25 +539,46 @@ class WorkerStage04(Worker):
         build_result = True
         tc_outcome = {'p2f': 0, 'p2p': 0, 'f2p': 0, 'f2f': 0}
 
+        mutant2tcs_results_file = self.mutant2tcs_results_dir / f"{mutant_id}.csv"  # 2024-08-05 time for each test on each mutant
+        mutant2tcs_results_fp = open(mutant2tcs_results_file, "w")
+        mutant2tcs_results_fp.write("tc_name,outcome,return_code,return_code_str,time_taken\n")
         # 4. Run test cases
         for type, tcs in self.utilized_testcases.items():
             for tc_script_name in tcs:
+                tc_start_time = time.time()
+                outcome = ""
+                
                 tc_name = tc_script_name.split(".")[0]
                 res = self.run_test_case(tc_script_name)
                 if res == 0:
                     if type == "failing":
+                        outcome = "f2p"
                         tc_outcome["f2p"] += 1
                         tc_outcome_detailed["f2p"].append(tc_name)
                     elif type == "passing":
+                        outcome = "p2p"
                         tc_outcome["p2p"] += 1
                         tc_outcome_detailed["p2p"].append(tc_name)
                 else:
                     if type == "failing":
+                        outcome = "f2f"
                         tc_outcome["f2f"] += 1
                         tc_outcome_detailed["f2f"].append(tc_name)
                     elif type == "passing":
+                        outcome = "p2f"
                         tc_outcome["p2f"] += 1
                         tc_outcome_detailed["p2f"].append(tc_name)
+                
+                tc_time_duration = time.time() - tc_start_time
+                
+                error_str = "code-not-found-in-listed-crash-codes"
+                if res in crash_codes_dict:
+                    error_str = crash_codes_dict[res]
+                if res == 0:
+                    error_str = "pass"
+                content = f"{tc_script_name},{outcome},{res},{error_str},{tc_time_duration}\n"
+                mutant2tcs_results_fp.write(content)
+        mutant2tcs_results_fp.close()
         
         # 5. Apply patch reverse
         self.apply_patch(target_file_path, mutant_file, patch_file, True)
@@ -468,7 +603,7 @@ class WorkerStage04(Worker):
                 return self.core_dir / file
     
     def save_selected_mutants_info(self):
-        self.selected_mutants_file = self.version_dir / "selected_mutants.csv"
+        self.selected_mutants_file = self.version_dir / self.selected_mutant_filename
         mutant_idx = 1
         with open(self.selected_mutants_file, "w") as f:
             f.write(",,,,,,Before Mutation,,,,,After Mutation\n")
@@ -587,6 +722,91 @@ class WorkerStage04(Worker):
                         tot_mutant_cnt += 1
 
         return files2mutants
+    
+    def select_mutants_comparing_to_past_trials(self): # 2024-08-07 add-mbfl
+        files2mutants = {}
+        tot_mutant_cnt = 0
+
+        for target_file, fileline2tcs in self.lines_executed_by_failing_tcs.items():
+            file_tot_mutant_cnt = 0
+
+            filename = target_file.split("/")[-1]
+            # initiate dictionary for selected mutants on file-line basis
+            # {filename: {lineno: [[TC1.sh, TC2.sh, ...], [mutant_line_info1, mutant_line_info2, ...]]}}
+            files2mutants[filename] = {}
+            for lineno, tcs in fileline2tcs.items():
+                files2mutants[filename][lineno] = [tcs, []]
+            
+            # get mutants for each line
+            file_mutants_dir = self.version_mutant_dir / f"{self.name}-{filename}"
+            assert file_mutants_dir.exists(), f"File mutants directory {file_mutants_dir} does not exist"
+            
+            code_name = target_file.split(".")[0]
+            mut_db_csv_name = f"{code_name}_mut_db.csv"
+            mut_db_csv = file_mutants_dir / mut_db_csv_name
+            # this is when failing tcs doesn't execute any line in the target file
+            if not mut_db_csv.exists():
+                print(f">> Mutants database csv {mut_db_csv.name} does not exist (no mutants)")
+                continue
+
+            # print(f">> Reading mutants from {mut_db_csv.name}")
+            with mut_db_csv.open() as f:
+                lines = f.readlines()
+                mutants = lines[2:]
+                random.shuffle(mutants)
+                # print(f"Total mutants: {len(mutants)}")
+                for mutant_line in mutants:
+                    mutant_line = mutant_line.strip()
+
+                    # 0 Mutant Filename
+                    # 1 Mutation Operator
+                    # 2 Start Line#
+                    # 3 Start Col#
+                    # 4 End Line#
+                    # 5 End Col#
+                    # 6 Target Token
+                    # 7 Start Line#
+                    # 8 Start Col#
+                    # 9 End Line#
+                    # 10 End Col#
+                    # 11 Mutated Token
+                    # 12 Extra Info
+                    info = mutant_line.split(',')
+                    mutant_filename = info[0]
+                    mutant_lineno = info[2]
+
+                    mutant_file = file_mutants_dir / mutant_filename
+                    assert mutant_file.exists(), f"{mutant_file} doesn't exists"
+                    final_result = False
+                    for mutant in self.past_selected_mutants[filename][mutant_lineno]:
+                        cmp_mutant_id = mutant["mutant_id"]
+                        cmp_n_failing_tcs_line = mutant["#_failing_tcs_@line"]
+                        cmp_mutant_name = mutant["mutant_name"]
+                        cmp_trial_name = mutant["trial_name"]
+
+                        cmp_mbfl_generated_mutants_dir = out_dir / f"{self.name}" / f"generated_mutants-mbfl-{cmp_trial_name}"
+                        assert cmp_mbfl_generated_mutants_dir.exists(), f"{cmp_mbfl_generated_mutants_dir} doesn't exists"
+                        cmp_version_mutant_dir = cmp_mbfl_generated_mutants_dir / self.version_name
+                        cmp_file_mutants_dir = cmp_version_mutant_dir / f"{self.name}-{filename}"
+                        assert cmp_file_mutants_dir.exists(), f"File mutants directory {cmp_file_mutants_dir} does not exist"
+
+                        cmp_mutant_file = cmp_file_mutants_dir / cmp_mutant_name
+                        assert cmp_mutant_file.exists(), f"{cmp_mutant_file} doesn't exists"
+
+                        res = filecmp.cmp(mutant_file, cmp_mutant_file)
+                        print(res, mutant_file, cmp_mutant_file)
+                        if res == True:
+                            final_result = True
+                            break
+                    
+                    if res == False:
+                        # select mutant
+                        if len(files2mutants[filename][mutant_lineno][1]) < self.max_mutants:
+                            files2mutants[filename][mutant_lineno][1].append(mutant_line)
+                            file_tot_mutant_cnt += 1
+                            tot_mutant_cnt += 1
+
+        return files2mutants
 
     def generate_mutants_start(self):
         self.targetfile_and_mutantdir = self.initialize_mutants_dir()
@@ -634,12 +854,17 @@ class WorkerStage04(Worker):
         unused_ops = ",".join(not_using_operators_in_mbfl)
         executed_lines = ",".join(lines)
 
+        ll = self.max_mutants
+        n = 5
+        if self.past_trials != None:
+            n = self.max_mutants * (len(self.past_trials)+1)
+            ll = n
         cmd = [
             self.musicup_exe,
             str(target_file),
             "-o", str(mutant_dir),
-            "-ll", str(self.max_mutants),
-            "-l", "5",
+            "-ll", str(ll), # limit on line
+            "-l", str(n), # limie on mutatin operator
             "-d", unused_ops,
             "-i", executed_lines,
             "-p", str(compile_command)
@@ -666,12 +891,12 @@ class WorkerStage04(Worker):
             targetfile_and_mutantdir.append((target_file_path, single_file_mutant_dir))
         return targetfile_and_mutantdir
     
-    def unzip_mutants(self):
-        print_command(["unzip", "-q", self.version_mutant_zip, "-d", self.mbfl_generated_mutants_dir], self.verbose)
-        sp.check_call(["unzip", "-q", self.version_mutant_zip, "-d", self.mbfl_generated_mutants_dir])
+    def unzip_mutants(self, version_mutant_zip, mbfl_generated_mutants_dir, version_mutant_dir): # 2024-08-07 add-mbfl
+        print_command(["unzip", "-q", version_mutant_zip, "-d", mbfl_generated_mutants_dir], self.verbose)
+        sp.check_call(["unzip", "-q", version_mutant_zip, "-d", mbfl_generated_mutants_dir])
 
-        print(f">> Unzipped mutants are saved at {self.version_mutant_dir.name}")
-        assert self.version_mutant_dir.exists(), f"Mutant directory {self.version_mutant_dir} does not exist"
+        print(f">> Unzipped mutants are saved at {version_mutant_dir.name}")
+        assert version_mutant_dir.exists(), f"Mutant directory {version_mutant_dir} does not exist"
     
     def print_generated_mutants_stats(self):
         total_num_mutants = 0
@@ -715,10 +940,12 @@ class WorkerStage04(Worker):
 
     def print_selected_mutants_info(self):
         total_num_selected_mutants = 0
+        total_line = 0
         selected_mutants_info = {}
         for filename, lineno_mutants in self.selected_mutants.items():
             mutant_cnt = 0
             for lineno, mutants in lineno_mutants.items():
+                total_line += 1
                 mutant_cnt += len(mutants)
             total_num_selected_mutants += mutant_cnt
             selected_mutants_info[filename] = mutant_cnt
@@ -727,8 +954,12 @@ class WorkerStage04(Worker):
         print(f">> Selected mutants per file (after saving selected mutants):")
         for filename, num_mutants in selected_mutants_info.items():
             print(f"\t >> {filename}: {num_mutants} mutants")
+        print(f">>> total line: {total_line}")
     
     def print_lines_executed_by_failing_tcs(self):
         print(f">> Lines executed by failing test cases:")
+        total_cnt = 0
         for filename, fileline2tcs in self.lines_executed_by_failing_tcs.items():
             print(f"\t >> {filename}: {len(fileline2tcs)} lines")
+            total_cnt += len(fileline2tcs)
+        print(f">>> total {total_cnt}")

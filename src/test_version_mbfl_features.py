@@ -10,7 +10,7 @@ def main():
 
     worker = WorkerStage04(
         args.subject, args.machine, args.core,
-        args.version, args.verbose
+        args.version, args.trial, args.verbose, args.past_trials
     )
     worker.run()
 
@@ -20,6 +20,8 @@ def make_parser():
     parser.add_argument("--machine", type=str, help="Machine name", required=True)
     parser.add_argument("--core", type=str, help="Core name", required=True)
     parser.add_argument("--version", type=str, help="Version name", required=True)
+    parser.add_argument("--trial", type=str, help="Trial name", required=True) # 2024-08-07 add-mbfl
+    parser.add_argument("--past-trials", type=str, nargs="+", help="list trial name from past to increment mbfl results")
     parser.add_argument("--verbose", action="store_true", help="Verbose mode")
     return parser
 

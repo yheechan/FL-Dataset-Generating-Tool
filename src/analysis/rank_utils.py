@@ -32,8 +32,11 @@ def get_mutant_keys(max_mutants):
         mutant_keys.append(f'm{i}:p2f')
     return mutant_keys
 
-def get_mutation_testing_results_form_data(version_dir, buggy_line_key):
-    mutation_testing_results_csv = version_dir / 'mutation_testing_results.csv'
+def get_mutation_testing_results_form_data(version_dir, buggy_line_key, trialName=None):
+    if trialName == None:
+        mutation_testing_results_csv = version_dir / 'mutation_testing_results.csv'
+    else:
+        mutation_testing_results_csv = version_dir / f'mutation_testing_results-{trialName}.csv'
 
     buggy_target_file = buggy_line_key.split('#')[0].split('/')[-1]
     buggy_lineno = buggy_line_key.split('#')[-1]

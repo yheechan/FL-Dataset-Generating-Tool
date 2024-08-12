@@ -134,3 +134,12 @@ def write_bug_version_mutation_info(
                 f"{bug_id},{target_file_name},{line}\n"
             )
 
+def copy_generated_mutants(
+    bug_id, zip_file, root_dest_dir
+):
+    generated_mutants_for_mbfl_per_bug = root_dest_dir / "generated_mutants_for_mbfl_per_bug"
+    if not generated_mutants_for_mbfl_per_bug.exists():
+        generated_mutants_for_mbfl_per_bug.mkdir(parents=True, exist_ok=True)
+    
+    dest_file = generated_mutants_for_mbfl_per_bug / bug_id
+    sp.check_call(f"unzip -q {zip_file} -d {dest_file}", shell=True)

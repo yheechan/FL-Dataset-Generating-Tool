@@ -27,6 +27,9 @@ class PrerequisitePreparation(Subject):
 
         self.target_set_dir = out_dir / self.name / target_set_name
         assert self.target_set_dir.exists(), "Origin set directory does not exist"
+
+        self.allPassisCCTdir = out_dir / f"{self.name}" / "allPassisCCT"
+        self.allPassisCCTdir.mkdir(exist_ok=True, parents=True)
     
     def run(self):
         # 1. Read configurations and initialize working directory: self.work
@@ -71,6 +74,7 @@ class PrerequisitePreparation(Subject):
         
         print(f">> Finished testing all versions now retrieving versions with its prerequisite data")
         self.fileManager.collect_data_remote("prerequisite_data", self.prerequisite_data_dir, self.versions_assignments)
+        self.fileManager.collect_data_remote("allPassisCCT", self.allPassisCCTdir, self.versions_assignments)
     
     def test_single_machine_core_remote(self, machine, core, homedir, versions):
         print(f"Testing on {machine}::{core}")

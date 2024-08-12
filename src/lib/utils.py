@@ -36,7 +36,8 @@ not_using_operators_in_buggy_mutant_collection = [
     "IndVarLogNeg", "IndVarIncDec", "IndVarRepReq", "IndVarRepCon", 
     "IndVarRepPar", "IndVarRepGlo", "IndVarRepExt", "IndVarRepLoc",
     "SSDL", "CovAllNod", "CovAllEdg", "STRP", "STRI", "VDTR",
-    "RetStaDel", "FunCalDel", "SMVB"
+    "RetStaDel", "FunCalDel", "SMVB",
+    "SMTC" # This makes music to see buggy line as line at "{"
 ]
 
 not_using_operators_in_mbfl = [
@@ -64,6 +65,22 @@ crash_codes = [
     129,  # SIGHUP
 ]
 
+crash_codes_dict = {
+    132: "SIGILL",
+    133: "SIGTRAP",
+    134: "SIGABRT",
+    135: "SIGBUS",
+    136: "SIGFPE",
+    137: "SIGKILL",
+    138: "SIGBUS",
+    139: "segfault",
+    140: "SIGPIPE",
+    141: "SIGALRM",
+    124: "timeout",
+    143: "SIGTERM",
+    129: "SIGHUP"
+}
+
 def sort_testcase_script_name(tc_script):
     tc_filename = tc_script.split('.')[0]
     return int(tc_filename[2:])
@@ -73,6 +90,8 @@ def sort_bug_id(bug_id):
 
 def get_dirs_in_dir(directory):
     return [d for d in directory.iterdir() if d.is_dir()]
+def get_files_in_dir(directory):
+    return [f for f in directory.iterdir() if not f.is_dir()]
 
 def print_command(command, verbose):
     # print command if verbose is true (with data and time)
@@ -196,6 +215,28 @@ def get_lines_executed_by_failing_tcs_from_data(version_dir):
         lines_executed_by_failing_tcs = json.load(f)
     
     return lines_executed_by_failing_tcs
+
+def get_lines_executed_on_initialization(version_dir):
+    get_lines_executed_by_failing_tcs_file = version_dir / "coverage_info/lines_executed_at_initialization.txt"
+    assert get_lines_executed_by_failing_tcs_file.exists(), f"lines_executed_at_initialization.txt does not exist in {version_dir}"
+
+    with open(get_lines_executed_by_failing_tcs_file, "r") as f:
+        lines = f.readlines()
+        lines = [line.strip() for line in lines]
+    
+    return lines
+
+def get_postprocessed_coverage_csv_file_from_data(version_dir):
+    pp_cov_csv_file = version_dir / "coverage_info/postprocessed_coverage.csv"
+    assert pp_cov_csv_file.exists(), f"{pp_cov_csv_file} doesn't exists"
+
+    lines = []
+    with open(pp_cov_csv_file, "r") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            lines.append(row)
+    
+    return lines
 
 def get_buggy_line_key_from_data(version_dir):
     buggy_line_key_file = version_dir / "buggy_line_key.txt"

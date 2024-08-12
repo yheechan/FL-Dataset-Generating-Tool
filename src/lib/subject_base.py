@@ -45,8 +45,9 @@ class Subject:
     
     def initialize_working_directory(self):
         # Copy self.subject_dir content to work_dir
-        print_command(["cp", "-r", self.subject_dir, self.work], self.verbose)
-        sp.check_call(["cp", "-r", self.subject_dir, self.work])
+        source = self.subject_dir.__str__() + "/."
+        print_command(["cp", "-r", source, self.work], self.verbose)
+        sp.check_call(["cp", "-r", source, self.work])
         
         configure_no_cov_file = self.work / "configure_no_cov_script.sh"
         configure_yes_cov_file = self.work / "configure_yes_cov_script.sh"
@@ -126,7 +127,7 @@ class Subject:
         sp.check_call(
             ["bash", self.build_file],
             cwd=self.build_file_position,
-            stderr=sp.PIPE, stdout=sp.PIPE    
+            stderr=sp.PIPE, stdout=sp.PIPE
         )
     
     def clean_build(self):

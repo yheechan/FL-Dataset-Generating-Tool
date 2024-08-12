@@ -12,7 +12,7 @@ def main():
     subject = Rank(args.subject, args.set_name, args.output_csv)
 
     if args.mbfl_features:
-        subject.rank_mbfl_features()
+        subject.rank_mbfl_features(args.trial)
     elif args.sbfl_features:
         subject.rank_sbfl_features()
 
@@ -23,6 +23,7 @@ def make_parser():
     parser.add_argument("--output-csv", type=str, help="Output csv name", required=True)
     
     parser.add_argument("--mbfl-features", action="store_true", help="Get rank of MBFL features")
+    parser.add_argument("--trial", type=str, help="Trial name")
     parser.add_argument("--sbfl-features", action="store_true", help="Get rank of SBFL features")
     return parser
 

@@ -23,16 +23,26 @@ class UsableVersionSelection(Subject):
         assert self.generated_mutants_dir.exists(), "Generated mutants directory does not exist"
         self.buggy_mutants_dir = out_dir / self.name / "buggy_mutants"
         assert self.buggy_mutants_dir.exists(), "Buggy mutants directory does not exist"
+
+        self.crashed_buggy_mutants_dir = out_dir / f"{self.name}" / "crashed_buggy_mutants"
+        self.crashed_buggy_mutants_dir.mkdir(exist_ok=True, parents=True)
     
     def run(self):
         # 1. Read configurations and initialize working directory: self.work
         self.initialize_working_directory()
         
-        # 2. Select initial buggy versions at random
-        self.select_initial_buggy_versions()
-
-        # 3. Get versions to test
         self.versions_list = get_dirs_in_dir(self.initial_selected_dir)
+        if len(self.versions_list) != 0:
+            self.redoing = True
+        else:
+            self.redoing = False
+        
+        if self.redoing == False:
+            # 2. Select initial buggy versions at random
+            self.select_initial_buggy_versions()
+
+            # 3. Get versions to test
+            self.versions_list = get_dirs_in_dir(self.initial_selected_dir)
 
         # 4. Assign versions to machines
         self.versions_assignments = self.assign_works_to_machines(self.versions_list)
@@ -70,6 +80,7 @@ class UsableVersionSelection(Subject):
         
         print(f">> Finished testing all versions now retrieving usable versions")
         self.fileManager.collect_data_remote("usable_buggy_versions", self.usable_versions_dir, self.versions_assignments)
+        self.fileManager.collect_data_remote("crashed_buggy_mutants", self.self.crashed_buggy_mutants_dir, self.mutant_assignments)
     
     def test_single_machine_core_remote(self, machine, core, homedir, versions):
         print(f"Testing on {machine}::{core}")
@@ -163,7 +174,9 @@ class UsableVersionSelection(Subject):
     
     def prepare_for_remote(self):
         self.fileManager.make_assigned_works_dir_remote(self.experiment.machineCores_list, self.stage_name)
-        self.fileManager.send_works_remote(self.versions_assignments, self.stage_name)
+
+        if self.redoing == False:
+            self.fileManager.send_works_remote(self.versions_assignments, self.stage_name)
         
         self.fileManager.send_repo_remote(self.subject_repo, self.experiment.machineCores_list)
 
@@ -182,9 +195,10 @@ class UsableVersionSelection(Subject):
             assigned_dir = machine_core_dir / f"{self.stage_name}-assigned_works"
             assigned_dir.mkdir(exist_ok=True, parents=True)
 
-            for version in versions:
-                print_command(["cp", "-r", version, assigned_dir], self.verbose)
-                sp.check_call(["cp", "-r", version, assigned_dir])
+            if self.redoing == False:
+                for version in versions:
+                    print_command(["cp", "-r", version, assigned_dir], self.verbose)
+                    sp.check_call(["cp", "-r", version, assigned_dir])
             
             core_repo_dir = machine_core_dir / f"{self.name}"
             if not core_repo_dir.exists():
@@ -206,7 +220,8 @@ class UsableVersionSelection(Subject):
 
         # Select buggy mutants at random
         buggy_mutants_list = get_dirs_in_dir(self.buggy_mutants_dir)
-        buggy_mutants_list = random.sample(buggy_mutants_list, self.num_to_check)
+        if len(buggy_mutants_list) > self.num_to_check:
+            buggy_mutants_list = random.sample(buggy_mutants_list, self.num_to_check)
         print(f"Selected {len(buggy_mutants_list)} buggy mutants to check for usability at random")
 
         for buggy_mutant in buggy_mutants_list:
@@ -265,6 +280,11 @@ class UsableVersionSelection(Subject):
         assert passing_tcs_file.exists(), "Passing testcases file does not exist"
         print_command(["cp", passing_tcs_file, testsuite_info_dir], self.verbose)
         sp.check_call(["cp", passing_tcs_file, testsuite_info_dir])
+
+        crashed_tcs_file = buggy_mutant / "crashed_tcs.txt"
+        assert crashed_tcs_file.exists(), "crashed testcases file does not exist"
+        print_command(["cp", crashed_tcs_file, testsuite_info_dir], self.verbose)
+        sp.check_call(["cp", crashed_tcs_file, testsuite_info_dir]) # 2024-08-12
 
         # Copy buggy code file
         buggy_code_file_dir = mutant_dir_dest / "buggy_code_file"

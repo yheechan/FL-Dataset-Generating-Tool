@@ -14,9 +14,12 @@ def main():
     if args.usable_buggy_versions:
         subject.usable_buggy_versions()
     elif args.prerequisite_data:
-        subject.prerequisite_data()
-    elif len(args.remove_versions_mbfl) != 0:
-        subject.remove_versions_mbfl_meeting_criteria(args.remove_versions_mbfl)
+        subject.prerequisite_data(args.removed_initialization_coverage)
+    elif args.remove_versions_mbfl != None:
+        if len(args.remove_versions_mbfl) != 0:
+            subject.remove_versions_mbfl_meeting_criteria(args.remove_versions_mbfl)
+    elif args.crashed_buggy_mutants:
+        subject.crashed_buggy_mutants()
 
 def make_parser():
     parser = argparse.ArgumentParser(description="Copy subject to working directory")
@@ -26,8 +29,11 @@ def make_parser():
     
     parser.add_argument("--usable-buggy-versions", action="store_true", help="Get test case statistics")
     parser.add_argument("--prerequisite-data", action="store_true", help="Get prerequisite data")
+    parser.add_argument("--removed-initialization-coverage", action="store_true", help="Option to measure coverage difference") # 2024-08-12 measure distinct lines by failing TCs
 
     parser.add_argument("--remove-versions-mbfl", type=str, choices=["criteriaA", "criteriaB"], nargs="+", help="Remove versions based on MBFL criteria")
+    
+    parser.add_argument("--crashed-buggy-mutants", action="store_true", help="Analyze crashed buggy mutants")
     return parser
 
 if __name__ == "__main__":

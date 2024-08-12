@@ -9,9 +9,13 @@ from lib.file_manager import FileManager
 
 class MBFLExtraction(Subject):
     def __init__(
-            self, subject_name, target_set_name, verbose=False
+            self, subject_name, target_set_name, trial, verbose=False, past_trials=None
             ):
-        super().__init__(subject_name, "stage04", verbose)
+        self.trial = trial
+        self.past_trials = past_trials
+        self.stage_name = f"stage04-{trial}"
+        self.generated_mutants_dirname = f"generated_mutants-{trial}"
+        super().__init__(subject_name, self.stage_name, verbose) # 2024-08-07 add-mbfl
         self.mbfl_features_dir = out_dir / self.name / f"mbfl_features"
         self.mbfl_features_dir.mkdir(exist_ok=True)
 
@@ -27,6 +31,12 @@ class MBFLExtraction(Subject):
         # 2. get versions from set_dir
         self.versions_list = get_dirs_in_dir(self.target_set_dir)
 
+        # TODO: ~
+        # 2024-08-01: only remain 1 bug per line
+        generated_mutants_dir = out_dir / self.name / self.generated_mutants_dirname
+        if generated_mutants_dir.exists():
+            self.versions_list = self.remain_one_bug_per_line()
+
         # 4. Assign versions to machines
         self.versions_assignments = self.assign_works_to_machines(self.versions_list)
 
@@ -35,7 +45,63 @@ class MBFLExtraction(Subject):
 
         # 6. Test versions
         self.test_versions()
+    
+    def remain_one_bug_per_line(self): # 2024-08-01
+        included = 0
+        excluded = 0
 
+        generated_mutants_dir = out_dir / self.name / self.generated_mutants_dirname
+        # version name: line number
+        new_version_list = []
+        new_version_dict = {}
+
+        # check every version
+        for version in self.versions_list:
+            mutant_name = version.name
+            file_name = mutant_name.split(".")[0] + "." + mutant_name.split(".")[-1]
+
+            # retrieve mutant dir for mutant
+            target_mutant_dir = None
+            for mutant_dir in generated_mutants_dir.iterdir():
+                mutant_dir_name = mutant_dir.name.split("-")[-1]
+                if file_name == mutant_dir_name:
+                    target_mutant_dir = mutant_dir
+                    break
+            assert target_mutant_dir != None, f"target mutant dir is not found for {file_name}"
+
+            # retrieve mut db csv file for mutant
+            db_name = file_name.split(".")[0] + "_mut_db.csv"
+            db_csv = target_mutant_dir / db_name
+            assert db_csv.exists(), f"{db_csv.name} does not exist for {mutant_name}"
+
+            # retrieve line_no for mutant
+            line_no = None
+            with open(db_csv, "r") as fp:
+                lines = fp.readlines()
+                for line in lines[2:]:
+                    info = line.strip().split(",")
+                    mut_name = info[0]
+
+                    if mutant_name == mut_name:
+                        line_no = int(info[2])
+            
+            assert line_no != None, f"line_no is None for {mutant_name}"
+
+            # remain single bug in single line of target file
+            if file_name not in new_version_dict:
+                new_version_dict[file_name] = []
+            
+            if line_no not in new_version_dict[file_name]:
+                new_version_dict[file_name].append(line_no)
+                new_version_list.append(version)
+                included += 1
+            else:
+                excluded += 1
+        
+        print(f"# of version remaining versions after leaving only one bug in each line: {included}")
+        print(f"# of version excluded versions after leaving only one bug in each line: {excluded}")
+    
+        return new_version_list
     
     # +++++++++++++++++++++++++++
     # ++++++ Testing stage ++++++
@@ -112,14 +178,22 @@ class MBFLExtraction(Subject):
                         entered_termination_phase = True
                         start_term_time = time.time()
                         print(f">> ENTERING TERMINATION PHASE for {batch_id} of {machine} <<")
-                        print(f"{batch_id}-{machine} - {len(finished_jobs)} finished jobs out of {len(jobs)}, threshold: {threshold}")
+                        print(f"{batch_id}-{machine} - {len(finished_jobs)} finished jobs with {len(jobs)} leftover, threshold: {threshold}")
                     
-                    if entered_termination_phase and time.time() - start_term_time > 600:
+                    if entered_termination_phase and time.time() - start_term_time > 1800 and self.past_trials == None: # 2024-08-07 add-mbfl
                         print(f">> TERMINATING REMAINING JOBS for {batch_id} of {machine} <<")
                         for job in jobs:
                             print(f"Terminating job {job.name}")
                             job.terminate()
                             job.join()
+
+                            # copy the original version of subject for terminated jobs
+                            machine = job_args[job.name][0]
+                            core = job_args[job.name][1]
+                            machine_core_dir = self.working_env / machine / core
+                            print_command(["cp", "-r", self.subject_repo, machine_core_dir], self.verbose)
+                            sp.check_call(["cp", "-r", self.subject_repo, machine_core_dir])
+
                             terminated_jobs.append(job)
                     
                     # Remove the job from the list if it has finished
@@ -150,11 +224,15 @@ class MBFLExtraction(Subject):
         optional_flag = ""
         if self.verbose:
             optional_flag += " --verbose"
+        if self.past_trials != None:
+            optional_flag += " --past-trials"
+            trials_str = " ".join(self.past_trials)
+            optional_flag += trials_str
 
         cmd = [
             "ssh", f"{machine_name}",
-            f"cd {homedir}FL-dataset-generation-{subject_name}/src && python3 test_version_mbfl_features.py --subject {subject_name} --machine {machine_name} --core {core_name} --version {version_name} {optional_flag}"
-        ]
+            f"cd {homedir}FL-dataset-generation-{subject_name}/src && python3 test_version_mbfl_features.py --subject {subject_name} --machine {machine_name} --core {core_name} --version {version_name} --trial {self.trial} {optional_flag}"
+        ] # 2024-08-07 add-mbfl
         print_command(cmd, self.verbose)
         res = sp.run(cmd, stdout=sp.PIPE, stderr=sp.PIPE)
 
@@ -215,14 +293,21 @@ class MBFLExtraction(Subject):
                         entered_termination_phase = True
                         start_term_time = time.time()
                         print(f">> ENTERING TERMINATION PHASE <<")
-                        print(f"{len(finished_jobs)} finished jobs out of {len(jobs)}, threshold: {threshold}")
+                        print(f"{len(finished_jobs)} finished jobs with {len(jobs)} leftover, threshold: {threshold}")
                     
-                    if entered_termination_phase and time.time() - start_term_time > 600:
+                    if entered_termination_phase and time.time() - start_term_time > 1800 and self.past_trials == None: # 2024-08-07 add-mbfl
                         print(f">> TERMINATING REMAINING JOBS <<")
                         for job in jobs:
                             print(f"Terminating job {job.name}")
                             job.terminate()
                             job.join()
+
+                            # copy the original version of subject for terminated jobs
+                            machine = job_args[job.name][0]
+                            core = job_args[job.name][1]
+                            machine_core_dir = self.working_env / machine / core
+                            print_command(["cp", "-r", self.subject_repo, machine_core_dir], self.verbose)
+                            sp.check_call(["cp", "-r", self.subject_repo, machine_core_dir])
                     
                     # Remove the job from the list if it has finished
                     if not job.is_alive():
@@ -242,11 +327,15 @@ class MBFLExtraction(Subject):
         cmd = [
             "python3", "test_version_mbfl_features.py",
             "--subject", subject_name, "--machine", machine_name, "--core", core_name,
+            "--trial", self.trial, # 2024-08-07 add-mbfl
             "--version", version_name
         ]
 
         if self.verbose:
             cmd.append("--verbose")
+        if self.past_trials != None:
+            cmd.append("--past-trials")
+            cmd.extend(self.past_trials)
         
         print_command(cmd, self.verbose)
         res = sp.run(cmd, stdout=sp.PIPE, stderr=sp.PIPE, cwd=src_dir)
@@ -300,129 +389,3 @@ class MBFLExtraction(Subject):
                 print_command(["cp", "-r", self.subject_repo, machine_core_dir], self.verbose)
                 sp.check_call(["cp", "-r", self.subject_repo, machine_core_dir])
             
-            
-
-
-    
-    # # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    # # ++++++ Selecting N amount of versions to test for usability ++++++
-    # # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-    # def select_initial_buggy_versions(self):
-    #     # Copy real world buggy versions if exists
-    #     if self.real_world_buggy_versions_status:
-    #         self.copy_real_world_buggy_versions()
-
-    #     # Select buggy mutants at random
-    #     buggy_mutants_list = get_dirs_in_dir(self.buggy_mutants_dir)
-    #     buggy_mutants_list = random.sample(buggy_mutants_list, self.num_to_check)
-    #     print(f"Selected {len(buggy_mutants_list)} buggy mutants to check for usability at random")
-
-    #     for buggy_mutant in buggy_mutants_list:
-    #         mutant_name = buggy_mutant.name
-
-    #         # 1. Read bug_info.csv
-    #         target_code_file, mutant_code_file = self.get_mutant_info(buggy_mutant)
-
-    #         # 2. Get target file mutant directory ex) libxml2/HTMLparser.c, HTMLparser.MUT123.c
-    #         target_file_mutant_dir_name = target_code_file.replace("/", "-")
-    #         target_file_mutant_dir = self.generated_mutants_dir / target_file_mutant_dir_name
-    #         assert target_file_mutant_dir.exists(), "Target file mutant directory does not exist"
-
-    #         # 3. Get buggy_code_file
-    #         buggy_code_file = target_file_mutant_dir / mutant_code_file
-    #         assert buggy_code_file.exists(), "Buggy code file does not exist"
-
-    #         # 4. Get buggy_lineno and mut_db_line
-    #         buggy_lineno, mut_db_line = self.get_buggy_lineno(target_file_mutant_dir, mutant_name)
-
-    #         # 5. Check if buggy_lineno is in the target file
-    #         mutant_dir_dest = self.initial_selected_dir / mutant_name
-    #         print_command(["mkdir", "-p", mutant_dir_dest], self.verbose)
-    #         mutant_dir_dest.mkdir(exist_ok=True)
-
-    #         # 6. Write bug info
-    #         self.write_bug_info(
-    #             buggy_mutant, buggy_code_file, mutant_dir_dest, target_code_file, mutant_code_file, buggy_lineno, mut_db_line,
-    #         )
-    
-    # def write_bug_info(self, buggy_mutant, buggy_code_file, mutant_dir_dest, target_code_file, mutant_code_file, buggy_lineno, mut_db_line):
-    #     # Write bug_info.csv
-    #     bug_info_csv = mutant_dir_dest / "bug_info.csv"
-    #     with bug_info_csv.open("w") as f:
-    #         f.write("target_code_file,buggy_code_file,buggy_lineno\n")
-    #         f.write(f"{target_code_file},{mutant_code_file},{buggy_lineno}\n")
-        
-    #     # Write mutant_info.csv
-    #     mutant_info_csv = mutant_dir_dest / "mutant_info.csv"
-    #     with mutant_info_csv.open("w") as f:
-    #         f.write(",,,Before Mutation,,,,,After Mutation\n")
-    #         f.write("Mutant Filename,Mutation Operator,Start Line#,Start Col#,End Line#,End Col#,Target Token,Start Line#,Start Col#,End Line#,End Col#,Mutated Token,Extra Info\n")
-    #         f.write(mut_db_line)
-
-    #     # Copy testsuite_info
-    #     testsuite_info_dir = mutant_dir_dest / "testsuite_info"
-    #     print_command(["mkdir", "-p", testsuite_info_dir], self.verbose)
-    #     testsuite_info_dir.mkdir(exist_ok=True)
-
-    #     failing_tcs_file = buggy_mutant / "failing_tcs.txt"
-    #     assert failing_tcs_file.exists(), "Failing testcases file does not exist"
-    #     print_command(["cp", failing_tcs_file, testsuite_info_dir], self.verbose)
-    #     sp.check_call(["cp", failing_tcs_file, testsuite_info_dir])
-
-    #     passing_tcs_file = buggy_mutant / "passing_tcs.txt"
-    #     assert passing_tcs_file.exists(), "Passing testcases file does not exist"
-    #     print_command(["cp", passing_tcs_file, testsuite_info_dir], self.verbose)
-    #     sp.check_call(["cp", passing_tcs_file, testsuite_info_dir])
-
-    #     # Copy buggy code file
-    #     buggy_code_file_dir = mutant_dir_dest / "buggy_code_file"
-    #     print_command(["mkdir", "-p", buggy_code_file_dir], self.verbose)
-    #     buggy_code_file_dir.mkdir(exist_ok=True)
-    #     print_command(["cp", buggy_code_file, buggy_code_file_dir], self.verbose)
-    #     sp.check_call(["cp", buggy_code_file, buggy_code_file_dir])
-        
-
-        
-    # def get_buggy_lineno(self, target_file_mutant_dir, mutant_name):
-    #     filename = mutant_name.split(".")[0]
-
-    #     mut_db_csv_name = f"{filename}_mut_db.csv"
-    #     mut_db_csv = target_file_mutant_dir / mut_db_csv_name
-    #     assert mut_db_csv.exists(), "Mutant database csv does not exist"
-
-    #     with mut_db_csv.open() as f:
-    #         lines = f.readlines()
-    #         for line in lines[2:]:
-    #             mut_db_line = line.strip()
-    #             info = mut_db_line.split(",")
-
-    #             mut_name = info[0]
-    #             if mut_name == mutant_name:
-    #                 buggy_lineno = int(info[2])
-    #                 return buggy_lineno, mut_db_line
-
-
-    # def get_mutant_info(self, buggy_mutant):
-    #     bug_info_csv = buggy_mutant / "bug_info.csv"
-    #     assert bug_info_csv.exists(), "Bug info csv does not exist"
-
-    #     with bug_info_csv.open() as f:
-    #         lines = f.readlines()
-    #         info = lines[1].strip().split(",")
-    #         target_code_file = info[0]
-    #         mutant_code_file = info[1]
-
-    #     return target_code_file, mutant_code_file
-
-    # def copy_real_world_buggy_versions(self):
-    #     real_world_buggy_versions_dir = self.work / "real_world_buggy_versions"
-        
-    #     for buggy_version in real_world_buggy_versions_dir.iterdir():
-    #         if not buggy_version.is_dir():
-    #             continue
-            
-    #         # Copy buggy version to out_dir
-    #         sp.check_call(["cp", "-r", buggy_version, self.initial_selected_dir])
-
-    #         self.num_to_check -= 1

@@ -86,6 +86,10 @@ class Validate:
             # VALIDATE: Assert that line2function_info/line2function.json exists
             line2function_info = individual.dir_path / 'line2function_info' / 'line2function.json'
             assert line2function_info.exists(), f"Line to function mapping file {line2function_info} does not exist"
+
+            # VALIDATE: Assert that len(passing_tcs) > 0 and len(failing_tcs) > 0
+            assert len(individual.failing_tcs_list) > 0, f"length of failing tcs list is less than 0"
+            assert len(individual.passing_tcs_list) > 0, f"length of failing tcs list is less than 0"
         
         print(f"All {len(self.individual_list)} individuals have been validated successfully")
     
@@ -114,7 +118,7 @@ class Validate:
     # ++++++++++++++++++++++++++++++++
     # ++++ VALIDATE MBFL FEATURES ++++
     # ++++++++++++++++++++++++++++++++
-    def validate_mbfl_features(self):
+    def validate_mbfl_features(self, trialName=None):
         self.individual_list = get_dirs_in_dir(self.set_dir)
         for individual in self.individual_list:
             individual_name = individual.name
@@ -129,11 +133,15 @@ class Validate:
             self.check_one_buggy_line(mbfl_features_csv_file)
 
             # VALIDATE: Assert that selected_mutants.csv exists
-            selected_mutants_csv_file = individual.dir_path / "selected_mutants.csv"
-            assert selected_mutants_csv_file.exists(), f"Selected mutants file {selected_mutants_csv_file} does not exist"
+            if trialName != None:
+                selected_mutants_csv_file = individual.dir_path / f"selected_mutants-{trialName}.csv"
+                assert selected_mutants_csv_file.exists(), f"Selected mutants file {selected_mutants_csv_file} does not exist"
 
             # VALIDATE: Assert that mutation_testing_results.csv exists
-            mutation_testing_results_csv_file = individual.dir_path / "mutation_testing_results.csv"
+            if trialName != None:
+                mutation_testing_results_csv_file = individual.dir_path / f"mutation_testing_results-{trialName}.csv"
+            else:
+                mutation_testing_results_csv_file = individual.dir_path / f"mutation_testing_results.csv"
             assert mutation_testing_results_csv_file.exists(), f"Mutation testing results file {mutation_testing_results_csv_file} does not exist"
         
         print(f"All {len(self.individual_list)} individuals have been validated successfully")
