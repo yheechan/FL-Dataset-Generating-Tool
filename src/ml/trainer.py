@@ -22,7 +22,9 @@ class Trainer(EngineBase):
                  # training param
                  epoch=3, batch_size=64, learning_rate=1e-3, device="cpu",
                  # model param
-                 input_size=35, hidden_size=64, dropout=0.2, stack_size=3, output_size=1):
+                 model_shape=[35, 512, 1024, 2048, 1024, 512, 1], # 2024-08-08
+                 dropout=0.2,
+    ):
         super().__init__()
 
         self.params = {
@@ -35,11 +37,8 @@ class Trainer(EngineBase):
                 "random_seed": random_seed
             },
             "model_param": {
-                "input_size": input_size,
-                "hidden_size": hidden_size,
-                "dropout": dropout,
-                "stack_size": stack_size,
-                "output_size": output_size
+                "model_shape": model_shape, # 2024-08-08
+                "dropout": dropout
             },
             "training_param": {
                 "epoch": epoch,
@@ -101,6 +100,7 @@ class Trainer(EngineBase):
         pos_weight = torch.tensor(self.train_dataset.pos_weight).to(self.params["training_param"]["device"])
         self.loss_fn = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
         self.optimizer = torch.optim.SGD(self.mlp_model.parameters(), lr=self.params["training_param"]["learning_rate"])
+        # self.optimizer = torch.optim.Adam(self.mlp_model.parameters(), lr=self.params["training_param"]["learning_rate"])
 
         # 6. Training
         self.start_training()
@@ -135,7 +135,7 @@ class Trainer(EngineBase):
         print("Done!")
 
         # Save loss graph and csv
-        self.draw_loss_graph(self.project_out_dir, train_loss, validate_loss)
+        self.draw_loss_graph(self.project_out_dir, train_loss, validate_loss) # 2024-08-08
         self.write_loss_to_csv(self.project_out_dir, train_loss, validate_loss)
 
 

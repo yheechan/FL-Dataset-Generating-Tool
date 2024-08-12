@@ -45,11 +45,6 @@ def handle_train(args):
         if torch.cuda.is_available() and args.device == "cpu":
             device = "cuda"
         
-        # stack size
-        if args.stack_size < 2:
-            print("Error: Stack size has to be greater than 2.")
-            exit(1)
-        
         trainer = Trainer(
             # config param
             project_name, pair_list,
@@ -61,11 +56,8 @@ def handle_train(args):
             learning_rate=args.learning_rate,
             device=device,
             # model param
-            input_size=args.input_size,
-            hidden_size=args.hidden_size,
+            model_shape=args.model_shape, # 2024-08-08
             dropout=args.dropout,
-            stack_size=args.stack_size,
-            output_size=args.output_size
         )
         trainer.run()
 
@@ -134,11 +126,8 @@ def make_parser():
     parser.add_argument("--learning-rate", type=float, default=1e-3, help="Learning rate. Default is 1e-3.")
     parser.add_argument("--device", type=str, default="cpu", help="Device. Default is cpu.")
     # model param
-    parser.add_argument("--input-size", type=int, default=35, help="Input size. Default is 35.")
-    parser.add_argument("--hidden-size", type=int, default=64, help="Hidden size. Default is 64.")
     parser.add_argument("--dropout", type=float, default=0.2, help="Dropout. Default is 0.2.")
-    parser.add_argument("--stack-size", type=int, default=3, help="Stack size (has to be > 2). Default is 3.")
-    parser.add_argument("--output-size", type=int, default=1, help="Output size. Default is 1.")
+    parser.add_argument("--model-shape", type=int, nargs="+", default=[35, 512, 1024, 2048, 1024, 512, 1], help="Determine the input, hidden, and output size of model. Ex: 35 512 1024 2048 1024 512 1")
 
     # 3. Inference the model
     parser.add_argument("--inference", action="store_true", help="Inference the model.")

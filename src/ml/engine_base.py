@@ -3,7 +3,7 @@ import random
 import shutil
 import torch
 import pandas as pd
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt # 2024-08-08
 from torch.utils.data import DataLoader
 
 import lib.config as config
@@ -241,11 +241,8 @@ class EngineBase:
     
     def load_model(self, params):
         model = MLP_Model(
-            params["input_size"],
-            params["hidden_size"],
+            params["model_shape"], # 2024-08-08
             params["dropout"],
-            params["stack_size"],
-            params["output_size"]
         )
         return model
     # ===============================
