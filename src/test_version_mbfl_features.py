@@ -10,7 +10,9 @@ def main():
 
     worker = WorkerStage04(
         args.subject, args.machine, args.core,
-        args.version, args.trial, args.verbose, args.past_trials
+        args.version, args.trial, args.verbose,
+        args.past_trials, args.exclude_init_lines, # 2024-08-13 exclude lines executed on initialization
+        args.parallel_cnt, args.parallel_mode # 2024-08-13 implement parallel mode
     )
     worker.run()
 
@@ -22,6 +24,9 @@ def make_parser():
     parser.add_argument("--version", type=str, help="Version name", required=True)
     parser.add_argument("--trial", type=str, help="Trial name", required=True) # 2024-08-07 add-mbfl
     parser.add_argument("--past-trials", type=str, nargs="+", help="list trial name from past to increment mbfl results")
+    parser.add_argument("--exclude-init-lines", action="store_true", help="Option to exclude lines executed on initialization for mbfl") # 2024-08-13 exclude lines executed on initialization
+    parser.add_argument("--parallel-cnt", type=int, default=0, help="Number of parallel runs during mbfl on single buggy version") # 2024-08-13 implement parallel mode
+    parser.add_argument("--parallel-mode", action="store_true", help="Automatically set within program when <parallel-cnt> option is given (NOT FOR USERS")
     parser.add_argument("--verbose", action="store_true", help="Verbose mode")
     return parser
 

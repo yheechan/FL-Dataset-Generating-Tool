@@ -48,6 +48,9 @@ class Worker:
 
         self.gcovr_exec = Path(self.experiment.experiment_config["abs_path_to_gcovr_executable"]).expanduser()
 
+        self.log = log_dir / f"{self.name}/{self.stage_name}" # 2024-08-13 implement parallel mode
+        self.log.mkdir(exist_ok=True, parents=True)
+
     def read_configs(self):
         configs = None
         config_json = self.work / "configurations.json"
@@ -143,6 +146,19 @@ class Worker:
             shell=True, cwd=self.testsuite_dir,
             stderr=sp.PIPE, stdout=sp.PIPE,
             env=self.my_env
+        )
+        # rm -rf log/*
+        # rm -rf exe/log/*
+        # 2024-08-14 SPECIFICALLY WRITTEN FOR NSFW C LANGUAGE
+        sp.run("rm -rf log/*", shell=True,
+                cwd=self.testsuite_dir.parent.parent.parent,
+                stderr=sp.PIPE, stdout=sp.PIPE,
+                env=self.my_env
+        )
+        sp.run("rm -rf exe/log/*", shell=True,
+                cwd=self.testsuite_dir.parent.parent.parent,
+                stderr=sp.PIPE, stdout=sp.PIPE,
+                env=self.my_env
         )
         return res.returncode
 

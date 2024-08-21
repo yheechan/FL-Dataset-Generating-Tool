@@ -283,7 +283,7 @@ class Validate:
         # print(f"before_mutation: {before_mutation}")
         # print(f"after_mutation: {after_mutation}")
 
-        with open(buggy_code_file, "r") as f:
+        with open(buggy_code_file, "r", encoding="utf-8", errors="ignore") as f: # 2024-08-19
             lines = f.readlines()
             buggy_line = lines[buggy_lineno-1].strip()
             assert after_mutation in buggy_line, f"Mutated code {after_mutation} not found in buggy code file {buggy_code_file}"

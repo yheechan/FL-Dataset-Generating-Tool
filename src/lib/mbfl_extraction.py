@@ -2,6 +2,7 @@ import time
 import multiprocessing
 import subprocess as sp
 import random
+import shutil
 
 from lib.utils import *
 from lib.subject_base import Subject
@@ -9,12 +10,19 @@ from lib.file_manager import FileManager
 
 class MBFLExtraction(Subject):
     def __init__(
-            self, subject_name, target_set_name, trial, verbose=False, past_trials=None
+            self, subject_name, target_set_name, trial,
+            verbose=False, past_trials=None, exclude_init_lines=False, # 2024-08-13 exclude lines executed on initialization
+            parallel_cnt=0, dont_terminate_leftovers=False, # 2024-08-13 implement parallel mode
+            remain_one_bug_per_line_flag=False # 2024-08-16 implement flag for remaining one bug per line
             ):
         self.trial = trial
         self.past_trials = past_trials
         self.stage_name = f"stage04-{trial}"
-        self.generated_mutants_dirname = f"generated_mutants-{trial}"
+        self.generated_mutants_dirname = f"generated_mutants"
+        self.exclude_init_lines = exclude_init_lines
+        self.parallel_cnt = parallel_cnt
+        self.dont_terminate_leftovers = dont_terminate_leftovers
+        self.remain_one_bug_per_line_flag = remain_one_bug_per_line_flag
         super().__init__(subject_name, self.stage_name, verbose) # 2024-08-07 add-mbfl
         self.mbfl_features_dir = out_dir / self.name / f"mbfl_features"
         self.mbfl_features_dir.mkdir(exist_ok=True)
@@ -33,9 +41,12 @@ class MBFLExtraction(Subject):
 
         # TODO: ~
         # 2024-08-01: only remain 1 bug per line
-        generated_mutants_dir = out_dir / self.name / self.generated_mutants_dirname
-        if generated_mutants_dir.exists():
+        # generated_mutants_dir = out_dir / self.name / self.generated_mutants_dirname
+        # if generated_mutants_dir.exists(): # I DONT THINK THIS IS NEEDED!
+        if self.remain_one_bug_per_line_flag == True: # 2024-08-16 implement flag for remaining one bug per line
             self.versions_list = self.remain_one_bug_per_line()
+        
+        print(f">> MBFL extraction on {len(self.versions_list)} of buggy versions <<")
 
         # 4. Assign versions to machines
         self.versions_assignments = self.assign_works_to_machines(self.versions_list)
@@ -100,6 +111,7 @@ class MBFLExtraction(Subject):
         
         print(f"# of version remaining versions after leaving only one bug in each line: {included}")
         print(f"# of version excluded versions after leaving only one bug in each line: {excluded}")
+        # print(json.dumps(new_version_dict, indent=2))
     
         return new_version_list
     
@@ -132,6 +144,7 @@ class MBFLExtraction(Subject):
                 idx += 1
         
         jobs = []
+        sleep_cnt = 0
         for machine, machine_batch_dict in batch_dict.items():
             job = multiprocessing.Process(
                 target=self.test_single_machine_remote,
@@ -139,6 +152,9 @@ class MBFLExtraction(Subject):
             )
             jobs.append(job)
             job.start()
+            sleep_cnt += 1
+            if sleep_cnt % 5 == 0:
+                time.sleep(35)
 
         for job in jobs:
             job.join()
@@ -180,7 +196,7 @@ class MBFLExtraction(Subject):
                         print(f">> ENTERING TERMINATION PHASE for {batch_id} of {machine} <<")
                         print(f"{batch_id}-{machine} - {len(finished_jobs)} finished jobs with {len(jobs)} leftover, threshold: {threshold}")
                     
-                    if entered_termination_phase and time.time() - start_term_time > 1800 and self.past_trials == None: # 2024-08-07 add-mbfl
+                    if entered_termination_phase and time.time() - start_term_time > 1800 and self.past_trials == None and self.dont_terminate_leftovers == False: # 2024-08-07 add-mbfl
                         print(f">> TERMINATING REMAINING JOBS for {batch_id} of {machine} <<")
                         for job in jobs:
                             print(f"Terminating job {job.name}")
@@ -225,9 +241,15 @@ class MBFLExtraction(Subject):
         if self.verbose:
             optional_flag += " --verbose"
         if self.past_trials != None:
-            optional_flag += " --past-trials"
+            optional_flag += " --past-trials "
             trials_str = " ".join(self.past_trials)
             optional_flag += trials_str
+        if self.exclude_init_lines == True: # 2024-08-13 exclude lines executed on initialization
+            optional_flag += " --exclude-init-lines"
+        if self.parallel_cnt != 0: # 2024-08-13 implement parallel mode
+            optional_flag += " --parallel_cnt "
+            optional_flag += str(self.parallel_cnt)
+
 
         cmd = [
             "ssh", f"{machine_name}",
@@ -271,6 +293,7 @@ class MBFLExtraction(Subject):
             print(f"Batch ID: {batch_id}")
             print(f"Batch size: {batch_size}")
 
+            sleep_cnt = 0
             for machine_core, (machine, core, homedir, version) in machine_core_dict.items():
                 job = multiprocessing.Process(
                     target=self.test_single_machine_core_local,
@@ -279,6 +302,9 @@ class MBFLExtraction(Subject):
                 job_args[job.name] = [machine, core, homedir, version]
                 jobs.append(job)
                 job.start()
+                sleep_cnt += 1
+                if sleep_cnt % 5 == 0:
+                    time.sleep(35)
             
             threshold = len(jobs)*0.8
             finished_jobs = []
@@ -295,7 +321,7 @@ class MBFLExtraction(Subject):
                         print(f">> ENTERING TERMINATION PHASE <<")
                         print(f"{len(finished_jobs)} finished jobs with {len(jobs)} leftover, threshold: {threshold}")
                     
-                    if entered_termination_phase and time.time() - start_term_time > 1800 and self.past_trials == None: # 2024-08-07 add-mbfl
+                    if entered_termination_phase and time.time() - start_term_time > 1800 and self.past_trials == None and self.dont_terminate_leftovers == False: # 2024-08-07 add-mbfl
                         print(f">> TERMINATING REMAINING JOBS <<")
                         for job in jobs:
                             print(f"Terminating job {job.name}")
@@ -336,6 +362,11 @@ class MBFLExtraction(Subject):
         if self.past_trials != None:
             cmd.append("--past-trials")
             cmd.extend(self.past_trials)
+        if self.exclude_init_lines == True: # 2024-08-13 exclude lines executed on initialization
+            cmd.append("--exclude-init-lines")
+        if self.parallel_cnt != 0: # 2024-08-13 implement parallel mode
+            cmd.append("--parallel-cnt")
+            cmd.append(str(self.parallel_cnt))
         
         print_command(cmd, self.verbose)
         res = sp.run(cmd, stdout=sp.PIPE, stderr=sp.PIPE, cwd=src_dir)
@@ -385,7 +416,9 @@ class MBFLExtraction(Subject):
                 sp.check_call(["cp", "-r", version, assigned_dir])
             
             core_repo_dir = machine_core_dir / f"{self.name}"
-            if not core_repo_dir.exists():
-                print_command(["cp", "-r", self.subject_repo, machine_core_dir], self.verbose)
-                sp.check_call(["cp", "-r", self.subject_repo, machine_core_dir])
+            if core_repo_dir.exists():
+                shutil.rmtree(core_repo_dir)
+
+            print_command(["cp", "-r", self.subject_repo, machine_core_dir], self.verbose)
+            sp.check_call(["cp", "-r", self.subject_repo, machine_core_dir])
             

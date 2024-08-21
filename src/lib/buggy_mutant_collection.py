@@ -87,6 +87,7 @@ class BuggyMutantCollection(Subject):
     
     def test_on_remote(self):
         jobs = []
+        sleep_cnt = 0
         for machine_core, mutants in self.mutant_assignments.items():
             machine, core, homedir = machine_core.split("::")
             job = multiprocessing.Process(
@@ -95,7 +96,10 @@ class BuggyMutantCollection(Subject):
             )
             jobs.append(job)
             job.start()
-            time.sleep(0.5) # to avoid ssh connection error
+            sleep_cnt += 1
+            if sleep_cnt%5==0:
+                time.sleep(10)
+            # time.sleep(0.5) # to avoid ssh connection error
         
         for job in jobs:
             job.join()
@@ -145,6 +149,7 @@ class BuggyMutantCollection(Subject):
     def test_on_local(self):
         jobs = []
         cnt = 0
+        sleep_cnt = 0
         for machine_core, mutants in self.mutant_assignments.items():
             machine, core, homedir = machine_core.split("::")
             job = multiprocessing.Process(
@@ -153,6 +158,9 @@ class BuggyMutantCollection(Subject):
             )
             jobs.append(job)
             job.start()
+            sleep_cnt += 1
+            if sleep_cnt%5==0:
+                time.sleep(10)
         
         for job in jobs:
             job.join()
@@ -281,15 +289,16 @@ class BuggyMutantCollection(Subject):
             '-o', str(mutant_dir),
             # '-ll', '1',
             # '-l', '2',
-            '-ll', '3',
-            '-l', '5',
+            '-ll', '40',
+            '-l', '20',
             '-d', unused_ops,
             '-p', str(self.compile_command_file)
         ]
         mutant_list = get_files_in_dir(mutant_dir)
         if len(mutant_list) == 0:
             print_command(cmd, self.verbose)
-            sp.check_call(cmd, stderr=sp.PIPE, stdout=sp.PIPE)
+            # sp.check_call(cmd, stderr=sp.PIPE, stdout=sp.PIPE)
+            sp.check_call(cmd)
         else:
             print(f"{mutant_dir.name} already exists mutants")
 
@@ -329,13 +338,13 @@ class BuggyMutantCollection(Subject):
             for mutant in target_mutants:
                 mutants_list.append((target_file, mutant))
 
-                # TEMPORARY
-                if len(mutants_list) >= 500:
-                    break
+            #     # TEMPORARY
+            #     if len(mutants_list) >= 500:
+            #         break
 
-            # TEMPORARY
-            if len(mutants_list) >= 500:
-                break
+            # # TEMPORARY
+            # if len(mutants_list) >= 500:
+            #     break
         
         return mutants_list
 

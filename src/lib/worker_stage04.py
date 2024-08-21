@@ -4,6 +4,7 @@ import csv
 import time
 import shutil
 import filecmp
+import multiprocessing
 
 from lib.utils import *
 from lib.worker_base import Worker
@@ -11,10 +12,16 @@ from lib.susp_score_formula import *
 
 class WorkerStage04(Worker):
     def __init__(
-            self, subject_name, machine, core, version_name, trial, verbose=False, past_trials=None):
+            self, subject_name, machine, core, version_name, trial,
+            verbose=False, past_trials=None, exclude_init_lines=False, # 2024-08-13 exclude lines executed on initialization
+            parallel_cnt=0, parallel_mode=False# 2024-08-13 implement parallel mode
+        ):
         self.trial = trial
         self.past_trials = past_trials
         self.stage_name = f"stage04-{trial}" # 2024-08-07 add-mbfl
+        self.exclude_init_lines = exclude_init_lines
+        self.parallel_cnt = parallel_cnt
+        self.parallel_mode = parallel_mode
         super().__init__(subject_name, self.stage_name, "extracting_mbfl_features", machine, core, verbose)
         
         self.assigned_works_dir = self.core_dir / f"{self.stage_name}-assigned_works" # 2024-08-07 add-mbfl
@@ -135,28 +142,32 @@ class WorkerStage04(Worker):
         self.print_selected_mutants_info()
 
         # 4. Conduct mutation testing
-        self.begin_mbfl_process()
+        if self.parallel_cnt == 0: # 2024-08-13 implement parallel mode
+            self.begin_mbfl_process()
+        else:
+            self.begin_mbfl_parallel_process()
 
-        # 5. Measure MBFL features
-        self.mbfl_features = self.measure_mbfl_features()
+        if self.parallel_mode == False:
+            # 5. Measure MBFL features
+            self.mbfl_features = self.measure_mbfl_features()
 
-        # 6. process to csv
-        self.process2csv(self.mbfl_features)
+            # 6. process to csv
+            self.process2csv(self.mbfl_features)
 
-        # # 8. Zip mutant dir
-        self.zip_mutants(self.version_mutant_zip, self.mbfl_generated_mutants_dir, self.version_mutant_dir)
-        # unzip past mutation files
-        if self.past_trials != None: # 2024-08-07 add-mbfl
-            for past_trial_name in self.past_trials:
-                past_mbfl_generated_mutants_dir = out_dir / f"{self.name}" / f"generated_mutants-mbfl-{past_trial_name}"
-                assert past_mbfl_generated_mutants_dir.exists(), f"{past_mbfl_generated_mutants_dir} doesn't exists"
+            # # 8. Zip mutant dir
+            self.zip_mutants(self.version_mutant_zip, self.mbfl_generated_mutants_dir, self.version_mutant_dir)
+            # unzip past mutation files
+            if self.past_trials != None: # 2024-08-07 add-mbfl
+                for past_trial_name in self.past_trials:
+                    past_mbfl_generated_mutants_dir = out_dir / f"{self.name}" / f"generated_mutants-mbfl-{past_trial_name}"
+                    assert past_mbfl_generated_mutants_dir.exists(), f"{past_mbfl_generated_mutants_dir} doesn't exists"
 
-                past_version_mutant_zip = past_mbfl_generated_mutants_dir / f"{self.version_name}.zip"
-                past_version_mutant_dir = past_mbfl_generated_mutants_dir / self.version_name
-                self.zip_mutants(past_version_mutant_zip, past_mbfl_generated_mutants_dir, past_version_mutant_dir)
+                    past_version_mutant_zip = past_mbfl_generated_mutants_dir / f"{self.version_name}.zip"
+                    past_version_mutant_dir = past_mbfl_generated_mutants_dir / self.version_name
+                    self.zip_mutants(past_version_mutant_zip, past_mbfl_generated_mutants_dir, past_version_mutant_dir)
 
-        # 7. Save version
-        self.save_version(self.version_dir, self.mbfl_features_dir)
+            # 7. Save version
+            self.save_version(self.version_dir, self.mbfl_features_dir)
 
     def reduced_lines_executed_by_failing_tcs_based_on_past_trial(self): # 2024-08-07 add-mbfl
         reduced_dict = {}
@@ -183,6 +194,10 @@ class WorkerStage04(Worker):
         reduced_dict = {}
         total_selected_lines = 0
 
+        init_filenm2lineno = {}
+        if self.exclude_init_lines == True: # 2024-08-13 exclude lines executed on initialization
+            init_filenm2lineno = get_linse_exected_on_initialization_as_filenm2lineno(self.version_dir)
+
         if buggy_code_filename in self.lines_executed_by_failing_tcs:
             if self.buggy_lineno in self.lines_executed_by_failing_tcs[buggy_code_filename]:
                 reduced_dict[buggy_code_filename] = {
@@ -195,18 +210,38 @@ class WorkerStage04(Worker):
         list_of_lines = []
         for filename, fileline2tcs in self.lines_executed_by_failing_tcs.items():
             for line, tcs in fileline2tcs.items():
-                if line != self.buggy_lineno:
-                    list_of_lines.append((filename, line, tcs))
+                if filename == buggy_code_filename and line == self.buggy_lineno:
+                    continue
+                list_of_lines.append((filename, line, tcs))
 
         random.shuffle(list_of_lines)
+        print(f">>> candidate lines: {len(list_of_lines)}")
 
+        idx = 0
         for filename, line, tcs in list_of_lines:
+            idx += 1
             if total_selected_lines >= self.number_of_lines_to_mutation_test:
                 break
-            if filename not in reduced_dict:
-                reduced_dict[filename] = {}
-            reduced_dict[filename][line] = tcs
-            total_selected_lines += 1
+            if self.exclude_init_lines == False: # 2024-08-13 exclude lines executed on initialization
+                if filename not in reduced_dict:
+                    reduced_dict[filename] = {}
+                reduced_dict[filename][line] = tcs
+                total_selected_lines += 1
+            else:
+                if filename in init_filenm2lineno:
+                    if line in init_filenm2lineno[filename]:
+                        print(f">>>[{idx}] candidate not-included: {filename}:{line}")
+                        continue
+                if filename not in reduced_dict:
+                    reduced_dict[filename] = {}
+                print(f">>> [{idx}]candidate included: {filename}:{line}")
+                reduced_dict[filename][line] = tcs
+                total_selected_lines += 1
+        
+        if total_selected_lines == self.number_of_lines_to_mutation_test: # 2024-08-13 exclude lines executed on initialization
+            print(f">>> Selected maximum available lines {total_selected_lines}/{self.number_of_lines_to_mutation_test}")
+        else:
+            print(f">>> Selected below maximum available lines {total_selected_lines}/{self.number_of_lines_to_mutation_test}")
         
         # add empty dict for files that are not selected
         for filename in self.lines_executed_by_failing_tcs.keys():
@@ -497,6 +532,154 @@ class WorkerStage04(Worker):
         # 5. Close result csv file
         self.mutation_testing_results_fp.close()
     
+    def begin_mbfl_parallel_process(self): # 2024-08-13 implement parallel mode
+        # 1. copy current core<n> directory as core<n>-p<n>
+        for idx in range(self.parallel_cnt):
+            parall_core_name = f"{self.core_dir.name}-p{idx}"
+            parall_core_dir = self.core_dir.parent / parall_core_name
+            if parall_core_dir.exists():
+                shutil.rmtree(parall_core_dir)
+            # core_dir
+            parall_core_dir.mkdir(exist_ok=True, parents=True)
+            # assigned_works dir
+            parall_assigned_works_dir = parall_core_dir / f"{self.stage_name}-assigned_works"
+            parall_assigned_works_dir.mkdir(exist_ok=True, parents=True)
+            # version_dir
+            parall_version_dir = parall_assigned_works_dir / self.version_name
+            shutil.copytree(self.version_dir, parall_version_dir)
+            # subject-repo
+            parall_repo_dir = parall_core_dir / self.name
+            shutil.copytree(self.subject_repo, parall_repo_dir)
+
+        # 2. divide the selected mutants
+        selected_mutants_file = self.version_dir / self.selected_mutant_filename
+        selected_mutants_csv_row = get_list_of_selected_mutants_csv_row(selected_mutants_file)
+        parted_selected_mutants_csv_row = divide_list(selected_mutants_csv_row, self.parallel_cnt)
+        assert len(parted_selected_mutants_csv_row) == self.parallel_cnt, f"the length of parted doesn't equal parallel_cnt {self.parallel_cnt}"
+        
+        # 3. alter core<n>-p<n>/stage04-trial1-assigned_works/<version-name>/selected_mutants-<trial-cnt>.csv
+        for idx in range(self.parallel_cnt):
+            parall_core_name = f"{self.core_dir.name}-p{idx}"
+            parall_core_dir = self.core_dir.parent / parall_core_name
+            assert parall_core_dir.exists(), f"{parall_core_dir.name} doesn't exist!"
+
+            parall_assigned_works_dir = parall_core_dir / f"{self.stage_name}-assigned_works"
+            assert parall_assigned_works_dir.exists(), f"{parall_assigned_works_dir.name} doesn't exist!"
+            
+            parall_version_dir = parall_assigned_works_dir / self.version_name
+            assert parall_version_dir.exists(), f"{parall_version_dir.name} doesn't exist!"
+
+            parall_selected_mutant_file = parall_version_dir / self.selected_mutant_filename
+            assert parall_selected_mutant_file.exists(), f"{parall_selected_mutant_file.name} doesn't exist!"
+
+            parall_selected_mutants_csv_row = parted_selected_mutants_csv_row[idx]
+
+            self.update_parall_selected_mutants_csv(parall_selected_mutant_file, parall_selected_mutants_csv_row)
+
+        # 4. execute mbfl extraction on core<n>-p<n>
+        jobs = []
+        job_args = {}
+        for idx in range(self.parallel_cnt):
+            machine_name = self.machine
+            core_name = f"{self.core_dir.name}-p{idx}"
+            version_name = self.version_name
+            job = multiprocessing.Process(
+                target=self.test_single_core_parall,
+                args=(machine_name, core_name, version_name)
+            )
+            job_args[job.name] = [machine_name, core_name, version_name]
+            jobs.append(job)
+            job.start()
+
+        finished_jobs = []
+        for job in jobs:
+            job.join()
+            print(f"Job {job.name} has been finished: {job_args[job.name]}")
+            finished_jobs.append(job)
+            # jobs.remove(job)
+
+        # 5. combine core<n>-p<n>/stage04-trial1-assigned_works/<version-name>/mutation_testing_results-<trial-cnt>.csv from all core<n>-p<n>
+        total_mutation_testing_results_csv_row = []
+        for idx in range(self.parallel_cnt):
+            parall_core_name = f"{self.core_dir.name}-p{idx}"
+            parall_core_dir = self.core_dir.parent / parall_core_name
+            assert parall_core_dir.exists(), f"{parall_core_dir.name} doesn't exist!"
+
+            parall_assigned_works_dir = parall_core_dir / f"{self.stage_name}-assigned_works"
+            assert parall_assigned_works_dir.exists(), f"{parall_assigned_works_dir.name} doesn't exist!"
+            
+            parall_version_dir = parall_assigned_works_dir / self.version_name
+            assert parall_version_dir.exists(), f"{parall_version_dir.name} doesn't exist!"
+
+            parall_mutation_testing_results_csv = parall_version_dir / self.mutation_testing_results_filename
+            assert parall_mutation_testing_results_csv.exists(), f"{parall_mutation_testing_results_csv.name} doesn't exist!"
+            
+            mutation_testing_results_csv_row = get_mutation_testing_results_csv_row(parall_mutation_testing_results_csv)
+            total_mutation_testing_results_csv_row.extend(mutation_testing_results_csv_row)
+            
+        dest_mutation_testing_results_csv = self.version_dir / self.mutation_testing_results_filename
+        self.fill_mutation_testing_results_as_final(dest_mutation_testing_results_csv, total_mutation_testing_results_csv_row)
+
+        # 6. copy files in  mutant2tcs_results-<trial-cnt> directory
+        total_mutant2tc_result_files = []
+        for idx in range(self.parallel_cnt):
+            parall_core_name = f"{self.core_dir.name}-p{idx}"
+            parall_core_dir = self.core_dir.parent / parall_core_name
+            assert parall_core_dir.exists(), f"{parall_core_dir.name} doesn't exist!"
+
+            parall_assigned_works_dir = parall_core_dir / f"{self.stage_name}-assigned_works"
+            assert parall_assigned_works_dir.exists(), f"{parall_assigned_works_dir.name} doesn't exist!"
+            
+            parall_version_dir = parall_assigned_works_dir / self.version_name
+            assert parall_version_dir.exists(), f"{parall_version_dir.name} doesn't exist!"
+
+            parall_mutant2tcs_results_dir = parall_version_dir / self.mutant2tcs_results_dir.name
+            assert parall_mutant2tcs_results_dir.exists(), f"{parall_mutant2tcs_results_dir.name} doesn't exist!"
+
+            for mut2tc_file in parall_mutant2tcs_results_dir.iterdir():
+                print_command(["cp", "-r", mut2tc_file, self.mutant2tcs_results_dir], self.verbose)
+                sp.check_call(["cp", mut2tc_file, self.mutant2tcs_results_dir])
+        # 7. delete core<n>-p<n> and exits
+        for idx in range(self.parallel_cnt):
+            parall_core_name = f"{self.core_dir.name}-p{idx}"
+            parall_core_dir = self.core_dir.parent / parall_core_name
+            if parall_core_dir.exists():
+                shutil.rmtree(parall_core_dir)
+    
+    def test_single_core_parall(self, machine, core, version):
+        print(f"Testing on {machine}::{core}")
+        subject_name = self.name
+        machine_name = machine
+        core_name = core
+        need_configure = True
+        version_name = self.version_name
+
+        cmd = [
+            "python3", "test_version_mbfl_features.py",
+            "--subject", subject_name, "--machine", machine_name, "--core", core_name,
+            "--trial", self.trial,
+            "--version", version_name
+        ]
+
+        if self.verbose:
+            cmd.append("--verbose")
+        if self.past_trials != None:
+            cmd.append("--past-trials")
+            cmd.extend(self.past_trials)
+        cmd.append("--parallel-mode")
+        
+        print_command(cmd, self.verbose)
+        res = sp.run(cmd, stdout=sp.PIPE, stderr=sp.PIPE, cwd=src_dir)
+
+        # write stdout and stderr to self.log
+        log_file = self.log / f"{machine_name}-{core_name}.log"
+        with log_file.open("a") as f:
+            f.write(f"\n+++++ results for {version_name} +++++\n")
+            f.write("+++++ STDOUT +++++\n")
+            f.write(res.stdout.decode())
+            f.write("\n+++++ STDERR +++++\n")
+            f.write(res.stderr.decode())
+    
     def conduct_mutation_testing(self):
         for target_file, lineno_mutants in self.selected_mutants.items():
             target_file_path = self.get_target_file_path(target_file)
@@ -620,6 +803,19 @@ class WorkerStage04(Worker):
 
                         mutant_info = mutant_line.split(",")
                         mutant_filename = mutant_info[0]
+    
+    def update_parall_selected_mutants_csv(self, csv_file, mutant_rows): # 2024-08-13 implement parallel mode
+        with open(csv_file, "w") as fp:
+            fp.write(",,,,,,Before Mutation,,,,,After Mutation\n")
+            fp.write("target filename,mutant_id,lineno,#_failing_tcs_@line,Mutant Filename,Mutation Operator,Start Line#,Start Col#,End Line#,End Col#,Target Token,Start Line#,Start Col#,End Line#,End Col#,Mutated Token,Extra Info\n")
+            content = "\n".join(mutant_rows)
+            fp.write(content)
+    
+    def fill_mutation_testing_results_as_final(self, csv_file, mutant_results_rows): # 2024-08-13 implement parallel mode
+        with open(csv_file, "w") as fp:
+            fp.write("target_file,mutant_id,lineno,#_failing_tcs_@line,Mutant Filename,build_result,p2f,p2p,f2p,f2f,p2f_tcs,p2p_tcs,f2p_tcs,f2f_tcs\n")
+            content = "\n".join(mutant_results_rows)
+            fp.write(content)
     
     def reduced_selected_mutants(self):
         buggy_code_filename = self.target_code_file_path.name
@@ -842,7 +1038,10 @@ class WorkerStage04(Worker):
             if len(lines) == 0:
                 print(f">> No failing test case executed lines on {filename}")
                 continue
-            self.generate_mutants(compile_command, target_file, mutant_dir, lines)
+            retcode = self.generate_mutants(compile_command, target_file, mutant_dir, lines)
+            if retcode != 0:
+                self.apply_patch(self.target_code_file_path, self.buggy_code_file, patch_file, True)
+                return 1
         
         # 6. Apply patch reverse
         self.apply_patch(self.target_code_file_path, self.buggy_code_file, patch_file, True)
@@ -870,7 +1069,8 @@ class WorkerStage04(Worker):
             "-p", str(compile_command)
         ]
         print_command(cmd, self.verbose)
-        sp.check_call(cmd, stdout=sp.PIPE, stderr=sp.PIPE)
+        res = sp.run(cmd, stdout=sp.PIPE, stderr=sp.PIPE) # 2024-08-13 implement parallel mode
+        return res.returncode
 
         
 

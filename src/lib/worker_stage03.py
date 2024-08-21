@@ -349,8 +349,8 @@ class WorkerStage03(Worker):
         # 4-2. Run test case
         # cd ../../../
         res = sp.run(
-            f"timeout 5s ./NSFW_LNX_TESTd.out -C script/msg -# nothing",
-            shell=True, cwd=self.testsuite_dir.parent.parent.parent, # 2024-08-12 CHANGE THIS MANUALLY
+            f"timeout 10s ./NSFW_LNX_TESTd.out -C script/msg -# nothing",
+            shell=True, cwd=self.testsuite_dir.parent.parent.parent, # 2024-08-12 SPECIFICALLY CHANGE THIS MANUALLY
             stderr=sp.PIPE, stdout=sp.PIPE,
             env=self.my_env
         )

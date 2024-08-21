@@ -135,7 +135,7 @@ class Trainer(EngineBase):
         print("Done!")
 
         # Save loss graph and csv
-        self.draw_loss_graph(self.project_out_dir, train_loss, validate_loss) # 2024-08-08
+        # self.draw_loss_graph(self.project_out_dir, train_loss, validate_loss) # 2024-08-08
         self.write_loss_to_csv(self.project_out_dir, train_loss, validate_loss)
 
 

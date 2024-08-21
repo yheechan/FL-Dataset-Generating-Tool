@@ -135,11 +135,14 @@ def write_bug_version_mutation_info(
             )
 
 def copy_generated_mutants(
-    bug_id, zip_file, root_dest_dir
+    bug_id, zip_file, root_dest_dir, trial # 2024-08-19
 ):
     generated_mutants_for_mbfl_per_bug = root_dest_dir / "generated_mutants_for_mbfl_per_bug"
     if not generated_mutants_for_mbfl_per_bug.exists():
         generated_mutants_for_mbfl_per_bug.mkdir(parents=True, exist_ok=True)
     
-    dest_file = generated_mutants_for_mbfl_per_bug / bug_id
-    sp.check_call(f"unzip -q {zip_file} -d {dest_file}", shell=True)
+    dest_bug_dir = generated_mutants_for_mbfl_per_bug / bug_id
+    dest_bug_dir.mkdir(parents=True, exist_ok=True)
+
+    trial_dir = dest_bug_dir / trial
+    sp.check_call(f"unzip -q {zip_file} -d {trial_dir}", shell=True)

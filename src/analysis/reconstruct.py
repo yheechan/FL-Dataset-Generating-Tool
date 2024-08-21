@@ -284,7 +284,7 @@ class Reconstruct:
                 sp.run(["cp", "-r", version_dir, removed_versions_dir])
 
     
-    def combine_mbfl_sbfl(self):
+    def combine_mbfl_sbfl(self, combining_trials): # 2024-08-19
         # Create FL dataset directory
         self.fl_dataset_dir = out_dir / self.subject_name / f"FL-dataset-{self.subject_name}"
         if self.fl_dataset_dir.exists():
@@ -377,9 +377,10 @@ class Reconstruct:
             )
 
             # 7. copy generated_mutants-mbfl
-            self.generated_mutants_zip_file = out_dir / self.subject_name / f"generated_mutants-mbfl" / f"{individual.name}.zip"
-            assert self.generated_mutants_zip_file.exists(), f"zip file for {bug_id}-{individual.name} does not exist"
-            copy_generated_mutants(bug_id, self.generated_mutants_zip_file, self.fl_dataset_dir)
+            for trial in combining_trials: # 2024-08-19
+                self.generated_mutants_zip_file = out_dir / self.subject_name / f"generated_mutants-mbfl-{trial}" / f"{individual.name}.zip"
+                assert self.generated_mutants_zip_file.exists(), f"zip file for {bug_id}-{individual.name} does not exist"
+                copy_generated_mutants(bug_id, self.generated_mutants_zip_file, self.fl_dataset_dir, trial)
         
         bug_version_mutation_info_fp.close()
 

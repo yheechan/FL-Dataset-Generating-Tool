@@ -216,7 +216,7 @@ def get_lines_executed_by_failing_tcs_from_data(version_dir):
     
     return lines_executed_by_failing_tcs
 
-def get_lines_executed_on_initialization(version_dir):
+def get_lines_executed_on_initialization(version_dir): # 2024-08-13 exclude lines executed on initialization
     get_lines_executed_by_failing_tcs_file = version_dir / "coverage_info/lines_executed_at_initialization.txt"
     assert get_lines_executed_by_failing_tcs_file.exists(), f"lines_executed_at_initialization.txt does not exist in {version_dir}"
 
@@ -225,6 +225,24 @@ def get_lines_executed_on_initialization(version_dir):
         lines = [line.strip() for line in lines]
     
     return lines
+
+def get_linse_exected_on_initialization_as_filenm2lineno(version_dir): # 2024-08-13 exclude lines executed on initialization
+    get_lines_executed_by_failing_tcs_file = version_dir / "coverage_info/lines_executed_at_initialization.txt"
+    assert get_lines_executed_by_failing_tcs_file.exists(), f"lines_executed_at_initialization.txt does not exist in {version_dir}"
+
+    with open(get_lines_executed_by_failing_tcs_file, "r") as f:
+        lines = f.readlines()
+        filenm2lineno = {}
+        for line in lines:
+            info = line.strip().split("#")
+            filenm = info[0].split("/")[-1]
+            func = info[1]
+            lineno = info[-1]
+            if filenm not in filenm2lineno:
+                filenm2lineno[filenm] = []
+            filenm2lineno[filenm].append(lineno)
+    
+    return filenm2lineno
 
 def get_postprocessed_coverage_csv_file_from_data(version_dir):
     pp_cov_csv_file = version_dir / "coverage_info/postprocessed_coverage.csv"
@@ -246,3 +264,25 @@ def get_buggy_line_key_from_data(version_dir):
         buggy_line_key = f.readline().strip()
     
     return buggy_line_key
+
+def divide_list(lst, n):
+    k, m = divmod(len(lst), n)
+    return [lst[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(n)]
+
+def get_list_of_selected_mutants_csv_row(csv_file):
+    mutant_list = []
+    with open(csv_file, "r") as fp:
+        lines = fp.readlines()
+        for line in lines[2:]:
+            line = line.strip()
+            mutant_list.append(line)
+    return mutant_list
+
+def get_mutation_testing_results_csv_row(csv_file):
+    mutant_list = []
+    with open(csv_file, "r") as fp:
+        lines = fp.readlines()
+        for line in lines[1:]:
+            line = line.strip()
+            mutant_list.append(line)
+    return mutant_list

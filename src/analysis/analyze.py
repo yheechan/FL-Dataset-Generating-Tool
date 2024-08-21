@@ -112,6 +112,8 @@ class Analyze:
             "#_funcs_executed_by_failing_TCs", 
             "#_distinct_funcs_executed_by_failing_TCs",
             "#_distinct_lines_executed_by_failing_TCs",
+            "buggy_func_is_included_in_func_executed_on_initialization", # 2024-08-13 to check whether buggy func/line is included in func/lines executed by intialization code
+            "buggy_line_is_included_in_func_executed_on_initialization",
             "#_funcs", "#_files"
         ]
         failing_tcs = []
@@ -131,6 +133,9 @@ class Analyze:
         total_distinct_lines_executed_by_failing_tcs = []
         total_files = []
         total_funcs = []
+        total_bugfunc_included_in_initialization = 0 # 2024-08-13 to check whether buggy func/line is included in func/lines executed by intialization code
+        total_bugline_included_in_initialization = 0
+
 
         with open(self.output_csv, "w") as out_fp:
             out_fp.write(",".join(csv_keys) + "\n")
@@ -141,6 +146,10 @@ class Analyze:
                 individual = Individual(self.subject_name, self.set_name, individual.name)
                 coverage_summary_file = individual.dir_path / "coverage_summary.csv"
                 assert coverage_summary_file.exists(), f"Coverage summary file {coverage_summary_file} does not exist"
+                buggy_line_key = get_buggy_line_key_from_data(individual.dir_path) # 2024-08-13 to check whether buggy func/line is included in func/lines executed by intialization code
+                buggy_file = buggy_line_key.split("#")[0]
+                buggy_func = buggy_line_key.split("#")[1]
+                buggy_lineno = buggy_line_key.split("#")[-1]
 
                 with open(coverage_summary_file, "r") as cov_sum_fp:
                     lines = cov_sum_fp.readlines()
@@ -174,12 +183,19 @@ class Analyze:
                     lines_from_initialization = get_lines_executed_on_initialization(individual.dir_path)
                 info.append(len(lines_from_initialization))
                 funcs_from_initialization = []
+                bug_func_is_included = 0
+                bug_line_is_included = 0
                 for key in lines_from_initialization:
                     file_nm = key.split("#")[0]
                     func = key.split("#")[1]
                     lineno = int(key.split("#")[-1])
                     if func not in funcs_from_initialization:
                         funcs_from_initialization.append(func)
+                    if buggy_file == file_nm and buggy_func == func: # 2024-08-13 to check whether buggy func/line is included in func/lines executed by intialization code
+                        bug_func_is_included = 1
+                    if buggy_file == file_nm and buggy_func == func and buggy_lineno == lineno:
+                        bug_line_is_included = 1
+                    
                 info.append(len(funcs_from_initialization))
                 total_lines_executed_on_initialization.append(len(funcs_from_initialization))
 
@@ -201,10 +217,14 @@ class Analyze:
                 info.append(len(funcs_by_failing_tcs))
                 info.append(len(distinct_funcs_by_failing_tcs))
                 info.append(len(distinct_lines_by_failing_tcs))
+                info.append(bug_func_is_included) # 2024-08-13 to check whether buggy func/line is included in func/lines executed by intialization code
+                info.append(bug_line_is_included)
 
                 total_funcs_executed_by_failing_tcs.append(len(funcs_by_failing_tcs))
                 total_distinct_funcs_executed_by_failing_tcs.append(len(distinct_funcs_by_failing_tcs))
                 total_distinct_lines_executed_by_failing_tcs.append(len(distinct_lines_by_failing_tcs))
+                total_bugfunc_included_in_initialization += bug_func_is_included # 2024-08-13 to check whether buggy func/line is included in func/lines executed by intialization code
+                total_bugline_included_in_initialization += bug_line_is_included
 
                 # 2024-08-05: Measure total # of files/functions of targetted files
                 pp_cov_line_list = get_postprocessed_coverage_csv_file_from_data(individual.dir_path)
@@ -248,6 +268,8 @@ class Analyze:
         print(f"Average # lines executed on initialization: {sum(total_lines_executed_on_initialization) / self.set_size}")
         print(f"Average # distinct funcs executed by failing TCs: {sum(total_distinct_funcs_executed_by_failing_tcs) / self.set_size}")
         print(f"Average # distinct lines executed by failing TCs: {sum(total_distinct_lines_executed_by_failing_tcs) / self.set_size}")
+        print(f"# of versions where buggy func is included in func executed on initialization: {total_bugfunc_included_in_initialization}")
+        print(f"# of versions where buggy line is included in func executed on initialization: {total_bugline_included_in_initialization}")
 
 
     def crashed_buggy_mutants(self,):
@@ -259,31 +281,42 @@ class Analyze:
             info = filename.split("-")
             version_name = info[0]
             target_file = version_name.split(".")[0] + "." + version_name.split(".")[2]
+            crash_type = info[1]
             stage = info[2]
 
             if target_file not in stat_dict:
                 stat_dict[target_file] = {}
             
-            with open(individual_file, "r") as fp:
-                lines = fp.readlines()
-                line_info = lines[0].strip().split(",")
-                line_name = line_info[0]
-                line_crash_type = line_info[1]
-                line_exit_num = line_info[2]
+            if stage not in stat_dict[target_file]:
+                stat_dict[target_file][stage] = {}
+            
+            if crash_type not in stat_dict[target_file][stage]:
+                stat_dict[target_file][stage][crash_type] = 0
+            stat_dict[target_file][stage][crash_type] += 1
 
-                crash_id = f"{line_crash_type}:{line_exit_num}"
-                if crash_id not in stat_dict[target_file]:
-                    stat_dict[target_file][crash_id] = 0
-                stat_dict[target_file][crash_id] += 1
+            
+            # with open(individual_file, "r") as fp:
+            #     lines = fp.readlines()
+            #     line_info = lines[0].strip().split(",")
+            #     line_name = line_info[0]
+            #     line_crash_type = line_info[1]
+            #     line_exit_num = line_info[2]
+
+            #     crash_id = f"{line_crash_type}:{line_exit_num}"
+            #     if crash_id not in stat_dict[target_file]:
+            #         stat_dict[target_file][crash_id] = 0
+            #     stat_dict[target_file][crash_id] += 1
         
-        txt_name = self.output_csv.name.split(".")[0] + ".txt"
-        self.output_txt = self.stat_dir / txt_name
+        txt_name = self.output_csv.name.split(".")[0] + ".json"
+        self.output_json = self.stat_dir / txt_name
 
-        with open(self.output_txt, "w") as fp:
-            for target in stat_dict:
-                fp.write(f"file: {target}\n")
-                print(f"file: {target}")
-                for crash_id in stat_dict[target]:
-                    fp.write(f"\tcrash id: {crash_id}, count: {stat_dict[target][crash_id]}\n")
-                    print(f"\tcrash id: {crash_id}, count: {stat_dict[target][crash_id]}")
+        with open(self.output_json, "w") as fp:
+            print(json.dumps(stat_dict, indent=2))
+            json.dump(stat_dict, fp, ensure_ascii=False, indent=2)
+            # for target in stat_dict:
+            #     fp.write(f"file: {target}\n")
+            #     print(f"file: {target}")
+            #     for crash_id in stat_dict[target]:
+            #         fp.write(f"\tcrash id: {crash_id}, count: {stat_dict[target][crash_id]}\n")
+            #         print(f"\tcrash id: {crash_id}, count: {stat_dict[target][crash_id]}")
                 
