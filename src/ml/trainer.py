@@ -103,7 +103,9 @@ class Trainer(EngineBase):
         # self.optimizer = torch.optim.Adam(self.mlp_model.parameters(), lr=self.params["training_param"]["learning_rate"])
 
         # 6. Training
+        train_start_time = time.time()
         self.start_training()
+        train_end_time = time.time() - train_start_time # 2024-08-21 save training time duration
 
         # 7. Testing
         self.start_testing(
@@ -111,7 +113,8 @@ class Trainer(EngineBase):
             self.raw_test_set, self.mlp_model,
             "test-accuracy.csv", self.params,
             self.model_line_susp_score_dir,
-            self.model_function_susp_score_dir, self.bug_keys_dir
+            self.model_function_susp_score_dir, self.bug_keys_dir,
+            train_end_time # 2024-08-21 save training time duration
         )
 
         # 8. Save Model

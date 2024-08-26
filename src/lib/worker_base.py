@@ -150,16 +150,16 @@ class Worker:
         # rm -rf log/*
         # rm -rf exe/log/*
         # 2024-08-14 SPECIFICALLY WRITTEN FOR NSFW C LANGUAGE
-        sp.run("rm -rf log/*", shell=True,
-                cwd=self.testsuite_dir.parent.parent.parent,
-                stderr=sp.PIPE, stdout=sp.PIPE,
-                env=self.my_env
-        )
-        sp.run("rm -rf exe/log/*", shell=True,
-                cwd=self.testsuite_dir.parent.parent.parent,
-                stderr=sp.PIPE, stdout=sp.PIPE,
-                env=self.my_env
-        )
+        # sp.run("rm -rf log/*", shell=True,
+        #         cwd=self.testsuite_dir.parent.parent.parent,
+        #         stderr=sp.PIPE, stdout=sp.PIPE,
+        #         env=self.my_env
+        # )
+        # sp.run("rm -rf exe/log/*", shell=True,
+        #         cwd=self.testsuite_dir.parent.parent.parent,
+        #         stderr=sp.PIPE, stdout=sp.PIPE,
+        #         env=self.my_env
+        # )
         return res.returncode
 
     def set_env(self):

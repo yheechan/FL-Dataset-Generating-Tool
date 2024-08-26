@@ -23,7 +23,7 @@ class EngineBase:
     # ===============================
     def start_testing(
             self, project_name, project_out_dir, raw_test_set, model, filename, params,
-            line_suspend_score_dir, function_susp_score_dir, bug_keys_dir
+            line_suspend_score_dir, function_susp_score_dir, bug_keys_dir, train_end_time # 2024-08-21 save training time duration
     ):
         print(f"[{project_name}] Start Testing...")
         size = len(raw_test_set)
@@ -53,12 +53,13 @@ class EngineBase:
         print(f"acc@5 perc.: {len(acc_5)/size}")
         print(f"acc@10: {len(acc_10)}")
         print(f"acc@10 perc.: {len(acc_10)/size}")
+        print(f"training time duration: {train_end_time}") # 2024-08-21 save training time duration
 
         print("Done!")
 
         # Save accuracy results
         self.write_test_accuracy_to_csv(project_out_dir, accuracy_results, filename)
-        self.write_test_accuracy_to_txt(project_out_dir, acc_5, acc_10, size)
+        self.write_test_accuracy_to_txt(project_out_dir, acc_5, acc_10, size, train_end_time) # 2024-08-21 save training time duration
     
     def test_instr(
             self, model, project_out_dir, subject, feature_csv, params,
@@ -305,7 +306,7 @@ class EngineBase:
         model_file = project_out_dir / f"{project_name}.pth"
         torch.save(model.state_dict(), model_file)
     
-    def write_test_accuracy_to_txt(self, project_out_dir, acc_5, acc_10, size):
+    def write_test_accuracy_to_txt(self, project_out_dir, acc_5, acc_10, size, train_end_time): # 2024-08-21 save training time duration
         fl_acc_txt = project_out_dir / "fl_acc.txt"
         with open(fl_acc_txt, "w") as f:
             f.write(f"Total # of bug versions: {size}\n")
@@ -313,6 +314,7 @@ class EngineBase:
             f.write(f"acc@5 perc.: {len(acc_5)/size}\n")
             f.write(f"acc@10: {len(acc_10)}\n")
             f.write(f"acc@10 perc.: {len(acc_10)/size}")
+            f.write(f"training time duration: {train_end_time}")
 
     # ===============================
     # Related to dataset

@@ -347,13 +347,14 @@ class WorkerStage03(Worker):
         self.remove_all_gcda(self.core_repo_dir)
 
         # 4-2. Run test case
-        # cd ../../../
-        res = sp.run(
-            f"timeout 10s ./NSFW_LNX_TESTd.out -C script/msg -# nothing",
-            shell=True, cwd=self.testsuite_dir.parent.parent.parent, # 2024-08-12 SPECIFICALLY CHANGE THIS MANUALLY
-            stderr=sp.PIPE, stdout=sp.PIPE,
-            env=self.my_env
-        )
+        if self.config["test_initialization"]["status"] == True:
+            exec_wd = self.core_dir / self.config["test_initialization"]["execution_path"]
+            res = sp.run(
+                self.config["test_initialization"]["init_cmd"],
+                shell=True, cwd=exec_wd, # 2024-08-12 SPECIFICALLY CHANGE THIS MANUALLY
+                stderr=sp.PIPE, stdout=sp.PIPE,
+                env=self.my_env
+            )
         
         # 4-3. Remove untarged files for coverage
         self.remove_untargeted_files_for_gcovr(self.core_repo_dir)

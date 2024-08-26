@@ -36,25 +36,24 @@
 # 2. Build Step
 ## 2.1 Build MUSICUP
 ```
-$ cd tools/MUSICUP/
+$ cd ./tools/MUSICUP/
 $ make LLVM_BUILD_PATH=/usr/lib/llvm-13 -j20
 ```
 
 ### 2.2 Build extractor
 ```
-$ cd tools/extractor/
+$ cd ./tools/extractor/
 $ make -j20
 ```
 
 # 3. Executables Overview
 * directory: ``src/``
 * list of executables for dataset generation:
-  1. ``collect_buggy_mutants.py``                                                                                                  
+  1. ``collect_buggy_mutants.py``
   2. ``select_usable_versions.py``
   3. ``prepare_prerequisites.py``
   4. ``extract_mbfl_features.py``
   5. ``extract_sbfl_features.py``
-  6. ``combine_fl_features.py``
 
 * list of executables for dataset generation on a single version of a subject:
   1. ``test_mutant_buggy_collection.py``: tests a mutant for buggy collections (version saved when considered as buggy)
@@ -71,9 +70,9 @@ $ make -j20
   * ``machine_learning.py``
 
 # 5. Configurations
-## 5.1 Experiment Configurations
-Users are required to give an experiment configurations written on ``./configs/config.json`` file and ``./configs/machines.json`` file.
+Users are required to give an experiment configurations written on ``./configs/config.json`` file and ``./configs/machines.json`` file and subject configurations within subject directory, ``./subjects/<subject-name>/``.
 
+## 5.1 Experiment Configurations
 ### 5.1.2 ``config.json``
 The following code box shows an example of written ``config.json`` file for experiment configurations.
 ```
@@ -98,7 +97,7 @@ The following code box shows an example of written ``config.json`` file for expe
     * ``name``: name or address when connecting to the machine.
     * ``core``: an integer value indicating the number of available cores of the machine.
     * ``homedirectory``: absolute path to home directory
-  * ``number_of_versions_to_check_for_usability``: the number of buggy mutants to check for usability (detailed explanation found in section 6.2)
+  * ``number_of_versions_to_check_for_usability``: the number of buggy mutants to check for usability (detailed explanation found in section 6.2). All buggy versions is checked if the number is greater than the number of buggy versions within ``./out/<subject-name>/<buggy-versions-directory>/``.
   * ``max_mutants``: an integer value indicating the number of maximum mutants to generate on a single line during MBFL feature extraction.
   * ``number_of_lines_to_mutation_test``: an integer value indicating the number of lines to conduct mutation testing during MBFL feature extraction.
   * ``abs_path_to_gcovr_executable``: absolute path to ``gcovr`` executable for coverage processing.
@@ -172,6 +171,7 @@ All information (subject repository, subject configurations, etc.) must be place
       * ``cov_compiled_with_clang``: boolean value ``true`` or ``false`` indicating whether the subject for coverage was built with clang.
       * ``gcovr_source_root``: absolute path to root directory of source files (only given when ``cov_compiled_with_clang`` is ``false``, ``"None"`` if ``true``)
       * ``gcovr_object_root``: absolute path to directory where object files are saved (only given when ``cov_compiled_with_clang`` is ``false``, ``"None"`` if ``true``).
+      * ``test_initialization``: command (``init_cmd``) and command working directory path (``execution_path``) if exists (``status``).
       ```
       {
           "subject_name": "libxml2",
@@ -203,7 +203,12 @@ All information (subject repository, subject configurations, etc.) must be place
           },
           "cov_compiled_with_clang": true,
           "gcovr_source_root": "None",
-          "gcovr_object_root": "None"
+          "gcovr_object_root": "None",
+          "test_initialization": {
+              "status": false,
+              "init_cmd": "None",
+              "execution_path": "None"
+          }
       }
       ```
   5. Build script for subject written in ``build_script.sh``. Must return 1 at build failure, 0 else.
@@ -223,6 +228,8 @@ All information (subject repository, subject configurations, etc.) must be place
 ```
 $ time python3 collect_buggy_mutants.py --subject <subject-name> [--verbose]
 ```
+* command flag usage:
+  * ``--subject <str>``: name of the target subject
 
 ## 6.2 Usable Buggy Mutant Collection
 ### 6.2.1 Action for Step 6.2
@@ -235,6 +242,16 @@ $ time python3 collect_buggy_mutants.py --subject <subject-name> [--verbose]
 ### 6.2.2 CLI for Usable Buggy Mutant Collection
 ```
 $ time python3 select_usable_versions.py --subject <subject-name>
+```
+* command flag usage:
+  * ``--subject  <str>``: name of the target subject
+
+### 6.2.3 Validation command for Usable Buggy Mutants
+For each buggy versions within ``usable_buggy_versions`` directory, the following ``validator.py`` command validates that:
+  * ``bug_info.csv`` has been generated
+  * ``testsuite_info`` has been generated for both failing and passing test cases
+  * ``buggy_code_file`` directory contains the designated buggy code file
+```
 $ python3 validator.py --subject <subject-name> --set-name <usable_buggy_versions-directory> --validate-usable-buggy-versions
 ```
 
@@ -250,7 +267,28 @@ $ python3 validator.py --subject <subject-name> --set-name <usable_buggy_version
 ### 6.3.2 CLI for prerequisite data preparation
 ```
 $ time python3 prepare_prerequisites.py --subject <subject-name> --target-set-name <usable_buggy_versions-directory> [--exclude-ccts] [--use-excluded-failing-tcs] [--passing-tcs-perc 0.05] [--failing-tcs-perc 0.1]
+```
+* command flag usage:
+  * ``--subject <str>``: name of the target subject
+  * ``--target-set-name <str>``: name of the directory that contains buggy versions targeted for prerequisite data preparation
+  * ``--exclude-ccts``: flag when given, excludes ccts before MBFL and SBFL feature extraction
+
+### 6.3.3 Validation command for Prerequisite Data
+For each buggy versions within ``prerequisite_data`` directory, the following ``validator.py`` command validates that:
+  * ``buggy_line_key.txt`` has been generated
+  * ``coverage_summary.csv`` has been generated
+  * ``postprocess_coverage.csv`` has been generated
+  * failing TCs executes the buggy line based on ``postprocessed_coverage.csv`` file
+  * ``lines_executed_by_failing_tc.json`` has been generated
+  * ``line2function.json`` has been generated
+  * at least 1 failing tc and 1 passing tc exists
+```
 $ python3 validator.py --subject <subject-name> --set-name <prerequisite_data-directory> --validate-prerequisite-data
+```
+
+### 6.3.4 Statistics result generation command for Prerequisite Data
+The following commands generates statistics regarding the prerequisite data and crashed buggy mutants information within ``./statistics/<subject-name>/`` directory.
+```
 $ python3 analyzer.py --subject <subject-name> --set-name <prerequisite_data-directory> --output-csv <prerequisite_data-directory>-tc-stats --prerequisite-data --removed-initialization-coverage
 $ python3 analyzer.py --subject <subject-name> --set-name crashed_buggy_mutants --output crashed_buggy_mutants --crashed-buggy-mutants
 ```
@@ -264,7 +302,29 @@ $ python3 analyzer.py --subject <subject-name> --set-name crashed_buggy_mutants 
 ### 6.4.2 CLI for mbfl feature extraction
 ```
 $ time python3 extract_mbfl_features.py --subject <subject-name> --target-set-name <prerequisite_data-directory> --trial <trial-name> [--exclude-init-lines] [--parallel-cnt 2] [--dont-terminate-leftovers] [--remain-one-bug-per-line]
+```
+* command flag usage:
+  * ``--subject <str>``: name of the target subject
+  * ``--target-set-name <str>``: name of the directory that contains buggy versions targeted for mbfl feature extraction
+  * ``--trial <str>``: name of the experiment trial (ex. trial1)
+  * ``--exclude-init-lines``: flag when given, excludes lines executed during initialization (before test case execution) from MBFL targeted lines
+  * ``--prallel-cnt <int>``: conduct MBFL feature extraction of a buggy version in parallel of ``<int>`` amount.
+  * ``--dont-terminate-leftovers``: flag when given, waits until all mbfl exctraction of buggy versions has been finished in a batch.
+  * ``--remain-one-bug-per-line``: flag when given, only selects one buggy version per line.
+
+### 6.4.3 Validation command for MBFL features
+For each buggy versions within ``mbfl_features`` directory, the following ``validator.py`` command validates that:
+  * ``mbfl_features.csv`` has been generated
+  * ``mbfl_features.csv`` only contains one buggy line
+  * ``selected_mutants.csv`` has been generated
+  * ``mutation_testing_results.csv`` has been generated
+```
 $ python3 validator.py --subject <subject-name> --set-name <mbfl_features-directory> --validate-mbfl-features --trial <trial-name>
+```
+
+### 6.4.4 Statistics results generation command for MBFL features
+The following commands generates statistics regarding the rank and statistical information of mbfl features data within ``./statistics/<subject-name>/`` directory.
+```
 $ python3 ranker.py --subject <subject-name> --set-name <mbfl_features-directory> --output-csv <mbfl_features-directory>-rank-stats --mbfl-features --trial <trial-name>
 $ python3 analyzer.py --subject <subject-name> --set-name <mbfl_features-directory> --output-csv <mbfl_features-directory>-tc-stats --prerequisite-data --removed-initialization-coverage
 ```
@@ -277,7 +337,21 @@ $ python3 analyzer.py --subject <subject-name> --set-name <mbfl_features-directo
 ### 6.5.2 CLI for mbfl feature extraction
 ```
 $ time python3 extract_sbfl_features.py --subject <subject-name> --target-set-name <mbfl_features-directory>
+```
+* command flag usage:
+  * ``--subject <str>``: name of the target subject
+  * ``--target-set-name <str>``: name of the directory that contains buggy versions targeted for sbfl feature extraction
+
+### 6.5.3 Validation command for SBFL features
+For each buggy versions within ``sbfl_features`` directory, the following ``validator.py`` command validates that:
+  * ``sbfl_features.csv`` has been generated
+```
 $ python3 validator.py --subject <subject-name> --set-name <sbfl_features-directory> --validate-sbfl-features
+```
+
+### 6.5.4 Statistics results generation command for SBFL features
+The following commands generates statistics regarding the rank information of sbfl features data within ``./statistics/<subject-name>/`` directory.
+```
 $ python3 ranker.py --subject <subject-name> --set-name <sbfl_features-directory> --output-csv <sbfl_features-directory>-rank-stats --sbfl-features
 ```
 
@@ -287,6 +361,21 @@ $ python3 ranker.py --subject <subject-name> --set-name <sbfl_features-directory
 ### 6.6.2 CLI for FL feature dataset finalization
 ```
 $ python3 reconstructor.py --subject <subject-name> --set-name <sbfl_features-directory> --combine-mbfl-sbfl --combining-trials trial1
+```
+* command flag usage:
+  * ``--subject <str>``: name of the target subject
+  * ``--target-set-name <str>``: name of the directory that contains buggy versions targeted for mbfl and sbfl combining action
+  * ``--combine-mbfl-sbfl``: flag when given, combines mbfl and sbfl feature csv file within buggy versions of targetted directory
+  * ``--combining-trials [<str> ...]``: name of the trials to combine
+
+### 6.6.3 Validation command for FL features
+For each buggy versions within ``FL-dataset-<subject-name>`` directory, the following ``validator.py`` command validates that:
+  * there is only one row with "bug" column as 1 within the ``<bug-id>.fl_features.csv``
+  * the the sum of SBFL spectrum (ep, ef, np, nf) add up to the utilized number of test cases
+  * all failing tcs executes buggy line based on postprocess coverage csv file
+  * Metallaxis and MUSE score is correctly measurable with the given features
+  * the mutated code exists within the specified line of buggy code file
+```
 $ python3 validator.py --subject <subject-name> --set-name FL-dataset-<subject-name> --validate-fl-features
 ```
 
@@ -304,9 +393,9 @@ $ python3 machine_learning.py --subject2setname-pair <subject-name>:<fl-dataset-
 
 ## 7.3 inferring with MLP model
 ```
- python3 machine_learning.py --subject2setname-pair <subject-name>:<fl-dataset-directory> --inference --project-name ML-<date>-<subject-name>-<version> --inference-name infer-<subject-name>-<version>
+$ python3 machine_learning.py --subject2setname-pair <subject-name>:<fl-dataset-directory> --inference --project-name ML-<date>-<subject-name>-<version> --inference-name infer-<subject-name>-<version>
 ```
 
 
 ---
-last updated Aug 20, 2024
+last updated Aug 22, 2024
