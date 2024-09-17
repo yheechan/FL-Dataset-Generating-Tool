@@ -107,7 +107,7 @@ class FileManager():
         for machine, core, homedir in machinesCores_list:
             tasks.append((machine, core, homedir, repo))
 
-        limit = 100
+        limit = 50
         print(f"Number of tasks (repo): {len(tasks)}")
         with multiprocessing.Pool(processes=limit) as pool:
             pool.map(self.single_send_repo_remote, tasks)

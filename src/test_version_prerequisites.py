@@ -15,7 +15,7 @@ def main():
     worker = WorkerStage03(
         args.subject, args.machine, args.core,
         args.version, args.need_configure,
-        args.use_excluded_failing_tcs, args.exclude_ccts,
+        args.use_excluded_failing_tcs,
         args.passing_tcs_perc, args.failing_tcs_perc, args.verbose
     )
     worker.run()
@@ -28,7 +28,6 @@ def make_parser():
     parser.add_argument("--version", type=str, help="Version name", required=True)
     parser.add_argument("--need-configure", action="store_true", help="Need configure")
     parser.add_argument("--use-excluded-failing-tcs", action="store_true", help="Use excluded failing tcs")
-    parser.add_argument("--exclude-ccts", action="store_true", help="Exclude CCTs")
     parser.add_argument("--passing-tcs-perc", type=float, default=1.0, help="Percentage of passing tcs to use (default: 1.0, range: 0.0 ~ 1.0)")
     parser.add_argument("--failing-tcs-perc", type=float, default=1.0, help="Percentage of failing tcs to use (default: 1.0, range: 0.0 ~ 1.0)")
     parser.add_argument("--verbose", action="store_true", help="Verbose mode")

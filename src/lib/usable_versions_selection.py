@@ -80,7 +80,7 @@ class UsableVersionSelection(Subject):
         
         print(f">> Finished testing all versions now retrieving usable versions")
         self.fileManager.collect_data_remote("usable_buggy_versions", self.usable_versions_dir, self.versions_assignments)
-        self.fileManager.collect_data_remote("crashed_buggy_mutants", self.self.crashed_buggy_mutants_dir, self.mutant_assignments)
+        self.fileManager.collect_data_remote("crashed_buggy_mutants", self.crashed_buggy_mutants_dir, self.versions_assignments)
     
     def test_single_machine_core_remote(self, machine, core, homedir, versions):
         print(f"Testing on {machine}::{core}")

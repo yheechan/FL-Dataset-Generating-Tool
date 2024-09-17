@@ -1,6 +1,7 @@
 import time
 import multiprocessing
 import subprocess as sp
+import concurrent.futures
 
 from lib.utils import *
 from lib.subject_base import Subject
@@ -29,7 +30,7 @@ class BuggyMutantCollection(Subject):
         self.configure_no_cov()
         
         # 3. Build subject
-        self.build()
+        self.build(piping=False)
         
         check = []
         self.redoing = False
@@ -88,7 +89,10 @@ class BuggyMutantCollection(Subject):
     def test_on_remote(self):
         jobs = []
         sleep_cnt = 0
-        for machine_core, mutants in self.mutant_assignments.items():
+        # make shuffled list of machine_cores
+        shuffled_list = list(self.mutant_assignments.keys())
+        for machine_core in shuffled_list:
+            mutants = self.mutant_assignments[machine_core]
             machine, core, homedir = machine_core.split("::")
             job = multiprocessing.Process(
                 target=self.test_single_machine_core_remote,
@@ -100,13 +104,27 @@ class BuggyMutantCollection(Subject):
             if sleep_cnt%5==0:
                 time.sleep(10)
             # time.sleep(0.5) # to avoid ssh connection error
+
+        # 2024-09-14 commented out to randomize build order for cores in machines
+        # for machine_core, mutants in self.mutant_assignments.items():
+        #     machine, core, homedir = machine_core.split("::")
+        #     job = multiprocessing.Process(
+        #         target=self.test_single_machine_core_remote,
+        #         args=(machine, core, homedir, mutants)
+        #     )
+        #     jobs.append(job)
+        #     job.start()
+        #     sleep_cnt += 1
+        #     if sleep_cnt%5==0:
+        #         time.sleep(10)
+        #     # time.sleep(0.5) # to avoid ssh connection error
         
         for job in jobs:
             job.join()
     
         print(f">> Finished testing mutants now retrieving buggy mutants...")
         self.fileManager.collect_data_remote("buggy_mutants", self.buggy_mutants_dir, self.mutant_assignments)
-        self.fileManager.collect_data_remote("crashed_buggy_mutants", self.self.crashed_buggy_mutants_dir, self.mutant_assignments)
+        self.fileManager.collect_data_remote("crashed_buggy_mutants", self.crashed_buggy_mutants_dir, self.mutant_assignments)
         
     def test_single_machine_core_remote(self, machine, core, homedir, mutants):
         print(f"Testing on {machine}::{core}")
@@ -265,17 +283,28 @@ class BuggyMutantCollection(Subject):
 
         start_time = time.time()
 
-        jobs = []
-        for target_file, mutant_dir in self.targetfile_and_mutantdir:
-            job = multiprocessing.Process(
-                target=self.generate_mutants_for_single_file,
-                args=(target_file, mutant_dir)
-            )
-            jobs.append(job)
-            job.start()
+        # jobs = [] # 2024-09-14 commented out to limit max process to 5
+        # for target_file, mutant_dir in self.targetfile_and_mutantdir:
+        #     job = multiprocessing.Process(
+        #         target=self.generate_mutants_for_single_file,
+        #         args=(target_file, mutant_dir)
+        #     )
+        #     jobs.append(job)
+        #     job.start()
         
-        for job in jobs:
-            job.join()
+        # for job in jobs:
+        #     job.join()
+        
+        with concurrent.futures.ProcessPoolExecutor(max_workers=5) as executor:
+        # Submit the tasks to the pool, it will ensure that only 5 run concurrently
+            futures = [
+                executor.submit(self.generate_mutants_for_single_file, target_file, mutant_dir)
+                for target_file, mutant_dir in self.targetfile_and_mutantdir
+            ]
+
+            # Wait for all submitted tasks to complete
+            for future in concurrent.futures.as_completed(futures):
+                future.result()  # You can add error handling here if needed
         
         print(f">> Finished generating mutants in {time.time() - start_time} seconds")
     
@@ -289,15 +318,15 @@ class BuggyMutantCollection(Subject):
             '-o', str(mutant_dir),
             # '-ll', '1',
             # '-l', '2',
-            '-ll', '40',
-            '-l', '20',
+            '-ll', '1', # limit on line
+            '-l', '20', # limit on mutant
             '-d', unused_ops,
             '-p', str(self.compile_command_file)
         ]
         mutant_list = get_files_in_dir(mutant_dir)
         if len(mutant_list) == 0:
             print_command(cmd, self.verbose)
-            # sp.check_call(cmd, stderr=sp.PIPE, stdout=sp.PIPE)
+            sp.check_call(cmd, stderr=sp.PIPE, stdout=sp.PIPE)
             sp.check_call(cmd)
         else:
             print(f"{mutant_dir.name} already exists mutants")
@@ -338,13 +367,13 @@ class BuggyMutantCollection(Subject):
             for mutant in target_mutants:
                 mutants_list.append((target_file, mutant))
 
-            #     # TEMPORARY
-            #     if len(mutants_list) >= 500:
-            #         break
+                # TEMPORARY
+                if len(mutants_list) >= 275:
+                    break
 
-            # # TEMPORARY
-            # if len(mutants_list) >= 500:
-            #     break
+            # TEMPORARY
+            if len(mutants_list) >= 275:
+                break
         
         return mutants_list
 

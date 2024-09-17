@@ -33,7 +33,7 @@ class WorkerStage01(Worker):
             self.configure_no_cov()
 
         # 2. Build subject
-        self.build()
+        self.build(piping=False)
         self.set_env()
 
         # 3. Test mutant
@@ -48,7 +48,7 @@ class WorkerStage01(Worker):
         self.apply_patch(self.target_file_code_file, self.assigned_mutant_code_file, patch_file, False)
 
         # 3. Build the subject, if build fails, skip the mutant
-        res = self.build()
+        res = self.build(piping=False)
         if res != 0:
             print(f"Failed to build on {self.assigned_mutant_code_file.name}")
             self.apply_patch(self.target_file_code_file, self.assigned_mutant_code_file, patch_file, True)

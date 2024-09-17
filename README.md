@@ -266,12 +266,11 @@ $ python3 validator.py --subject <subject-name> --set-name <usable_buggy_version
 
 ### 6.3.2 CLI for prerequisite data preparation
 ```
-$ time python3 prepare_prerequisites.py --subject <subject-name> --target-set-name <usable_buggy_versions-directory> [--exclude-ccts] [--use-excluded-failing-tcs] [--passing-tcs-perc 0.05] [--failing-tcs-perc 0.1]
+$ time python3 prepare_prerequisites.py --subject <subject-name> --target-set-name <usable_buggy_versions-directory> [--use-excluded-failing-tcs] [--passing-tcs-perc 0.05] [--failing-tcs-perc 0.1]
 ```
 * command flag usage:
   * ``--subject <str>``: name of the target subject
   * ``--target-set-name <str>``: name of the directory that contains buggy versions targeted for prerequisite data preparation
-  * ``--exclude-ccts``: flag when given, excludes ccts before MBFL and SBFL feature extraction
 
 ### 6.3.3 Validation command for Prerequisite Data
 For each buggy versions within ``prerequisite_data`` directory, the following ``validator.py`` command validates that:

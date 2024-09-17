@@ -121,14 +121,21 @@ class Subject:
             stderr=sp.PIPE, stdout=sp.PIPE    
         )
     
-    def build(self):
+    def build(self, piping=True):
         print(f">> Building {self.name}")
         print_command(["bash", self.build_file], self.verbose)
-        sp.check_call(
-            ["bash", self.build_file],
-            cwd=self.build_file_position,
-            stderr=sp.PIPE, stdout=sp.PIPE
-        )
+
+        if piping:
+            sp.call(
+                ["bash", self.build_file],
+                cwd=self.build_file_position,
+                stderr=sp.PIPE, stdout=sp.PIPE
+            )
+        else:
+            sp.check_call(
+                ["bash", self.build_file],
+                cwd=self.build_file_position
+            )
     
     def clean_build(self):
         print(f">> Cleaning build for {self.name}")

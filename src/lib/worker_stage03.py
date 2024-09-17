@@ -9,7 +9,7 @@ from lib.worker_base import Worker
 class WorkerStage03(Worker):
     def __init__(
             self, subject_name, machine, core, version_name, need_configure,
-            use_excluded_failing_tcs, exclude_ccts,
+            use_excluded_failing_tcs,
             passing_tcs_perc=1.0, failing_tcs_perc=1.0, verbose=False
     ):
         super().__init__(subject_name, "stage03", "prepare_prerequisites", machine, core, verbose)
@@ -20,7 +20,6 @@ class WorkerStage03(Worker):
         self.passing_tcs_perc = passing_tcs_perc
         self.failing_tcs_perc = failing_tcs_perc
         self.use_excluded_failing_tcs = use_excluded_failing_tcs
-        self.exclude_ccts = exclude_ccts
 
         self.version_dir = self.assigned_works_dir / version_name
 
@@ -114,9 +113,7 @@ class WorkerStage03(Worker):
         print_command(["mkdir", "-p", self.version_coverage_dir], self.verbose)
         self.version_coverage_dir.mkdir(exist_ok=True)
 
-        # self.cov_dir
-
-        total_tc_list = self.failing_tcs_list + self.passing_tcs_list
+        total_tc_list = self.failing_tcs_list + self.passing_tcs_list + self.ccts_list
         total_tc_list = sorted(total_tc_list, key=sort_testcase_script_name)
         print_command([">> total_tc_list length: ", len(total_tc_list)], self.verbose)
 
@@ -124,13 +121,20 @@ class WorkerStage03(Worker):
         # and the row is each line key (filename#function_name#line_number)
         # the contents is 0 or 1 (0: not covered, 1: covered)
         first = True
-        self.cov_data = {
+        first_noCCTs = True
+        cov_data = {
+            "col_data": [],
+            "row_data": []
+        }
+        cov_data_noCCTs = {
             "col_data": [],
             "row_data": []
         }
         self.lines_execed_by_failing_tc = {}
         self.lines_execed_by_passing_tc = {}
         self.lines_execed = {}
+        # postprocess coverage for all test cases (failing, passing, ccts) at postprocessed_coverage.csv
+        # postprocess coverage for all test cases (failing, passing) at postprocessed_coverage_noCCTs.csv
         for idx, tc_script_name in enumerate(total_tc_list):
             print(f"Processing {idx+1}/{len(total_tc_list)}: {tc_script_name}")
 
@@ -143,18 +147,28 @@ class WorkerStage03(Worker):
 
             if first:
                 first = False
-                self.add_key_data(tc_cov_json)
+                self.add_key_data(cov_data, tc_cov_json)
             
             self.add_cov_data(
-                tc_cov_json, tc_script_name,
+                cov_data, tc_cov_json, tc_script_name,
             )
+
+            if first_noCCTs and tc_script_name not in self.ccts_list:
+                first_noCCTs = False
+                self.add_key_data(cov_data_noCCTs, tc_cov_json)
+            
+            if tc_script_name not in self.ccts_list:
+                self.add_cov_data(
+                    cov_data_noCCTs, tc_cov_json, tc_script_name,
+                )
         
         self.coverage_summary["#_lines_executed_by_failing_tcs"] = len(self.lines_execed_by_failing_tc)
         self.coverage_summary["#_lines_executed_by_passing_tcs"] = len(self.lines_execed_by_passing_tc)
         self.coverage_summary["#_total_lines_executed"] = len(self.lines_execed)
         
         # write coverage data to a csv file
-        self.write_postprocessed_coverage()
+        self.write_postprocessed_coverage(cov_data, "postprocessed_coverage.csv")
+        self.write_postprocessed_coverage(cov_data_noCCTs, "postprocessed_coverage_noCCTs.csv")
         self.write_executed_lines(self.lines_execed_by_failing_tc, "lines_executed_by_failing_tc.json")
         self.write_executed_lines(self.lines_execed_by_passing_tc, "lines_executed_by_passing_tc.json")
         self.write_summary()
@@ -194,19 +208,19 @@ class WorkerStage03(Worker):
             f.write(content)
         print(f"Lines executed on initialization saved at {lines_execed_on_init_file.name}")
 
-    def write_postprocessed_coverage(self,):
-        cov_csv_file = self.version_coverage_dir / f"postprocessed_coverage.csv"
+    def write_postprocessed_coverage(self, cov_data, cov_csv_filename):
+        cov_csv_file = self.version_coverage_dir / cov_csv_filename
         with open(cov_csv_file, "w") as f:
-            f.write(",".join(self.cov_data["col_data"]) + "\n")
+            f.write(",".join(cov_data["col_data"]) + "\n")
 
-            for row in self.cov_data["row_data"]:
+            for row in cov_data["row_data"]:
                 f.write(",".join([f"\"{str(x)}\"" for x in row]) + "\n")
         
         print(f"Coverage csv file is saved at {cov_csv_file.name}")
     
-    def add_cov_data(self, tc_cov_json, tc_script_name):
+    def add_cov_data(self, cov_data, tc_cov_json, tc_script_name):
         tc_name = tc_script_name.split(".")[0]
-        self.cov_data["col_data"].append(tc_name)
+        cov_data["col_data"].append(tc_name)
 
         pass_or_fail = False if tc_script_name in self.failing_tcs_list else True
         if pass_or_fail:
@@ -219,11 +233,11 @@ class WorkerStage03(Worker):
                 line = file["lines"][i]
                 lineno = line["line_number"]
                 key = self.make_key(filename, lineno)
-                curr_row_key = self.cov_data["row_data"][cnt][0]
+                curr_row_key = cov_data["row_data"][cnt][0]
                 assert key == curr_row_key, f"Key {key} does not match with the row data key {curr_row_key}"
 
                 covered = 1 if line["count"] > 0 else 0
-                self.cov_data["row_data"][cnt].append(covered)
+                cov_data["row_data"][cnt].append(covered)
 
                 if covered == 1:
                     if key not in self.lines_execed:
@@ -246,8 +260,8 @@ class WorkerStage03(Worker):
                 
                 cnt += 1
 
-    def add_key_data(self, tc_cov_json):
-        self.cov_data["col_data"].append("key")
+    def add_key_data(self, cov_data, tc_cov_json):
+        cov_data["col_data"].append("key")
 
         for file in tc_cov_json["files"]:
             filename = file["file"]
@@ -255,8 +269,8 @@ class WorkerStage03(Worker):
                 lineno = line["line_number"]
                 key = self.make_key(filename, lineno)
                 
-                assert [key] not in self.cov_data["row_data"], f"Key {key} already exists in the row data"
-                self.cov_data["row_data"].append([key])
+                assert [key] not in cov_data["row_data"], f"Key {key} already exists in the row data"
+                cov_data["row_data"].append([key])
                 self.coverage_summary["#_total_lines"] += 1
 
     
@@ -316,13 +330,15 @@ class WorkerStage03(Worker):
                     print(f">> Failed to check coverage for failing TC {tc_script_name}")
                 
                 print(f">> Buggy line {self.buggy_lineno} is covered by failing TC {tc_script_name}")
-            elif tc_script_name in self.passing_tcs_list and self.exclude_ccts:
+            elif tc_script_name in self.passing_tcs_list:
+                # check_buggy_line_covered return 0 if the buggy line is covered
+                # and 1 if the buggy line is not covered
                 buggy_line_covered = self.check_buggy_line_covered(
                     tc_script_name, raw_cov_file, self.target_code_file_path, self.buggy_lineno
                 )
                 if buggy_line_covered == 0:
                     self.ccts_list.append(tc_script_name)
-                    os.remove(raw_cov_file)
+                    # os.remove(raw_cov_file) # 2024-09-17 Do not remove raw cov of ccts
         
         # 2024-08-12 SAVE INITIALIZATION CODE COVERAGE
         self.save_initialization_code_coverage()

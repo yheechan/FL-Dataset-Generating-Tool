@@ -85,15 +85,22 @@ class Worker:
             stderr=sp.PIPE, stdout=sp.PIPE    
         )
     
-    def build(self):
+    def build(self, piping=True):
         print(f">> Building {self.name}")
         print_command(["bash", self.build_file], self.verbose)
-        res = sp.run(
-            ["bash", self.build_file],
-            cwd=self.build_file_position,
-            stderr=sp.PIPE, stdout=sp.PIPE
-        )
-        return res.returncode
+        if piping:
+            res = sp.run(
+                ["bash", self.build_file],
+                cwd=self.build_file_position,
+                stderr=sp.PIPE, stdout=sp.PIPE
+            )
+            return res.returncode
+        else:
+            res = sp.run(
+                ["bash", self.build_file],
+                cwd=self.build_file_position,
+            )
+            return res.returncode
     
     def clean_build(self):
         print(f">> Cleaning build for {self.name}")
