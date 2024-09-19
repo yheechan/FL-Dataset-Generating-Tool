@@ -319,7 +319,7 @@ class BuggyMutantCollection(Subject):
             # '-ll', '1',
             # '-l', '2',
             '-ll', '1', # limit on line
-            '-l', '20', # limit on mutant
+            '-l', '20', # limit on mutant operator
             '-d', unused_ops,
             '-p', str(self.compile_command_file)
         ]
@@ -367,13 +367,13 @@ class BuggyMutantCollection(Subject):
             for mutant in target_mutants:
                 mutants_list.append((target_file, mutant))
 
-                # TEMPORARY
-                if len(mutants_list) >= 8:
-                    break
+            #     # TEMPORARY
+            #     if len(mutants_list) >= 8:
+            #         break
 
-            # TEMPORARY
-            if len(mutants_list) >= 8:
-                break
+            # # TEMPORARY
+            # if len(mutants_list) >= 8:
+            #     break
         
         return mutants_list
 
@@ -385,6 +385,7 @@ class BuggyMutantCollection(Subject):
         for machine_core, mutants in self.mutant_assignments.items():
             print(f'>> {machine_core} has {len(mutants)} mutants')
 
+    # 2024-09-19 might not need this part
     # ++++++++++++++++++++++++++++++++++++++++ # 2024-08-09 save-crashed-buggy-mutants
     # ++++++ Save Crashed Buggy Mutants ++++++
     # ++++++++++++++++++++++++++++++++++++++++
