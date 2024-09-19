@@ -17,7 +17,7 @@ class Rank(Analyze):
     # +++++++++++++++++++++++
     # ++++++ Rank MBFL ++++++
     # +++++++++++++++++++++++
-    def rank_mbfl_features(self, trialName=None):
+    def rank_mbfl_features(self, trialName=None, noCCTs=False):
         self.max_mutants = self.experiment.experiment_config["max_mutants"]
         self.mutant_keys = get_mutant_keys(self.max_mutants)
 
@@ -27,12 +27,17 @@ class Rank(Analyze):
         self.acc5_muse = []
         self.acc10_muse = []
 
+        mbfl_feature_type = "mbfl_features.csv"
+        if noCCTs:
+            mbfl_feature_type = "mbfl_features_noCCTs.csv"
+        print(f"rank on {mbfl_feature_type}")
+
         for idx, version_dir in enumerate(self.individual_list):
             print(f"\n{idx+1}/{len(self.individual_list)}: {version_dir.name}")
 
             individual = Individual(self.subject_name, self.set_name, version_dir.name)
 
-            mbfl_features_csv_file = individual.dir_path / "mbfl_features.csv"
+            mbfl_features_csv_file = individual.dir_path / mbfl_feature_type
             assert mbfl_features_csv_file.exists(), f"MBFL features file {mbfl_features_csv_file} does not exist"
 
             buggy_line_key = get_buggy_line_key_from_data(individual.dir_path)
