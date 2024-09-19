@@ -262,7 +262,8 @@ $ python3 validator.py --subject <subject-name> --set-name <usable_buggy_version
       * line-to-function map information (JSON format)
       * lines executed by failing TCs (JSON format)
       * lines executed by passing TCs (JSON format)
-      * coincidentally-correct-test-cases (CCTs optional)
+      * lines executed by CCTs (Json format)
+      * coincidentally-correct-test-cases
 
 ### 6.3.2 CLI for prerequisite data preparation
 ```
@@ -324,9 +325,11 @@ $ python3 validator.py --subject <subject-name> --set-name <mbfl_features-direct
 ### 6.4.4 Statistics results generation command for MBFL features
 The following commands generates statistics regarding the rank and statistical information of mbfl features data within ``./statistics/<subject-name>/`` directory.
 ```
-$ python3 ranker.py --subject <subject-name> --set-name <mbfl_features-directory> --output-csv <mbfl_features-directory>-rank-stats --mbfl-features --trial <trial-name>
+$ python3 ranker.py --subject <subject-name> --set-name <mbfl_features-directory> --output-csv <mbfl_features-directory>-rank-stats --mbfl-features --trial <trial-name> [--no-ccts]
 $ python3 analyzer.py --subject <subject-name> --set-name <mbfl_features-directory> --output-csv <mbfl_features-directory>-tc-stats --prerequisite-data --removed-initialization-coverage
 ```
+* command flag usage:
+  * ``--no-ccts``: flag when given, measures rank of mbfl features measured without the usage of CCTs
 
 ## 6.5 SBFL Feature Extraction
 ### 6.5.1 Action for step 6.5
