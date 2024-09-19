@@ -106,8 +106,8 @@ class Analyze:
             "buggy_version_name", "#_failing_TCs", "#_passing_TCs",
             "#_excluded_failing_TCs", "#_excluded_passing_TCs",
             "#_CCTs", "#_total_TCs",
-            "#_lines_executed_by_failing_TCs", "#_lines_executed_by_passing_TCs",
-            "#_total_lines_executed", "#_total_lines", "coverage", "#_lines_executed_on_initialization",
+            "#_lines_executed_by_failing_TCs", "#_lines_executed_by_passing_TCs", "#_lines_executed_by_CCTs"
+            "#_total_lines_executed", "#_total_lines", "coverage", "coverage (no CCTs)", "#_lines_executed_on_initialization",
             "#_funcs_executed_on_initialization",
             "#_funcs_executed_by_failing_TCs", 
             "#_distinct_funcs_executed_by_failing_TCs",
@@ -124,9 +124,11 @@ class Analyze:
         total_tcs = []
         lines_executed_by_failing_tcs = []
         lines_executed_by_passing_tcs = []
+        lines_executed_by_CCTs = []
         total_lines_executed = []
         total_lines = []
         all_coverage = []
+        all_coverage_noCCTs = []
         total_funcs_executed_by_failing_tcs = []
         total_lines_executed_on_initialization = []
         total_distinct_funcs_executed_by_failing_tcs = []
@@ -166,13 +168,17 @@ class Analyze:
                     total_tcs.append(int(info[5]))
                     lines_executed_by_failing_tcs.append(int(info[6]))
                     lines_executed_by_passing_tcs.append(int(info[7]))
-                    total_lines_executed.append(int(info[8]))
-                    total_lines.append(int(info[9]))
+                    lines_executed_by_CCTs.append(int(info[8]))
+                    total_lines_executed.append(int(info[9]))
+                    total_lines.append(int(info[10]))
 
-                    coverage = int(info[8]) / int(info[9])
+                    coverage = int(info[6]) + int(info[7]) + int(info[8])
                     all_coverage.append(coverage)
+                    coverage_noCCTs = int(info[6]) + int(info[7])
+                    all_coverage_noCCTs.append(coverage_noCCTs)
 
                     info.append(coverage)
+                    info.append(coverage_noCCTs)
                     info.insert(0, individual.name)
 
                 # 2024-08-05: Measure # of functions executed by failing TCss
@@ -255,9 +261,11 @@ class Analyze:
         print(f"Average # of total TCs: {sum(total_tcs) / self.set_size}")
         print(f"Average # of lines executed by failing TCs: {sum(lines_executed_by_failing_tcs) / self.set_size}")
         print(f"Average # of lines executed by passing TCs: {sum(lines_executed_by_passing_tcs) / self.set_size}")
+        print(f"Average # of lines executed by CCTs: {sum(lines_executed_by_CCTs) / self.set_size}")
         print(f"Average # of total lines executed: {sum(total_lines_executed) / self.set_size}")
         print(f"Average # of total lines: {sum(total_lines) / self.set_size}")
         print(f"Average coverage: {sum(all_coverage) / self.set_size}")
+        print(f"Average coverage (no CCTs): {sum(all_coverage_noCCTs) / self.set_size}")
         print(f"Max # of failing TCs: {max(failing_tcs)}")
         print(f"Max # of passing TCs: {max(passing_tcs)}")
         print(f"Min # of failing TCs: {min(failing_tcs)}")

@@ -2,6 +2,8 @@ import argparse
 
 from analysis.analyze import Analyze
 
+# TODO: update analyzer to analyze by normal and noCCTs
+
 # This script is to test mutants (of subject)
 # the mutant is considered buggy (and saved within out/buggy_mutants)
 # if at least one test case fails
@@ -14,7 +16,7 @@ def main():
     if args.usable_buggy_versions:
         subject.usable_buggy_versions()
     elif args.prerequisite_data:
-        subject.prerequisite_data(args.removed_initialization_coverage)
+        subject.prerequisite_data(removed_initialization_coverage=args.removed_initialization_coverage)
     elif args.remove_versions_mbfl != None:
         if len(args.remove_versions_mbfl) != 0:
             subject.remove_versions_mbfl_meeting_criteria(args.remove_versions_mbfl)

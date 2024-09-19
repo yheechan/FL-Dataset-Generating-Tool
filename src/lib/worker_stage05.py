@@ -17,7 +17,8 @@ class WorkerStage05(Worker):
         self.version_dir = self.assigned_works_dir / version_name
 
         # Work Information >>
-        self.target_code_file_path, self.buggy_code_filename, self.buggy_lineno = self.get_bug_info(self.version_dir)
+        self.target_code_file, self.buggy_code_filename, self.buggy_lineno = self.get_bug_info(self.version_dir)
+        self.target_code_file_path = self.core_dir / self.target_code_file
         assert version_name == self.buggy_code_filename, f"Version name {version_name} does not match with buggy code filename {self.buggy_code_filename}"
     
         self.set_testcases(self.version_dir)
@@ -26,7 +27,7 @@ class WorkerStage05(Worker):
 
         self.buggy_code_file = self.get_buggy_code_file(self.version_dir, self.buggy_code_filename)
         
-        self.buggy_line_key = self.make_key(self.target_code_file_path.__str__(), self.buggy_lineno)
+        self.buggy_line_key = self.make_key(self.target_code_file, self.buggy_lineno)
         buggy_line_key_from_data = get_buggy_line_key_from_data(self.version_dir)
         assert self.buggy_line_key == buggy_line_key_from_data, f"Buggy line key {self.buggy_line_key} does not match with buggy line key from data {buggy_line_key_from_data}"
 

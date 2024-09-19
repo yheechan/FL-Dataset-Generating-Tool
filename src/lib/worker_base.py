@@ -203,8 +203,9 @@ class Worker:
 
         self.line2function_dict = line2function_dict
     
-    def make_key(self, target_code_file_path, buggy_lineno):
-        filename = target_code_file_path.split('/')[-1]
+    def make_key(self, target_code_file, buggy_lineno):
+        # filename = target_code_file_path.split('/')[-1]
+        filename = target_code_file
         function = None
         for key, value in self.line2function_dict.items():
             if key.endswith(filename):
@@ -258,12 +259,16 @@ class Worker:
     
     def set_filtered_files_for_gcovr(self):
         self.targeted_files = self.config["target_files"]
-        self.targeted_files = [file.split("/")[-1] for file in self.targeted_files]
-        filtered_targeted_files = ["(.+/)?"+file+"$" for file in self.targeted_files]
-        self.filtered_files = "|".join(filtered_targeted_files)
+        # self.targeted_files = [file.split("/")[-1] for file in self.targeted_files]
+        self.targeted_files = [file for file in self.targeted_files]
+        # filtered_targeted_files = ["(.+/)?"+file.__str__()+"$" for file in filtered_targeted_files]
+        filtered_targeted_files = [self.core_dir / file for file in self.targeted_files]
+        filtered_targeted_files = [file.__str__() for file in filtered_targeted_files]
+        self.filtered_files = "|".join(filtered_targeted_files) + "$"
 
         self.target_gcno_gcda = []
         for target_file in self.targeted_files:
+            target_file = target_file.split("/")[-1]
             if self.subject_lang == "C":
                 filename = target_file.split(".")[0]
             else:
@@ -328,16 +333,27 @@ class Worker:
         with raw_cov_file.open() as f:
             cov_data = json.load(f)
         
-        target_file = target_file.name
+        # target_file = target_file.name
 
-        filename_list = [file["file"].split("/")[-1] for file in cov_data["files"]]
+        # filename_list = [file["file"].split("/")[-1] for file in cov_data["files"]]
 
-        if target_file not in filename_list:
+        # if target_file not in filename_list:
+        #     return -2
+        
+        file_exists = False
+        for file in cov_data["files"]:
+            if target_file in file["file"]:
+                file_exists = True
+                break
+        
+        if not file_exists:
             return -2
         
         for file in cov_data["files"]:
-            filename = file["file"].split("/")[-1]
-            if filename == target_file:
+            # filename = file["file"].split("/")[-1]
+            # if filename == target_file:
+            filename = file["file"]
+            if target_file in filename:
                 lines = file["lines"]
                 for line in lines:
                     if line["line_number"] == int(buggy_lineno):
@@ -396,8 +412,9 @@ class Worker:
             lines = f.readlines()
             target_code_file, mutant_code_file, buggy_lineno = lines[1].strip().split(",")
 
-        target_code_file = self.core_dir / target_code_file
-        assert target_code_file.exists(), f"Target code file does not exist: {target_code_file}"
+        # 2024-09-18 changed to not return path
+        # target_code_file = self.core_dir / target_code_file
+        # assert target_code_file.exists(), f"Target code file does not exist: {target_code_file}"
         
         return target_code_file, mutant_code_file, buggy_lineno
 

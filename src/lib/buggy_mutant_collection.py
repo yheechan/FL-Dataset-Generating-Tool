@@ -368,11 +368,11 @@ class BuggyMutantCollection(Subject):
                 mutants_list.append((target_file, mutant))
 
                 # TEMPORARY
-                if len(mutants_list) >= 275:
+                if len(mutants_list) >= 8:
                     break
 
             # TEMPORARY
-            if len(mutants_list) >= 275:
+            if len(mutants_list) >= 8:
                 break
         
         return mutants_list

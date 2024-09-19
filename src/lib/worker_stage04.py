@@ -30,7 +30,8 @@ class WorkerStage04(Worker):
         self.version_dir = self.assigned_works_dir / version_name
 
         # Work Information >>
-        self.target_code_file_path, self.buggy_code_filename, self.buggy_lineno = self.get_bug_info(self.version_dir)
+        self.target_code_file, self.buggy_code_filename, self.buggy_lineno = self.get_bug_info(self.version_dir)
+        self.target_code_file_path = self.core_dir / self.target_code_file
         assert version_name == self.buggy_code_filename, f"Version name {version_name} does not match with buggy code filename {self.buggy_code_filename}"
     
         self.set_testcases(self.version_dir)
@@ -40,7 +41,7 @@ class WorkerStage04(Worker):
         self.set_target_preprocessed_files()
 
         self.buggy_code_file = self.get_buggy_code_file(self.version_dir, self.buggy_code_filename)
-        self.buggy_line_key = self.make_key(self.target_code_file_path.__str__(), self.buggy_lineno)
+        self.buggy_line_key = self.make_key(self.target_code_file, self.buggy_lineno)
 
         self.musicup_exe = self.tools_dir / "music"
 
@@ -58,17 +59,23 @@ class WorkerStage04(Worker):
         self.postprocessed_cov_file = self.version_dir / "coverage_info" / "postprocessed_coverage.csv"
         assert self.postprocessed_cov_file.exists(), f"Postprocessed coverage file {self.postprocessed_cov_file} does not exist"
 
+        self.postprocessed_cov_file_noCCTs = self.version_dir / "coverage_info" / "postprocessed_coverage_noCCTs.csv"
+        assert self.postprocessed_cov_file_noCCTs.exists(), f"Postprocessed coverage file {self.postprocessed_cov_file_noCCTs} does not exist"
+
         self.mutant2tcs_results_dir = self.version_dir / f"mutant2tcs_results-{self.trial}"
         self.mutant2tcs_results_dir.mkdir(exist_ok=True, parents=True)
 
         self.selected_mutant_filename = f"selected_mutants-{self.trial}.csv"
         self.mutation_testing_results_filename = f"mutation_testing_results-{self.trial}.csv"
         self.mbfl_features_filename = f"mbfl_features-{self.trial}.csv" # 2024-08-07 add-mbfl
+        self.mutation_testing_results_noCCTs_filename = f"mutation_testing_results_noCCTs-{self.trial}.csv" # 2024-09-17
+        self.mbfl_features_noCCTs_filename = f"mbfl_features_noCCTs-{self.trial}.csv" # 2024-09-17
 
     def run(self):
         print(f"Testing version {self.version_dir.name} on {self.machine}::{self.core}")
 
         self.selected_mutants_file = self.version_dir / self.selected_mutant_filename
+        # if number_of_lines_to_mutation_test is -1, then it means we are not going to reduce target lines
         if self.number_of_lines_to_mutation_test > 0 and not self.selected_mutants_file.exists() and self.past_trials == None:
             self.lines_executed_by_failing_tcs = self.reduced_lines_executed_by_failing_tcs()
         # self.print_lines_executed_by_failing_tcs()
@@ -149,10 +156,11 @@ class WorkerStage04(Worker):
 
         if self.parallel_mode == False:
             # 5. Measure MBFL features
-            self.mbfl_features = self.measure_mbfl_features()
+            self.mbfl_features, self.mbfl_features_noCCTs = self.measure_mbfl_features()
 
             # 6. process to csv
-            self.process2csv(self.mbfl_features)
+            self.process2csv(self.mbfl_features, self.mbfl_features_filename, "mbfl_features.csv")
+            self.process2csv(self.mbfl_features_noCCTs, self.mbfl_features_noCCTs_filename, "mbfl_features_noCCTs.csv")
 
             # # 8. Zip mutant dir
             self.zip_mutants(self.version_mutant_zip, self.mbfl_generated_mutants_dir, self.version_mutant_dir)
@@ -340,14 +348,18 @@ class WorkerStage04(Worker):
     def measure_mbfl_features(self):
         self.total_num_of_failing_tcs = len(self.failing_tcs_list)
         self.lines_from_pp_cov = self.get_lines_from_pp_cov(self.postprocessed_cov_file)
-        perfileline_features, total_p2f, total_f2p = self.get_perfileline_features()
+        perfileline_features, total_p2f, total_f2p = self.get_perfileline_features(self.mutation_testing_results_filename)
+
+        self.lines_from_pp_cov = self.get_lines_from_pp_cov(self.postprocessed_cov_file_noCCTs) # 2024-09-17
+        perfileline_features_noCCTs, total_p2f_noCCTs, total_f2p_noCCTs = self.get_perfileline_features(self.mutation_testing_results_noCCTs_filename) # 2024-09-17
 
         # start measurement
         mbfl_features = self.measure_mbfl_scores(perfileline_features, total_p2f, total_f2p)
-        return mbfl_features
+        mbfl_features_noCCTs = self.measure_mbfl_scores(perfileline_features_noCCTs, total_p2f_noCCTs, total_f2p_noCCTs) # 2024-09-17
+        return mbfl_features, mbfl_features_noCCTs
     
-    def process2csv(self, mbfl_features):
-        csv_file = self.version_dir / self.mbfl_features_filename
+    def process2csv(self, mbfl_features, filename, final_filename):
+        csv_file = self.version_dir / filename
 
         mutant_key_default = {}
         for i in range(1, self.max_mutants+1):
@@ -393,7 +405,7 @@ class WorkerStage04(Worker):
                     default['bug'] = buggy_stat
                     writer.writerow({'key': line, **default})
         
-        final_file = csv_file.parent / "mbfl_features.csv"
+        final_file = csv_file.parent / final_filename
         shutil.copy(csv_file, final_file) # 2024-08-07 add-mbfl
     
     def measure_mbfl_scores(self, perfileline_features, total_p2f, total_f2p):
@@ -455,15 +467,15 @@ class WorkerStage04(Worker):
         
         return mbfl_features
     
-    def get_perfileline_features(self):
-        self.mutation_testing_results = self.version_dir / self.mutation_testing_results_filename
-        assert self.mutation_testing_results.exists(), f"Mutation testing result file {self.mutation_testing_results} does not exist"
+    def get_perfileline_features(self, filename_type):
+        mutation_testing_results = self.version_dir / filename_type
+        assert mutation_testing_results.exists(), f"Mutation testing result file {mutation_testing_results} does not exist"
 
         perfileline_features = {}
         total_p2f = 0
         total_f2p = 0
 
-        with open(self.mutation_testing_results, 'r') as f:
+        with open(mutation_testing_results, 'r') as f:
             lines = f.readlines()
             for line in lines[1:]:
                 info = line.strip().split(',')
@@ -509,7 +521,7 @@ class WorkerStage04(Worker):
     def begin_mbfl_process(self):
         self.utilized_testcases = {
             "failing": self.failing_tcs_list,
-            "passing": self.passing_tcs_list
+            "passing": self.passing_tcs_list + self.ccts_list
         }
         for type, tcs in self.utilized_testcases.items():
             print(f">> # of {type} test cases: {len(tcs)}")
@@ -518,6 +530,10 @@ class WorkerStage04(Worker):
         self.mutation_testing_results = self.version_dir / self.mutation_testing_results_filename
         self.mutation_testing_results_fp = self.mutation_testing_results.open("w")
         self.mutation_testing_results_fp.write("target_file,mutant_id,lineno,#_failing_tcs_@line,Mutant Filename,build_result,p2f,p2p,f2p,f2f,p2f_tcs,p2p_tcs,f2p_tcs,f2f_tcs\n")
+
+        self.mutation_testing_results_noCCTs = self.version_dir / self.mutation_testing_results_noCCTs_filename
+        self.mutation_testing_results_noCCTs_fp = self.mutation_testing_results_noCCTs.open("w")
+        self.mutation_testing_results_noCCTs_fp.write("target_file,mutant_id,lineno,#_failing_tcs_@line,Mutant Filename,build_result,p2f,p2p,f2p,f2f,p2f_tcs,p2p_tcs,f2p_tcs,f2f_tcs\n")
 
         # 2. Apply version patch
         patch_file = self.make_patch_file(self.target_code_file_path, self.buggy_code_file, "version.patch")
@@ -531,6 +547,7 @@ class WorkerStage04(Worker):
 
         # 5. Close result csv file
         self.mutation_testing_results_fp.close()
+        self.mutation_testing_results_noCCTs_fp.close()
     
     def begin_mbfl_parallel_process(self): # 2024-08-13 implement parallel mode
         # 1. copy current core<n> directory as core<n>-p<n>
@@ -549,7 +566,8 @@ class WorkerStage04(Worker):
             shutil.copytree(self.version_dir, parall_version_dir)
             # subject-repo
             parall_repo_dir = parall_core_dir / self.name
-            shutil.copytree(self.subject_repo, parall_repo_dir)
+            core_repo_dir = self.core_dir / self.name
+            shutil.copytree(core_repo_dir, parall_repo_dir)
 
         # 2. divide the selected mutants
         selected_mutants_file = self.version_dir / self.selected_mutant_filename
@@ -600,6 +618,7 @@ class WorkerStage04(Worker):
 
         # 5. combine core<n>-p<n>/stage04-trial1-assigned_works/<version-name>/mutation_testing_results-<trial-cnt>.csv from all core<n>-p<n>
         total_mutation_testing_results_csv_row = []
+        total_mutation_testing_results_noCCTs_csv_row = []
         for idx in range(self.parallel_cnt):
             parall_core_name = f"{self.core_dir.name}-p{idx}"
             parall_core_dir = self.core_dir.parent / parall_core_name
@@ -616,9 +635,18 @@ class WorkerStage04(Worker):
             
             mutation_testing_results_csv_row = get_mutation_testing_results_csv_row(parall_mutation_testing_results_csv)
             total_mutation_testing_results_csv_row.extend(mutation_testing_results_csv_row)
+
+            parall_mutation_testing_results_noCCTs_csv = parall_version_dir / self.mutation_testing_results_noCCTs_filename
+            assert parall_mutation_testing_results_noCCTs_csv.exists(), f"{parall_mutation_testing_results_noCCTs_csv.name} doesn't exist!"
+
+            mutation_testing_results_noCCTs_csv_row = get_mutation_testing_results_csv_row(parall_mutation_testing_results_noCCTs_csv)
+            total_mutation_testing_results_noCCTs_csv_row.extend(mutation_testing_results_noCCTs_csv_row)
             
         dest_mutation_testing_results_csv = self.version_dir / self.mutation_testing_results_filename
         self.fill_mutation_testing_results_as_final(dest_mutation_testing_results_csv, total_mutation_testing_results_csv_row)
+
+        dest_mutation_testing_results_noCCTs_csv = self.version_dir / self.mutation_testing_results_noCCTs_filename
+        self.fill_mutation_testing_results_as_final(dest_mutation_testing_results_noCCTs_csv, total_mutation_testing_results_noCCTs_csv_row)
 
         # 6. copy files in  mutant2tcs_results-<trial-cnt> directory
         total_mutant2tc_result_files = []
@@ -703,6 +731,8 @@ class WorkerStage04(Worker):
         print(f">> Testing mutant {mutant_id}:{mutant_name} on {self.version_dir.name}")
         tc_outcome = {'p2f': -1, 'p2p': -1, 'f2p': -1, 'f2f': -1}
         tc_outcome_detailed = {'p2f': [], 'p2p': [], 'f2p': [], 'f2f': []}
+        tc_outcome_noCCTs = {'p2f': -1, 'p2p': -1, 'f2p': -1, 'f2f': -1} # 2024-09-18 to make mbfl results without CCTs at the same time
+        tc_outcome_detailed_noCCTs = {'p2f': [], 'p2p': [], 'f2p': [], 'f2f': []}
         build_result = False
 
         # 1. Make patch file
@@ -716,11 +746,13 @@ class WorkerStage04(Worker):
         if res != 0:
             print(f"Failed to build on {mutant_id}:{mutant_name} of {self.version_dir.name}")
             self.apply_patch(target_file_path, mutant_file, patch_file, True)
-            self.write_result(target_file_path, mutant_id, lineno, num_failing_tcs, mutant_name, build_result, tc_outcome, tc_outcome_detailed)
+            self.write_result(self.mutation_testing_results_fp, target_file_path, mutant_id, lineno, num_failing_tcs, mutant_name, build_result, tc_outcome, tc_outcome_detailed)
+            self.write_result(self.mutation_testing_results_noCCTs_fp, target_file_path, mutant_id, lineno, num_failing_tcs, mutant_name, build_result, tc_outcome_noCCTs, tc_outcome_detailed_noCCTs)
             return
         
         build_result = True
         tc_outcome = {'p2f': 0, 'p2p': 0, 'f2p': 0, 'f2f': 0}
+        tc_outcome_noCCTs = {'p2f': 0, 'p2p': 0, 'f2p': 0, 'f2f': 0} # 2024-09-18 to make mbfl results without CCTs at the same time
 
         mutant2tcs_results_file = self.mutant2tcs_results_dir / f"{mutant_id}.csv"  # 2024-08-05 time for each test on each mutant
         mutant2tcs_results_fp = open(mutant2tcs_results_file, "w")
@@ -733,30 +765,35 @@ class WorkerStage04(Worker):
                 
                 tc_name = tc_script_name.split(".")[0]
                 res = self.run_test_case(tc_script_name)
+                isCCTs = False # 2024-09-18 to make mbfl results without CCTs at the same time
+                if tc_script_name in self.ccts_list:
+                    isCCTs = True
                 if res == 0:
                     if type == "failing":
-                        outcome = "f2p"
-                        tc_outcome["f2p"] += 1
-                        tc_outcome_detailed["f2p"].append(tc_name)
+                        self.update_tc_outcome("f2p", tc_outcome, tc_outcome_detailed, tc_name)
+                        if isCCTs == False:
+                            self.update_tc_outcome("f2p", tc_outcome_noCCTs, tc_outcome_detailed_noCCTs, tc_name)
                     elif type == "passing":
-                        outcome = "p2p"
-                        tc_outcome["p2p"] += 1
-                        tc_outcome_detailed["p2p"].append(tc_name)
+                        self.update_tc_outcome("p2p", tc_outcome, tc_outcome_detailed, tc_name)
+                        if isCCTs == False:
+                            self.update_tc_outcome("p2p", tc_outcome_noCCTs, tc_outcome_detailed_noCCTs, tc_name)
                 else:
                     if type == "failing":
-                        outcome = "f2f"
-                        tc_outcome["f2f"] += 1
-                        tc_outcome_detailed["f2f"].append(tc_name)
+                        self.update_tc_outcome("f2f", tc_outcome, tc_outcome_detailed, tc_name)
+                        if isCCTs == False:
+                            self.update_tc_outcome("f2f", tc_outcome_noCCTs, tc_outcome_detailed_noCCTs, tc_name)
                     elif type == "passing":
-                        outcome = "p2f"
-                        tc_outcome["p2f"] += 1
-                        tc_outcome_detailed["p2f"].append(tc_name)
+                        self.update_tc_outcome("p2f", tc_outcome, tc_outcome_detailed, tc_name)
+                        if isCCTs == False:
+                            self.update_tc_outcome("p2f", tc_outcome_noCCTs, tc_outcome_detailed_noCCTs, tc_name)
                 
                 tc_time_duration = time.time() - tc_start_time
                 
                 error_str = "code-not-found-in-listed-crash-codes"
                 if res in crash_codes_dict:
                     error_str = crash_codes_dict[res]
+                if res == 1:
+                    error_str = "fail"
                 if res == 0:
                     error_str = "pass"
                 content = f"{tc_script_name},{outcome},{res},{error_str},{tc_time_duration}\n"
@@ -767,9 +804,14 @@ class WorkerStage04(Worker):
         self.apply_patch(target_file_path, mutant_file, patch_file, True)
 
         # 6. Write result to csv
-        self.write_result(target_file_path, mutant_id, lineno, num_failing_tcs, mutant_name, build_result, tc_outcome, tc_outcome_detailed)
+        self.write_result(self.mutation_testing_results_fp, target_file_path, mutant_id, lineno, num_failing_tcs, mutant_name, build_result, tc_outcome, tc_outcome_detailed)
+        self.write_result(self.mutation_testing_results_noCCTs_fp, target_file_path, mutant_id, lineno, num_failing_tcs, mutant_name, build_result, tc_outcome_noCCTs, tc_outcome_detailed_noCCTs)
     
-    def write_result(self, target_file_path, mutant_id, lineno, num_failing_tcs, mutant_name, build_result, tc_outcome, tc_outcome_detailed):
+    def update_tc_outcome(self, type, outcome_num, outcome_detailed, tc_name):
+        outcome_num[type] += 1
+        outcome_detailed[type].append(tc_name)
+    
+    def write_result(self, fp, target_file_path, mutant_id, lineno, num_failing_tcs, mutant_name, build_result, tc_outcome, tc_outcome_detailed):
         build_str = "PASS" if build_result else "FAIL"
         full_tc_outcome = f"{tc_outcome['p2f']},{tc_outcome['p2p']},{tc_outcome['f2p']},{tc_outcome['f2f']}"
 
@@ -778,7 +820,7 @@ class WorkerStage04(Worker):
         f2p_tcs = "#".join(tc_outcome_detailed["f2p"])
         f2f_tcs = "#".join(tc_outcome_detailed["f2f"])
 
-        self.mutation_testing_results_fp.write(f"{target_file_path.name},{mutant_id},{lineno},{num_failing_tcs},{mutant_name},{build_str},{full_tc_outcome},{p2f_tcs},{p2p_tcs},{f2p_tcs},{f2f_tcs}\n")
+        fp.write(f"{target_file_path.name},{mutant_id},{lineno},{num_failing_tcs},{mutant_name},{build_str},{full_tc_outcome},{p2f_tcs},{p2p_tcs},{f2p_tcs},{f2f_tcs}\n")
         
     def get_target_file_path(self, target_file):
         for file in self.config["target_files"]:
@@ -1040,8 +1082,7 @@ class WorkerStage04(Worker):
                 continue
             retcode = self.generate_mutants(compile_command, target_file, mutant_dir, lines)
             if retcode != 0:
-                self.apply_patch(self.target_code_file_path, self.buggy_code_file, patch_file, True)
-                return 1
+                print(f">>> Failed to generate mutants on {filename} on mutant target {mutant_dir}")
         
         # 6. Apply patch reverse
         self.apply_patch(self.target_code_file_path, self.buggy_code_file, patch_file, True)
@@ -1069,7 +1110,8 @@ class WorkerStage04(Worker):
             "-p", str(compile_command)
         ]
         print_command(cmd, self.verbose)
-        res = sp.run(cmd, stdout=sp.PIPE, stderr=sp.PIPE) # 2024-08-13 implement parallel mode
+        # res = sp.run(cmd, stdout=sp.PIPE, stderr=sp.PIPE) # 2024-08-13 implement parallel mode
+        res = sp.run(cmd) # 2024-08-13 implement parallel mode
         return res.returncode
 
         

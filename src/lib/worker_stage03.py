@@ -24,7 +24,8 @@ class WorkerStage03(Worker):
         self.version_dir = self.assigned_works_dir / version_name
 
         # Work Information >>
-        self.target_code_file_path, self.buggy_code_filename, self.buggy_lineno = self.get_bug_info(self.version_dir)
+        self.target_code_file, self.buggy_code_filename, self.buggy_lineno = self.get_bug_info(self.version_dir)
+        self.target_code_file_path = self.core_dir / self.target_code_file
         assert version_name == self.buggy_code_filename, f"Version name {version_name} does not match with buggy code filename {self.buggy_code_filename}"
     
         self.set_testcases(self.version_dir)
@@ -101,12 +102,13 @@ class WorkerStage03(Worker):
             "#_total_TCs": len(self.total_tcs),
             "#_lines_executed_by_failing_tcs": 0,
             "#_lines_executed_by_passing_tcs": 0,
+            '#_lines_executed_by_ccts': 0,
             "#_total_lines_executed": 0,
             "#_total_lines": 0,
         }
 
         self.set_line2function_dict(self.version_dir)
-        self.buggy_line_key = self.make_key(self.target_code_file_path.__str__(), self.buggy_lineno)
+        self.buggy_line_key = self.make_key(self.target_code_file, self.buggy_lineno)
         print_command([">> buggy_line_key: ", self.buggy_line_key], self.verbose)
 
         self.version_coverage_dir = self.version_dir / "coverage_info"
@@ -121,7 +123,6 @@ class WorkerStage03(Worker):
         # and the row is each line key (filename#function_name#line_number)
         # the contents is 0 or 1 (0: not covered, 1: covered)
         first = True
-        first_noCCTs = True
         cov_data = {
             "col_data": [],
             "row_data": []
@@ -132,11 +133,12 @@ class WorkerStage03(Worker):
         }
         self.lines_execed_by_failing_tc = {}
         self.lines_execed_by_passing_tc = {}
+        self.lines_execed_by_ccts = {}
         self.lines_execed = {}
         # postprocess coverage for all test cases (failing, passing, ccts) at postprocessed_coverage.csv
         # postprocess coverage for all test cases (failing, passing) at postprocessed_coverage_noCCTs.csv
         for idx, tc_script_name in enumerate(total_tc_list):
-            print(f"Processing {idx+1}/{len(total_tc_list)}: {tc_script_name}")
+            # print(f"Processing {idx+1}/{len(total_tc_list)}: {tc_script_name}")
 
             tc_name = tc_script_name.split(".")[0]
             tc_cov_filename = f"{tc_name}.raw.json"
@@ -148,22 +150,15 @@ class WorkerStage03(Worker):
             if first:
                 first = False
                 self.add_key_data(cov_data, tc_cov_json)
-            
-            self.add_cov_data(
-                cov_data, tc_cov_json, tc_script_name,
-            )
+                self.add_key_data(cov_data_noCCTs, tc_cov_json, False)
 
-            if first_noCCTs and tc_script_name not in self.ccts_list:
-                first_noCCTs = False
-                self.add_key_data(cov_data_noCCTs, tc_cov_json)
-            
-            if tc_script_name not in self.ccts_list:
-                self.add_cov_data(
-                    cov_data_noCCTs, tc_cov_json, tc_script_name,
-                )
+            self.add_cov_data(
+                cov_data, cov_data_noCCTs, tc_cov_json, tc_script_name,
+            )
         
         self.coverage_summary["#_lines_executed_by_failing_tcs"] = len(self.lines_execed_by_failing_tc)
         self.coverage_summary["#_lines_executed_by_passing_tcs"] = len(self.lines_execed_by_passing_tc)
+        self.coverage_summary["#_lines_executed_by_ccts"] = len(self.lines_execed_by_ccts)
         self.coverage_summary["#_total_lines_executed"] = len(self.lines_execed)
         
         # write coverage data to a csv file
@@ -171,6 +166,7 @@ class WorkerStage03(Worker):
         self.write_postprocessed_coverage(cov_data_noCCTs, "postprocessed_coverage_noCCTs.csv")
         self.write_executed_lines(self.lines_execed_by_failing_tc, "lines_executed_by_failing_tc.json")
         self.write_executed_lines(self.lines_execed_by_passing_tc, "lines_executed_by_passing_tc.json")
+        self.write_executed_lines(self.lines_execed_by_ccts, "lines_executed_by_ccts.json")
         self.write_summary()
         self.write_buggy_line_key()
     
@@ -218,13 +214,21 @@ class WorkerStage03(Worker):
         
         print(f"Coverage csv file is saved at {cov_csv_file.name}")
     
-    def add_cov_data(self, cov_data, tc_cov_json, tc_script_name):
+    def add_cov_data(self, cov_data, cov_data_noCCTs, tc_cov_json, tc_script_name):
         tc_name = tc_script_name.split(".")[0]
-        cov_data["col_data"].append(tc_name)
 
         pass_or_fail = False if tc_script_name in self.failing_tcs_list else True
+        isCCTs = False
         if pass_or_fail:
-            assert tc_script_name in self.passing_tcs_list, f"Test case {tc_script_name} is not in passing test cases"
+            if tc_script_name in self.passing_tcs_list:
+                assert tc_script_name in self.passing_tcs_list, f"Test case {tc_script_name} is not in passing test cases"
+            else:
+                assert tc_script_name in self.ccts_list, f"Test case {tc_script_name} is not in CCTs"                
+                isCCTs = True
+        
+        cov_data["col_data"].append(tc_name)
+        if isCCTs == False:
+            cov_data_noCCTs["col_data"].append(tc_name)
         
         cnt = 0
         for file in tc_cov_json["files"]:
@@ -239,15 +243,22 @@ class WorkerStage03(Worker):
                 covered = 1 if line["count"] > 0 else 0
                 cov_data["row_data"][cnt].append(covered)
 
+                if isCCTs == False:
+                    cov_data_noCCTs["row_data"][cnt].append(covered)
+
                 if covered == 1:
                     if key not in self.lines_execed:
                         self.lines_execed[key] = 0
                     self.lines_execed[key] += 1
 
-                    if pass_or_fail:
+                    if pass_or_fail and isCCTs == False:
                         if key not in self.lines_execed_by_passing_tc:
                             self.lines_execed_by_passing_tc[key] = []
                         self.lines_execed_by_passing_tc[key].append(tc_script_name)
+                    elif pass_or_fail and isCCTs == True:
+                        if key not in self.lines_execed_by_ccts:
+                            self.lines_execed_by_ccts[key] = []
+                        self.lines_execed_by_ccts[key].append(tc_script_name)
                     else:
                         if key not in self.lines_execed_by_failing_tc:
                             self.lines_execed_by_failing_tc[key] = []
@@ -260,7 +271,7 @@ class WorkerStage03(Worker):
                 
                 cnt += 1
 
-    def add_key_data(self, cov_data, tc_cov_json):
+    def add_key_data(self, cov_data, tc_cov_json, is_all=True):
         cov_data["col_data"].append("key")
 
         for file in tc_cov_json["files"]:
@@ -271,7 +282,8 @@ class WorkerStage03(Worker):
                 
                 assert [key] not in cov_data["row_data"], f"Key {key} already exists in the row data"
                 cov_data["row_data"].append([key])
-                self.coverage_summary["#_total_lines"] += 1
+                if is_all:
+                    self.coverage_summary["#_total_lines"] += 1
 
     
     def measure_coverage(self):
@@ -322,7 +334,7 @@ class WorkerStage03(Worker):
             # 4-5. Check if the buggy line is coveraged
             if tc_script_name in self.failing_tcs_list:
                 buggy_line_covered = self.check_buggy_line_covered(
-                    tc_script_name, raw_cov_file, self.target_code_file_path, self.buggy_lineno
+                    tc_script_name, raw_cov_file, self.target_code_file, self.buggy_lineno
                 )
                 if buggy_line_covered == 1:
                     print(f">> Buggy line {self.buggy_lineno} is NOT covered by failing TC {tc_script_name}")
@@ -334,7 +346,7 @@ class WorkerStage03(Worker):
                 # check_buggy_line_covered return 0 if the buggy line is covered
                 # and 1 if the buggy line is not covered
                 buggy_line_covered = self.check_buggy_line_covered(
-                    tc_script_name, raw_cov_file, self.target_code_file_path, self.buggy_lineno
+                    tc_script_name, raw_cov_file, self.target_code_file, self.buggy_lineno
                 )
                 if buggy_line_covered == 0:
                     self.ccts_list.append(tc_script_name)
@@ -383,7 +395,7 @@ class WorkerStage03(Worker):
 
         # 4-5. Check if the buggy line is coveraged
         buggy_line_covered = self.check_buggy_line_covered(
-            tc_script_name, raw_cov_file, self.target_code_file_path, self.buggy_lineno
+            tc_script_name, raw_cov_file, self.target_code_file, self.buggy_lineno
         )
         if buggy_line_covered == 1:
             print(f">> Buggy line {self.buggy_lineno} is NOT covered by failing TC {tc_script_name}")

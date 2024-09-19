@@ -247,7 +247,7 @@ class MBFLExtraction(Subject):
         if self.exclude_init_lines == True: # 2024-08-13 exclude lines executed on initialization
             optional_flag += " --exclude-init-lines"
         if self.parallel_cnt != 0: # 2024-08-13 implement parallel mode
-            optional_flag += " --parallel_cnt "
+            optional_flag += " --parallel-cnt "
             optional_flag += str(self.parallel_cnt)
 
 

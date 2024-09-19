@@ -12,7 +12,8 @@ class WorkerStage02(Worker):
 
         self.version_dir = self.assigned_works_dir / version_name
 
-        self.target_code_file_path, self.buggy_code_filename, self.buggy_lineno = self.get_bug_info(self.version_dir)
+        self.target_code_file, self.buggy_code_filename, self.buggy_lineno = self.get_bug_info(self.version_dir)
+        self.target_code_file_path = self.core_dir / self.target_code_file
         assert version_name == self.buggy_code_filename, f"Version name {version_name} does not match with buggy code filename {self.buggy_code_filename}"
     
         self.set_testcases(self.version_dir)
@@ -25,6 +26,7 @@ class WorkerStage02(Worker):
 
         self.core_repo_dir = self.core_dir / self.name
 
+        self.set_target_preprocessed_files()
         self.set_filtered_files_for_gcovr()
 
         self.usable_buggy_versions_dir = out_dir / f"{self.name}" / "usable_buggy_versions"
@@ -95,7 +97,7 @@ class WorkerStage02(Worker):
 
             # 4-5 Check if the buggy line is coveraged
             buggy_line_covered = self.check_buggy_line_covered(
-                tc_script_name, raw_cov_file, self.target_code_file_path, self.buggy_lineno
+                tc_script_name, raw_cov_file, self.target_code_file, self.buggy_lineno
             )
             # self.apply_patch(self.target_code_file_path, self.buggy_code_file, patch_file, True)
             # return
