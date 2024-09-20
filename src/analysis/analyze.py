@@ -171,12 +171,19 @@ class Analyze:
                     lines_executed_by_CCTs.append(int(info[8]))
                     total_lines_executed.append(int(info[9]))
                     total_lines.append(int(info[10]))
+             
+                    line_key_by_fail = self.get_line_key(individual.dir_path / "coverage_info/lines_executed_by_failing_tc.json")
+                    line_key_by_pass = self.get_line_key(individual.dir_path / "coverage_info/lines_executed_by_passing_tc.json")
+                    line_key_by_CCT = self.get_line_key(individual.dir_path / "coverage_info/lines_executed_by_ccts.json")
 
-                    coverage = int(info[6]) + int(info[7]) + int(info[8])
+                    all_key_set = set(line_key_by_fail) | set(line_key_by_pass) | set(line_key_by_CCT)
+                    key_set_noCCT = set(line_key_by_fail) | set(line_key_by_pass)
+                    coverage = len(all_key_set) / int(info[10])
                     all_coverage.append(coverage)
-                    coverage_noCCTs = int(info[6]) + int(info[7])
+                    coverage_noCCTs = len(key_set_noCCT) / int(info[10])
                     all_coverage_noCCTs.append(coverage_noCCTs)
 
+                    assert len(all_key_set) != int(info[9]), f"Total lines executed is not equal to the number of lines executed by failing/passing/CCTs"                    
                     info.append(coverage)
                     info.append(coverage_noCCTs)
                     info.insert(0, individual.name)
@@ -252,33 +259,46 @@ class Analyze:
                 
                 out_fp.write(",".join(map(str, info)) + "\n")
 
-        print(f"\nTotal individual: {self.set_size}")
-        print(f"Average # of failing TCs: {sum(failing_tcs) / self.set_size}")
-        print(f"Average # of passing TCs: {sum(passing_tcs) / self.set_size}")
-        print(f"Average # of excluded failing TCs: {sum(excluded_failing_tcs) / self.set_size}")
-        print(f"Average # of excluded passing TCs: {sum(excluded_passing_tcs) / self.set_size}")
-        print(f"Average # of CCTs: {sum(ccts) / self.set_size}")
-        print(f"Average # of total TCs: {sum(total_tcs) / self.set_size}")
-        print(f"Average # of lines executed by failing TCs: {sum(lines_executed_by_failing_tcs) / self.set_size}")
-        print(f"Average # of lines executed by passing TCs: {sum(lines_executed_by_passing_tcs) / self.set_size}")
-        print(f"Average # of lines executed by CCTs: {sum(lines_executed_by_CCTs) / self.set_size}")
-        print(f"Average # of total lines executed: {sum(total_lines_executed) / self.set_size}")
-        print(f"Average # of total lines: {sum(total_lines) / self.set_size}")
-        print(f"Average coverage: {sum(all_coverage) / self.set_size}")
-        print(f"Average coverage (no CCTs): {sum(all_coverage_noCCTs) / self.set_size}")
-        print(f"Max # of failing TCs: {max(failing_tcs)}")
-        print(f"Max # of passing TCs: {max(passing_tcs)}")
-        print(f"Min # of failing TCs: {min(failing_tcs)}")
-        print(f"Min # of passing TCs: {min(passing_tcs)}")
-        print(f"Average # of functions executed by failing TCs: {sum(total_funcs_executed_by_failing_tcs) / self.set_size}")
-        print(f"Average # of funcs: {sum(total_funcs) / self.set_size}")
-        print(f"Average # of files: {sum(total_files) / self.set_size}")
-        print(f"Average # lines executed on initialization: {sum(total_lines_executed_on_initialization) / self.set_size}")
-        print(f"Average # distinct funcs executed by failing TCs: {sum(total_distinct_funcs_executed_by_failing_tcs) / self.set_size}")
-        print(f"Average # distinct lines executed by failing TCs: {sum(total_distinct_lines_executed_by_failing_tcs) / self.set_size}")
-        print(f"# of versions where buggy func is included in func executed on initialization: {total_bugfunc_included_in_initialization}")
-        print(f"# of versions where buggy line is included in func executed on initialization: {total_bugline_included_in_initialization}")
+        output = ""
+        output += f"\nTotal individual: {self.set_size}"
+        output += f"Average # of failing TCs: {sum(failing_tcs) / self.set_size}"
+        output += f"Average # of passing TCs: {sum(passing_tcs) / self.set_size}"
+        output += f"Average # of excluded failing TCs: {sum(excluded_failing_tcs) / self.set_size}"
+        output += f"Average # of excluded passing TCs: {sum(excluded_passing_tcs) / self.set_size}"
+        output += f"Average # of CCTs: {sum(ccts) / self.set_size}"
+        output += f"Average # of total TCs: {sum(total_tcs) / self.set_size}"
+        output += f"Average # of lines executed by failing TCs: {sum(lines_executed_by_failing_tcs) / self.set_size}"
+        output += f"Average # of lines executed by passing TCs: {sum(lines_executed_by_passing_tcs) / self.set_size}"
+        output += f"Average # of lines executed by CCTs: {sum(lines_executed_by_CCTs) / self.set_size}"
+        output += f"Average # of total lines executed: {sum(total_lines_executed) / self.set_size}"
+        output += f"Average # of total lines: {sum(total_lines) / self.set_size}"
+        output += f"Average coverage: {sum(all_coverage) / self.set_size}"
+        output += f"Average coverage (no CCTs): {sum(all_coverage_noCCTs) / self.set_size}"
+        output += f"Max # of failing TCs: {max(failing_tcs)}"
+        output += f"Max # of passing TCs: {max(passing_tcs)}"
+        output += f"Min # of failing TCs: {min(failing_tcs)}"
+        output += f"Min # of passing TCs: {min(passing_tcs)}"
+        output += f"Max # of lines executed by failing TCs: {max(lines_executed_by_failing_tcs)}"
+        output += f"Min # of lines executed by failing TCs: {min(lines_executed_by_failing_tcs)}"
+        output += f"Average # of functions executed by failing TCs: {sum(total_funcs_executed_by_failing_tcs) / self.set_size}"
+        output += f"Average # of funcs: {sum(total_funcs) / self.set_size}"
+        output += f"Average # of files: {sum(total_files) / self.set_size}"
+        output += f"Average # lines executed on initialization: {sum(total_lines_executed_on_initialization) / self.set_size}"
+        output += f"Average # distinct funcs executed by failing TCs: {sum(total_distinct_funcs_executed_by_failing_tcs) / self.set_size}"
+        output += f"Average # distinct lines executed by failing TCs: {sum(total_distinct_lines_executed_by_failing_tcs) / self.set_size}"
+        output += f"# of versions where buggy func is included in func executed on initialization: {total_bugfunc_included_in_initialization}"
+        output += f"# of versions where buggy line is included in func executed on initialization: {total_bugline_included_in_initialization}"
 
+        print(output)
+        with open(self.stat_dir / "prerequisite_data-tc-stats-summary.txt", "w") as f:
+            f.write(output)
+
+    def get_line_key(self, file_path):
+        assert file_path.exists(), f"{file_path} does not exist"
+        with open(file_path, "r") as fp:
+            data = json.load(fp)
+            key_list = list(data.keys())
+        return key_list
 
     def crashed_buggy_mutants(self,):
         stat_dict = {}
