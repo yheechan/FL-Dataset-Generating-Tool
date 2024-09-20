@@ -73,15 +73,29 @@ class Validate:
             postprocessed_coverage = individual.dir_path / 'coverage_info' / 'postprocessed_coverage.csv'
             assert postprocessed_coverage.exists(), f"Postprocessed coverage file {postprocessed_coverage} does not exist"
 
+            postprocessed_coverage_noCCTs = individual.dir_path / 'coverage_info' / 'postprocessed_coverage_noCCTs.csv'
+            assert postprocessed_coverage_noCCTs.exists(), f"Postprocessed coverage no CCTs file {postprocessed_coverage_noCCTs} does not exist"
+
             # VALIDATE: Assert that failing TCs execute the buggy line in postprocessed_coverage.csv
             res = self.check_failing_tcs(postprocessed_coverage, individual.failing_tcs_list, buggy_line_key)
             assert res, f"Failing test cases do not execute the buggy line in {postprocessed_coverage}"
+
+            res = self.check_failing_tcs(postprocessed_coverage_noCCTs, individual.failing_tcs_list, buggy_line_key)
+            assert res, f"Failing test cases do not execute the buggy line in {postprocessed_coverage_noCCTs}"
+
+            # VALIDATE: Assert the postprocessed_coverage_noCCTs.csv has no CCTs
+            self.check_CCTs(postprocessed_coverage_noCCTs, individual.ccts_list, notExist=True)
+
+            # Validate: Assert the postprocessed_coverage.csv has CCTs
+            self.check_CCTs(postprocessed_coverage, individual.ccts_list, notExist=False)
 
             # VALIDATE: Assert that coverage_info/lines_executed_by_failing_tc.json exists
             lines_executed_by_failing_tc = individual.dir_path / 'coverage_info' / 'lines_executed_by_failing_tc.json'
             assert lines_executed_by_failing_tc.exists(), f"Lines executed by failing test cases file {lines_executed_by_failing_tc} does not exist"
             lines_executed_by_passing_tc = individual.dir_path / 'coverage_info' / 'lines_executed_by_passing_tc.json'
             assert lines_executed_by_passing_tc.exists(), f"Lines executed by passing test cases file {lines_executed_by_passing_tc} does not exist"
+            lines_executed_by_ccts = individual.dir_path / 'coverage_info' / 'lines_executed_by_ccts.json'
+            assert lines_executed_by_ccts.exists(), f"Lines executed by CCTs file {lines_executed_by_ccts} does not exist"
 
             # VALIDATE: Assert that line2function_info/line2function.json exists
             line2function_info = individual.dir_path / 'line2function_info' / 'line2function.json'
@@ -103,6 +117,7 @@ class Validate:
                         tc_name = failing_tc.split('.')[0]
                         if row[tc_name] == '0':
                             return False
+                    print(f"\t [VAL] Failing test cases execute buggy line check passed in {postprocessed_coverage.name}")
                     return True
     
     def check_buggy_lineno(self, buggy_line_key_file, buggy_lineno):
@@ -114,6 +129,19 @@ class Validate:
         
         assert file_buggy_lineno == buggy_lineno, f"Buggy line key {buggy_line_key} does not match with buggy line number {buggy_lineno}"
         return buggy_line_key
+    
+    def check_CCTs(self, coverage_csv, ccts_list, notExist=True):
+        with open(coverage_csv, 'r') as f:
+            reader = csv.DictReader(f)
+    
+            for row in reader:
+                for cct in ccts_list:
+                    cct_name = cct.split(".")[0]
+                    if notExist:
+                        assert cct_name not in row, f"CCT {cct_name} found in {coverage_csv}"
+                    else:
+                        assert cct_name in row, f"CCT {cct_name} not found in {coverage_csv}"
+        print(f"\t [VAL] CCTs check passed notExist={notExist}")
 
     # ++++++++++++++++++++++++++++++++
     # ++++ VALIDATE MBFL FEATURES ++++

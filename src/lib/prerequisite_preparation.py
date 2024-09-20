@@ -82,7 +82,9 @@ class PrerequisitePreparation(Subject):
         core_name = core
         need_configure = True
 
+        last_cnt = 0
         for version in versions:
+            last_cnt += 1
             version_name = version.name
 
             optional_flag = ""
@@ -95,6 +97,8 @@ class PrerequisitePreparation(Subject):
                 optional_flag += f" --passing-tcs-perc {self.passing_tcs_perc}"
             if self.failing_tcs_perc != 1.0:
                 optional_flag += f" --failing-tcs-perc {self.failing_tcs_perc}"
+            if last_cnt == len(versions):
+                optional_flag += " --last-version"
             if self.verbose:
                 optional_flag += " --verbose"
 
@@ -135,7 +139,9 @@ class PrerequisitePreparation(Subject):
         core_name = core
         need_configure = True
 
+        last_cnt = 0
         for version in versions:
+            last_cnt += 1
             version_name = version.name
             
             cmd = [
@@ -154,6 +160,8 @@ class PrerequisitePreparation(Subject):
             if self.failing_tcs_perc != 1.0:
                 cmd.append("--failing-tcs-perc")
                 cmd.append(str(self.failing_tcs_perc))
+            if last_cnt == len(versions):
+                cmd.append("--last-version")
             if self.verbose:
                 cmd.append("--verbose")
             

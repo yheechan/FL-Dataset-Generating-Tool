@@ -373,7 +373,7 @@ bool InformationVisitor::VisitCallExpr(clang::CallExpr* ce)
           // cout<<"found"<<endl;
         }
         if (ce->getNumArgs() > index_arg - 1)
-          arg = ce->getArg(index_arg);
+          arg = ce->getArg(index_arg - 1);
         else
           continue;
         // arg->dump();

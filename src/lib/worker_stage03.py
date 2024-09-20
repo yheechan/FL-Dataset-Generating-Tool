@@ -8,7 +8,8 @@ from lib.worker_base import Worker
 
 class WorkerStage03(Worker):
     def __init__(
-            self, subject_name, machine, core, version_name, need_configure,
+            self, subject_name, machine, core, version_name,
+            need_configure, last_version,
             use_excluded_failing_tcs,
             passing_tcs_perc=1.0, failing_tcs_perc=1.0, verbose=False
     ):
@@ -16,6 +17,7 @@ class WorkerStage03(Worker):
         
         self.assigned_works_dir = self.core_dir / f"stage03-assigned_works"
         self.need_configure = need_configure
+        self.last_version = last_version
 
         self.passing_tcs_perc = passing_tcs_perc
         self.failing_tcs_perc = failing_tcs_perc
@@ -65,7 +67,8 @@ class WorkerStage03(Worker):
 
         # 4. Test version
         self.test_version()
-        self.clean_build()
+        if self.last_version:
+            self.clean_build()
     
     def test_version(self):
 
@@ -338,10 +341,10 @@ class WorkerStage03(Worker):
                 )
                 if buggy_line_covered == 1:
                     print(f">> Buggy line {self.buggy_lineno} is NOT covered by failing TC {tc_script_name}")
-                if buggy_line_covered == -2:
+                elif buggy_line_covered == -2:
                     print(f">> Failed to check coverage for failing TC {tc_script_name}")
-                
-                print(f">> Buggy line {self.buggy_lineno} is covered by failing TC {tc_script_name}")
+                else:
+                    print(f">> Buggy line {self.buggy_lineno} is covered by failing TC {tc_script_name}")
             elif tc_script_name in self.passing_tcs_list:
                 # check_buggy_line_covered return 0 if the buggy line is covered
                 # and 1 if the buggy line is not covered

@@ -26,12 +26,6 @@ class BuggyMutantCollection(Subject):
         # 1. Read configurations and initialize working directory: self.work
         self.initialize_working_directory()
         
-        # 2. Configure subject
-        self.configure_no_cov()
-        
-        # 3. Build subject
-        self.build(piping=False)
-        
         check = []
         self.redoing = False
         self.targetfile_and_mutantdir = self.initalize_mutants_dir()
@@ -50,6 +44,12 @@ class BuggyMutantCollection(Subject):
                 assert c == 1, "something is not as expected"
 
         if self.redoing == False:
+            # 2. Configure subject
+            self.configure_no_cov()
+            
+            # 3. Build subject
+            self.build(piping=False)
+
             # 4. Generate mutants
             # self.mutants_dir format: path to 'generated_mutants' directory
             # self.targetfile_and_mutantdir format: (target_file, its mutants_dir)
@@ -133,7 +133,9 @@ class BuggyMutantCollection(Subject):
         core_name = core
         need_configure = True
 
+        last_cnt = 0
         for target_file, mutant_path in mutants:
+            last_cnt += 1
             # mutant_path : is a Path object
             # mutant is last two part of the path libxml2-HTMLparser.c/HTMLparser.MUT730.c
             # target_file : libxml2/HTMLparser.c
@@ -146,6 +148,8 @@ class BuggyMutantCollection(Subject):
                 need_configure = False
             if self.verbose:
                 optional_flag += " --verbose"
+            if last_cnt == len(mutants):
+                optional_flag += " --last-mutant"
             
             cmd = [
                 "ssh", f"{machine_name}",
@@ -190,7 +194,9 @@ class BuggyMutantCollection(Subject):
         core_name = core
         need_configure = True
 
+        last_cnt = 0
         for target_file, mutant_path in mutants:
+            last_cnt += 1
             # mutant_path : is a Path object
             # mutant is last two part of the path libxml2-HTMLparser.c/HTMLparser.MUT730.c
             # target_file : libxml2/HTMLparser.c
@@ -207,6 +213,8 @@ class BuggyMutantCollection(Subject):
                 need_configure = False
             if self.verbose:
                 cmd.append("--verbose")
+            if last_cnt == len(mutants):
+                cmd.append("--last-mutant")
             
             print_command(cmd, self.verbose)
             res = sp.run(cmd, stderr=sp.PIPE, stdout=sp.PIPE, cwd=src_dir)
@@ -326,7 +334,7 @@ class BuggyMutantCollection(Subject):
         mutant_list = get_files_in_dir(mutant_dir)
         if len(mutant_list) == 0:
             print_command(cmd, self.verbose)
-            sp.check_call(cmd, stderr=sp.PIPE, stdout=sp.PIPE)
+            # sp.check_call(cmd, stderr=sp.PIPE, stdout=sp.PIPE)
             sp.check_call(cmd)
         else:
             print(f"{mutant_dir.name} already exists mutants")

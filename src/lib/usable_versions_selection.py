@@ -89,7 +89,9 @@ class UsableVersionSelection(Subject):
         core_name = core
         need_configure = True
 
+        last_cnt = 0
         for version in versions:
+            last_cnt += 1
             version_name = version.name
 
             optional_flag = ""
@@ -98,6 +100,8 @@ class UsableVersionSelection(Subject):
                 need_configure = False
             if self.verbose:
                 optional_flag += " --verbose"
+            if last_cnt == len(versions):
+                optional_flag += " --last-version"
 
             cmd = [
                 "ssh", f"{machine_name}",
@@ -136,7 +140,9 @@ class UsableVersionSelection(Subject):
         core_name = core
         need_configure = True
 
+        last_cnt = 0
         for version in versions:
+            last_cnt += 1
             version_name = version.name
             
             cmd = [
@@ -149,6 +155,8 @@ class UsableVersionSelection(Subject):
                 need_configure = False
             if self.verbose:
                 cmd.append("--verbose")
+            if last_cnt == len(versions):
+                cmd.append("--last-version")
             
             print_command(cmd, self.verbose)
             res = sp.run(cmd, stdout=sp.PIPE, stderr=sp.PIPE, cwd=src_dir)

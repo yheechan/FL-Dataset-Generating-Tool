@@ -12,7 +12,7 @@ def main():
     worker = WorkerStage01(
         args.subject, args.machine, args.core,
         args.mutant_path, args.target_file_path, args.need_configure,
-        args.verbose
+        args.last_mutant, args.verbose
     )
     worker.run()
 
@@ -24,6 +24,7 @@ def make_parser():
     parser.add_argument("--mutant-path", type=str, help="Mutant path", required=True)
     parser.add_argument("--target-file-path", type=str, help="Target file path", required=True)
     parser.add_argument("--need-configure", action="store_true", help="Need configure")
+    parser.add_argument("--last-mutant", action="store_true", help="Last mutant")
     parser.add_argument("--verbose", action="store_true", help="Verbose mode")
     return parser
 

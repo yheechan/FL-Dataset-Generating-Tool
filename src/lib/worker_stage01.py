@@ -4,12 +4,13 @@ from lib.utils import *
 from lib.worker_base import Worker
 
 class WorkerStage01(Worker):
-    def __init__(self, subject_name, machine, core, mutant_path, target_file_path, need_configure, verbose=False):
+    def __init__(self, subject_name, machine, core, mutant_path, target_file_path, need_configure, last_mutant, verbose=False):
         super().__init__(subject_name, "stage01", "collecting_mutants", machine, core, verbose)
         
         self.test_suite = self.get_testsuite()
         self.assigned_works_dir = self.core_dir / f"stage01-assigned_works"
         self.need_configure = need_configure
+        self.last_mutant = last_mutant
 
         self.assigned_mutant_code_file = self.assigned_works_dir / mutant_path
         assert self.assigned_mutant_code_file.exists(), f"Mutant code file does not exist: {self.assigned_mutant_code_file}"
@@ -38,7 +39,8 @@ class WorkerStage01(Worker):
 
         # 3. Test mutant
         self.test_mutant()
-        self.clean_build()
+        if self.last_mutant:
+            self.clean_build()
     
     def test_mutant(self):
         # 1. Make patch file

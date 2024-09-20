@@ -4,11 +4,12 @@ from lib.utils import *
 from lib.worker_base import Worker
 
 class WorkerStage02(Worker):
-    def __init__(self, subject_name, machine, core, version_name, need_configure, verbose=False):
+    def __init__(self, subject_name, machine, core, version_name, need_configure, last_version, verbose=False):
         super().__init__(subject_name, "stage02", "selecting_usable_buggy_mutants", machine, core, verbose)
         
         self.assigned_works_dir = self.core_dir / f"stage02-assigned_works"
         self.need_configure = need_configure
+        self.last_version = last_version
 
         self.version_dir = self.assigned_works_dir / version_name
 
@@ -50,7 +51,8 @@ class WorkerStage02(Worker):
 
         # 4. Test version
         self.test_version()
-        self.clean_build()
+        if self.last_version:
+            self.clean_build()
     
     def test_version(self):
         
