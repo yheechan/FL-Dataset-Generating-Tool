@@ -770,22 +770,26 @@ class WorkerStage04(Worker):
                     isCCTs = True
                 if res == 0:
                     if type == "failing":
-                        self.update_tc_outcome("f2p", tc_outcome, tc_outcome_detailed, tc_name)
+                        outcome = "f2p"
+                        self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_name)
                         if isCCTs == False:
-                            self.update_tc_outcome("f2p", tc_outcome_noCCTs, tc_outcome_detailed_noCCTs, tc_name)
+                            self.update_tc_outcome(outcome, tc_outcome_noCCTs, tc_outcome_detailed_noCCTs, tc_name)
                     elif type == "passing":
-                        self.update_tc_outcome("p2p", tc_outcome, tc_outcome_detailed, tc_name)
+                        outcome = "p2p"
+                        self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_name)
                         if isCCTs == False:
-                            self.update_tc_outcome("p2p", tc_outcome_noCCTs, tc_outcome_detailed_noCCTs, tc_name)
+                            self.update_tc_outcome(outcome, tc_outcome_noCCTs, tc_outcome_detailed_noCCTs, tc_name)
                 else:
                     if type == "failing":
-                        self.update_tc_outcome("f2f", tc_outcome, tc_outcome_detailed, tc_name)
+                        outcome = "f2f"
+                        self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_name)
                         if isCCTs == False:
-                            self.update_tc_outcome("f2f", tc_outcome_noCCTs, tc_outcome_detailed_noCCTs, tc_name)
+                            self.update_tc_outcome(outcome, tc_outcome_noCCTs, tc_outcome_detailed_noCCTs, tc_name)
                     elif type == "passing":
-                        self.update_tc_outcome("p2f", tc_outcome, tc_outcome_detailed, tc_name)
+                        outcome = "p2f"
+                        self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_name)
                         if isCCTs == False:
-                            self.update_tc_outcome("p2f", tc_outcome_noCCTs, tc_outcome_detailed_noCCTs, tc_name)
+                            self.update_tc_outcome(outcome, tc_outcome_noCCTs, tc_outcome_detailed_noCCTs, tc_name)
                 
                 tc_time_duration = time.time() - tc_start_time
                 

@@ -1,0 +1,9 @@
+import subprocess as sp
+from pathlib import PosixPath
+
+cmd = [PosixPath('/home/yangheechan/mbfl-dataset-gen/FL-Dataset-Generating-Tool/work/opencv_dnn/tools/music'), '/home/yangheechan/mbfl-dataset-gen/FL-Dataset-Generating-Tool/work/opencv_dnn/opencv_dnn/modules/dnn/src/tensorflow/tf_importer.cpp', '-o', '/home/yangheechan/mbfl-dataset-gen/FL-Dataset-Generating-Tool/out/opencv_dnn/generated_mutants/opencv_dnn-modules-dnn-src-tensorflow-tf_importer.cpp', '-ll', '1', '-l', '20', '-d', 'DirVarAriNeg,DirVarBitNeg,DirVarLogNeg,DirVarIncDec,DirVarRepReq,DirVarRepCon,DirVarRepPar,DirVarRepGlo,DirVarRepExt,DirVarRepLoc,IndVarAriNeg,IndVarBitNeg,IndVarLogNeg,IndVarIncDec,IndVarRepReq,IndVarRepCon,IndVarRepPar,IndVarRepGlo,IndVarRepExt,IndVarRepLoc,SSDL,CovAllNod,CovAllEdg,STRP,STRI,VDTR,RetStaDel,FunCalDel,SMVB,SMTC', '-p', '/home/yangheechan/mbfl-dataset-gen/FL-Dataset-Generating-Tool/work/opencv_dnn/opencv_dnn/build/compile_commands.json']
+
+sp.check_call(cmd)
+
+# ./music /home/yangheechan/mbfl-dataset-gen/FL-Dataset-Generating-Tool/work/opencv_dnn/opencv_dnn/modules/dnn/src/tensorflow/tf_importer.cpp -o /home/yangheechan/mbfl-dataset-gen/FL-Dataset-Generating-Tool/tools/MUSICUP/tmp_output/ -p /home/yangheechan/mbfl-dataset-gen/FL-Dataset-Generating-Tool/work/opencv_dnn/opencv_dnn/build/compile_commands.json
+# gdb --args ./music /home/yangheechan/mbfl-dataset-gen/FL-Dataset-Generating-Tool/work/opencv_dnn/opencv_dnn/modules/dnn/src/tensorflow/tf_importer.cpp -o /home/yangheechan/mbfl-dataset-gen/FL-Dataset-Generating-Tool/tools/MUSICUP/tmp_output/ -p /home/yangheechan/mbfl-dataset-gen/FL-Dataset-Generating-Tool/work/opencv_dnn/opencv_dnn/build/compile_commands.json
