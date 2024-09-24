@@ -12,8 +12,8 @@ class SBFLExtraction(Subject):
             self, subject_name, target_set_name, verbose=False
             ):
         super().__init__(subject_name, "stage05", verbose)
-        self.mbfl_features_dir = out_dir / self.name / f"sbfl_features"
-        self.mbfl_features_dir.mkdir(exist_ok=True)
+        self.sbfl_features_dir = out_dir / self.name / f"sbfl_features"
+        self.sbfl_features_dir.mkdir(exist_ok=True)
 
         self.fileManager = FileManager(self.name, self.work, self.verbose)
 
@@ -77,8 +77,8 @@ class SBFLExtraction(Subject):
         for job in jobs:
             job.join()
         
-        print(f">> Finished testing all versions now retrieving versions with its mbfl data")
-        self.fileManager.collect_data_remote("mbfl_features", self.mbfl_features_dir, self.versions_assignments)
+        print(f">> Finished testing all versions now retrieving versions with its sbfl data")
+        self.fileManager.collect_data_remote("sbfl_features", self.sbfl_features_dir, self.versions_assignments)
     
     def test_single_machine_remote(self, machine, machine_batch_dict):
         for batch_id, machine_core_dict in machine_batch_dict.items():

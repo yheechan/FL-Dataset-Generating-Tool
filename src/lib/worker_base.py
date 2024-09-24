@@ -376,8 +376,11 @@ class Worker:
                 lines_list.append(row[0])
         return lines_list
     
-    def get_lines_from_pp_cov_as_dict(self, pp_cov_file):
-        tc_list = self.failing_tcs_list + self.passing_tcs_list
+    def get_lines_from_pp_cov_as_dict(self, pp_cov_file, noCCTs=False):
+        tc_list = self.failing_tcs_list + self.passing_tcs_list + self.ccts_list
+        if noCCTs:
+            tc_list = self.failing_tcs_list + self.passing_tcs_list
+
         cov_per_line = []
         check_tc_col = True
         buggy_line_exists = False

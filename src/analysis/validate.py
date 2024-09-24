@@ -160,6 +160,13 @@ class Validate:
             # VALIDATE: Assert that there is only one buggy line
             self.check_one_buggy_line(mbfl_features_csv_file)
 
+            # Validate: Assert that mbfl_feature_noCCTs.csv exists
+            mbfl_features_noCCTs_csv_file = individual.dir_path / "mbfl_features_noCCTs.csv"
+            assert mbfl_features_noCCTs_csv_file.exists(), f"MBFL features no CCTs file {mbfl_features_noCCTs_csv_file} does not exist"
+
+            # VALIDATE: Assert that there is only one buggy line
+            self.check_one_buggy_line(mbfl_features_noCCTs_csv_file)
+
             # VALIDATE: Assert that selected_mutants.csv exists
             if trialName != None:
                 selected_mutants_csv_file = individual.dir_path / f"selected_mutants-{trialName}.csv"
@@ -171,6 +178,13 @@ class Validate:
             else:
                 mutation_testing_results_csv_file = individual.dir_path / f"mutation_testing_results.csv"
             assert mutation_testing_results_csv_file.exists(), f"Mutation testing results file {mutation_testing_results_csv_file} does not exist"
+
+            # VALIDATE: assert that mutation_testing_results_noCCTs exists
+            if trialName != None:
+                mutation_testing_results_noCCTs_csv_file = individual.dir_path / f"mutation_testing_results_noCCTs-{trialName}.csv"
+            else:
+                mutation_testing_results_noCCTs_csv_file = individual.dir_path / f"mutation_testing_results_noCCTs.csv"
+            assert mutation_testing_results_noCCTs_csv_file.exists(), f"Mutation testing results no CCTs file {mutation_testing_results_noCCTs_csv_file} does not exist"
         
         print(f"All {len(self.individual_list)} individuals have been validated successfully")
     
@@ -190,9 +204,19 @@ class Validate:
     def validate_sbfl_features(self):
         self.individual_list = get_dirs_in_dir(self.set_dir)
         for individual in self.individual_list:
+            print(f"Validating SBFL features for {individual.name}")
+            
             # VALIDATE: Assert that sbfl_features.csv exists
             sbfl_features_csv_file = individual / "sbfl_features.csv"
             assert sbfl_features_csv_file.exists(), f"SBFL features file {sbfl_features_csv_file} does not exist"
+
+            # VALIDATE: Assert that sbfl_feature_noCCTs.csv exists
+            sbfl_features_noCCTs_csv_file = individual / "sbfl_features_noCCTs.csv"
+            assert sbfl_features_noCCTs_csv_file.exists(), f"SBFL features no CCTs file {sbfl_features_noCCTs_csv_file} does not exist"
+
+            # VALIDATE: Assert that there is only one buggy line
+            self.check_one_buggy_line(sbfl_features_csv_file)
+            self.check_one_buggy_line(sbfl_features_noCCTs_csv_file)
         
         print(f"All {len(self.individual_list)} individuals have been validated successfully")
 

@@ -39,10 +39,14 @@ class WorkerStage05(Worker):
         self.postprocessed_cov_file = self.version_dir / "coverage_info" / "postprocessed_coverage.csv"
         assert self.postprocessed_cov_file.exists(), f"Postprocessed coverage file {self.postprocessed_cov_file} does not exist"
 
+        self.postprocessed_cov_noCCTs_file = self.version_dir / "coverage_info" / "postprocessed_coverage_noCCTs.csv"
+        assert self.postprocessed_cov_noCCTs_file.exists(), f"Postprocessed coverage file without CCTs {self.postprocessed_cov_noCCTs_file} does not exist"
+
         self.lines_from_pp_cov = self.get_lines_from_pp_cov_as_dict(self.postprocessed_cov_file)
+        self.lines_from_pp_cov_noCCTs = self.get_lines_from_pp_cov_as_dict(self.postprocessed_cov_noCCTs_file, noCCTs=True)
 
     def run(self):
-       # 1. initialize spectrum per line
+        # 1. initialize spectrum per line
         self.spectrum_per_line = self.init_spectrum_per_line(self.lines_from_pp_cov)
 
         # 2. calculate suspiciousness score
@@ -50,6 +54,20 @@ class WorkerStage05(Worker):
 
         # 3. write suspiciousness scores to file
         self.write_sbfl_features(self.version_dir, sbfl_per_line)
+
+
+
+
+        # 1. initialize spectrum per line without CCTs
+        self.spectrum_per_line_noCCTs = self.init_spectrum_per_line(self.lines_from_pp_cov_noCCTs)
+
+        # 2. calculate suspiciousness score without CCTs
+        sbfl_per_line_noCCTs = self.measure_total_sbfl(self.spectrum_per_line_noCCTs)
+
+        # 3. write suspiciousness scores without CCTs to file
+        self.write_sbfl_features(self.version_dir, sbfl_per_line_noCCTs, noCCTs=True)
+
+
 
         # 4. save the version directory to self.sbfl_features_dir
         self.save_version(self.version_dir, self.sbfl_features_dir)
@@ -93,8 +111,12 @@ class WorkerStage05(Worker):
                 line_info[sbfl_formula] = sbfl_value
         return spectrums_per_line
     
-    def write_sbfl_features(self, version_dir, spectrum_per_line):
-        sbfl_features_csv = version_dir / 'sbfl_features.csv'
+    def write_sbfl_features(self, version_dir, spectrum_per_line, noCCTs=False):
+        filename = "sbfl_features.csv"
+        if noCCTs:
+            filename = "sbfl_features_noCCTs.csv"
+
+        sbfl_features_csv = version_dir / filename
 
         with open(sbfl_features_csv, 'w') as f:
             writer = csv.DictWriter(f, fieldnames=[
