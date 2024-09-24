@@ -19,10 +19,10 @@ def main():
         subject.remove_versions_mbfl_meeting_criteria(args.remove_versions_mbfl, args.trial)
     elif args.combine_mbfl_sbfl:
         assert args.combining_trials != None, f"combing trials is not given"
-        subject.combine_mbfl_sbfl(args.combining_trials) # 2024-08-19
+        subject.combine_mbfl_sbfl(args.combining_trials, noCCTs=args.no_ccts, doneRemotely=args.done_remotely) # 2024-08-19
     elif args.combine_mbfl_trials == True:
         assert args.past_trials != None, f"past trials is not given"
-        subject.combine_mbfl_trials(args.past_trials)
+        subject.combine_mbfl_trials(args.past_trials, noCCTs=args.no_ccts)
 
 def make_parser():
     parser = argparse.ArgumentParser(description="Copy subject to working directory")
@@ -38,6 +38,8 @@ def make_parser():
 
     parser.add_argument("--combine-mbfl-trials", action="store_true", help="Combine mbfl results from multiple trials. ex: trial1 trial2") # 2024-08-07 add-mbfl
     parser.add_argument("--past-trials", type=str, nargs="+", help="Combine mbfl results from multiple trials. ex: trial1 trial2")
+    parser.add_argument("--no-ccts", action="store_true", help="Do not consider CCTs")
+    parser.add_argument("--done-remotely", action="store_true", help="If the task is done remotely")
     return parser
 
 if __name__ == "__main__":

@@ -284,7 +284,11 @@ class Reconstruct:
                 sp.run(["cp", "-r", version_dir, removed_versions_dir])
 
     
-    def combine_mbfl_sbfl(self, combining_trials): # 2024-08-19
+    def combine_mbfl_sbfl(self, 
+                          combining_trials, 
+                          noCCTs=False,
+                          doneRemotely=False
+                        ): # 2024-08-19
         # Create FL dataset directory
         self.fl_dataset_dir = out_dir / self.subject_name / f"FL-dataset-{self.subject_name}"
         if self.fl_dataset_dir.exists():
@@ -355,8 +359,13 @@ class Reconstruct:
                 self.fl_dataset_dir
             )
 
-            sbfl_feature_file = individual.dir_path / "sbfl_features.csv"
-            mbfl_feature_file = individual.dir_path / "mbfl_features.csv"
+            sbfl_features_filename = "sbfl_features.csv"
+            mbfl_Features_filename = "mbfl_features.csv"
+            if noCCTs:
+                sbfl_features_filename = "sbfl_features_noCCTs.csv"
+                mbfl_Features_filename = "mbfl_features_noCCTs.csv"
+            sbfl_feature_file = individual.dir_path / sbfl_features_filename
+            mbfl_feature_file = individual.dir_path / mbfl_Features_filename
             assert sbfl_feature_file.exists(), f"SBFL feature file {sbfl_feature_file} does not exist"
             assert mbfl_feature_file.exists(), f"MBFL feature file {mbfl_feature_file} does not exist"
 
@@ -377,15 +386,22 @@ class Reconstruct:
             )
 
             # 7. copy generated_mutants-mbfl
-            for trial in combining_trials: # 2024-08-19
-                self.generated_mutants_zip_file = out_dir / self.subject_name / f"generated_mutants-mbfl-{trial}" / f"{individual.name}.zip"
-                assert self.generated_mutants_zip_file.exists(), f"zip file for {bug_id}-{individual.name} does not exist"
-                copy_generated_mutants(bug_id, self.generated_mutants_zip_file, self.fl_dataset_dir, trial)
+            if doneRemotely==False:
+                for trial in combining_trials: # 2024-08-19
+                    self.generated_mutants_zip_file = out_dir / self.subject_name / f"generated_mutants-mbfl-{trial}" / f"{individual.name}.zip"
+                    assert self.generated_mutants_zip_file.exists(), f"zip file for {bug_id}-{individual.name} does not exist"
+                    copy_generated_mutants(bug_id, self.generated_mutants_zip_file, self.fl_dataset_dir, trial)
         
         bug_version_mutation_info_fp.close()
 
-    def combine_mutation_testing_results_csv(self, individual, past_trials): # 2024-08-09
-        mutation_testing_results_csv_list = [individual.dir_path / f"mutation_testing_results-{trial}.csv" for trial in past_trials]
+    def combine_mutation_testing_results_csv(self, individual, past_trials, noCCTs=False): # 2024-08-09
+        if len(past_trials) == 1:
+            return
+
+        mutation_testing_results_filename = "mutation_testing_results"
+        if noCCTs:
+            mutation_testing_results_filename = "mutation_testing_results_noCCTs"
+        mutation_testing_results_csv_list = [individual.dir_path / f"{mutation_testing_results_filename}-{trial}.csv" for trial in past_trials]
 
         header = None
         total_rows = []
@@ -400,8 +416,11 @@ class Reconstruct:
             content = "\n".join(total_rows)
             f.write(content)
 
-    def get_mbfl_features_form_trial_csv(self, individual, past_trials): # 2024-08-07 add-mbfl
-        trials_mbfl_results_csv_list = [individual.dir_path / f"mbfl_features-{trial}.csv" for trial in past_trials]
+    def get_mbfl_features_form_trial_csv(self, individual, past_trials, noCCTs=False): # 2024-08-07 add-mbfl
+        mbfl_features_filename = "mbfl_features"
+        if noCCTs:
+            mbfl_features_filename = "mbfl_features_noCCTs"
+        trials_mbfl_results_csv_list = [individual.dir_path / f"{mbfl_features_filename}-{trial}.csv" for trial in past_trials]
         list_of_csv_rows = []
         length_check = []
         total_f2p = 0
@@ -436,7 +455,7 @@ class Reconstruct:
     
         return list_of_csv_rows, total_f2p, total_p2f
 
-    def combine_mbfl_trials(self, past_trials): # 2024-08-07 add-mbfl
+    def combine_mbfl_trials(self, past_trials, noCCTs=False): # 2024-08-07 add-mbfl
         new_set_name = f"{self.set_dir.name}-combined-trials"
         new_set_dir = self.set_dir.parent / new_set_name
         shutil.copytree(self.set_dir, new_set_dir)
@@ -448,8 +467,8 @@ class Reconstruct:
             print(f"\n{idx+1}/{len(self.individual_list)}: {version_dir.name}")
             individual = Individual(self.subject_name, self.set_name, version_dir.name)
 
-            list_of_csv_rows, total_f2p, total_p2f = self.get_mbfl_features_form_trial_csv(individual, past_trials)
-            self.combine_mutation_testing_results_csv(individual, past_trials)
+            list_of_csv_rows, total_f2p, total_p2f = self.get_mbfl_features_form_trial_csv(individual, past_trials, noCCTs=noCCTs)
+            self.combine_mutation_testing_results_csv(individual, past_trials, noCCTs=noCCTs)
 
             # save total max mutant on keys
             key2max_mutant = {}

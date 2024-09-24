@@ -364,13 +364,15 @@ $ python3 ranker.py --subject <subject-name> --set-name <sbfl_features-directory
   1. combine both sbfl and mfbl feature to a single csv file.
 ### 6.6.2 CLI for FL feature dataset finalization
 ```
-$ python3 reconstructor.py --subject <subject-name> --set-name <sbfl_features-directory> --combine-mbfl-sbfl --combining-trials trial1
+$ python3 reconstructor.py --subject <subject-name> --set-name <sbfl_features-directory> --combine-mbfl-sbfl --combining-trials trial1 [--no-ccts] [--done-remotely]
 ```
 * command flag usage:
   * ``--subject <str>``: name of the target subject
   * ``--target-set-name <str>``: name of the directory that contains buggy versions targeted for mbfl and sbfl combining action
   * ``--combine-mbfl-sbfl``: flag when given, combines mbfl and sbfl feature csv file within buggy versions of targetted directory
   * ``--combining-trials [<str> ...]``: name of the trials to combine
+  * ``--no-ccts``: flag when given, measures rank of sbfl features measured without the usage of CCTs
+  * ``--done-remotely``: flag when give, doesn't account in including generate mutatants for mbfl extraction because the data are in remote machines.
 
 ### 6.6.3 Validation command for FL features
 For each buggy versions within ``FL-dataset-<subject-name>`` directory, the following ``validator.py`` command validates that:
@@ -402,4 +404,4 @@ $ python3 machine_learning.py --subject2setname-pair <subject-name>:<fl-dataset-
 
 
 ---
-last updated Aug 22, 2024
+last updated Sep 24, 2024
