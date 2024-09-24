@@ -117,7 +117,7 @@ class Validate:
                         tc_name = failing_tc.split('.')[0]
                         if row[tc_name] == '0':
                             return False
-                    print(f"\t [VAL] Failing test cases execute buggy line check passed in {postprocessed_coverage.name}")
+                    # print(f"\t [VAL] Failing test cases execute buggy line check passed in {postprocessed_coverage.name}")
                     return True
     
     def check_buggy_lineno(self, buggy_line_key_file, buggy_lineno):
