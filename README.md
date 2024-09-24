@@ -354,8 +354,10 @@ $ python3 validator.py --subject <subject-name> --set-name <sbfl_features-direct
 ### 6.5.4 Statistics results generation command for SBFL features
 The following commands generates statistics regarding the rank information of sbfl features data within ``./statistics/<subject-name>/`` directory.
 ```
-$ python3 ranker.py --subject <subject-name> --set-name <sbfl_features-directory> --output-csv <sbfl_features-directory>-rank-stats --sbfl-features
+$ python3 ranker.py --subject <subject-name> --set-name <sbfl_features-directory> --output-csv <sbfl_features-directory>-rank-stats --sbfl-features [--no-ccts]
 ```
+* command flag usage:
+  * ``--no-ccts``: flag when given, measures rank of sbfl features measured without the usage of CCTs
 
 ## 6.6 FL Feature Dataset Finalization (combing MBFL and SBFL features)
 ### 6.6.1 Action for step 6.6

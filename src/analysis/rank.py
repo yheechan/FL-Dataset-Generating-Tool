@@ -139,7 +139,13 @@ class Rank(Analyze):
     # +++++++++++++++++++++++
     # ++++++ Rank SBFL ++++++
     # +++++++++++++++++++++++
-    def rank_sbfl_features(self):
+    def rank_sbfl_features(self, noCCTs=False):
+        sbfl_features_filename = "sbfl_features.csv"
+        if noCCTs:
+            sbfl_features_filename = "sbfl_features_noCCTs.csv"
+        
+        print(f"rank on {sbfl_features_filename}")
+
         self.bugs_list = []
         self.accuracy = {
             "acc@5": {
@@ -180,7 +186,7 @@ class Rank(Analyze):
             ranks = {}
             for sbfl_formula in sbfl_formulas:
                 rank_data = get_sbfl_rank_at_method_level(
-                    individual.dir_path / "sbfl_features.csv",
+                    individual.dir_path / sbfl_features_filename,
                     buggy_line_key, sbfl_formula
                 )
                 ranks[sbfl_formula] = rank_data

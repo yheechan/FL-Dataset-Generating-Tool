@@ -14,7 +14,7 @@ def main():
     if args.mbfl_features:
         subject.rank_mbfl_features(trialName=args.trial, noCCTs=args.no_ccts)
     elif args.sbfl_features:
-        subject.rank_sbfl_features()
+        subject.rank_sbfl_features(noCCTs=args.no_ccts)
 
 def make_parser():
     parser = argparse.ArgumentParser(description="Copy subject to working directory")
