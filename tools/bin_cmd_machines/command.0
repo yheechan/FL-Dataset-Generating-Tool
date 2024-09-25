@@ -1,0 +1,9 @@
+./run_cmd.py -th mbfl_servers.2TB.HDD -c "sudo mkdir -p /mnt/hdd/yangheechan/backup-240924"
+./run_cmd.py -th mbfl_servers.2TB.HDD -c "sudo mv FL-dataset-generation-opencv_dnn-240924-v1.zip /mnt/hdd/yangheechan/backup-240924/"
+
+
+./run_cmd.py -th mbfl_servers.4TB.SSD -c "sudo mkdir -p /mnt/ssd/yangheechan/backup-240924"
+./run_cmd.py -th mbfl_servers.4TB.SSD -c "sudo mv FL-dataset-generation-opencv_dnn-240924-v1.zip /mnt/ssd/yangheechan/backup-240924/"
+
+./run_cmd.py -th mbfl_servers -c "sudo sudo rm -rf FL-dataset-generation-opencv_dnn"
+

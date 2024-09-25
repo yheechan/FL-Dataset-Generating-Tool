@@ -69,7 +69,9 @@ class MBFLExtraction(Subject):
         # check every version
         for version in self.versions_list:
             mutant_name = version.name
-            file_name = mutant_name.split(".")[0] + "." + mutant_name.split(".")[-1]
+            filename = ".".join(mutant_name.split(".")[:-2])
+            extension = mutant_name.split(".")[-1]
+            file_name = filename + "." + extension
 
             # retrieve mutant dir for mutant
             target_mutant_dir = None
@@ -81,7 +83,7 @@ class MBFLExtraction(Subject):
             assert target_mutant_dir != None, f"target mutant dir is not found for {file_name}"
 
             # retrieve mut db csv file for mutant
-            db_name = file_name.split(".")[0] + "_mut_db.csv"
+            db_name = filename + "_mut_db.csv"
             db_csv = target_mutant_dir / db_name
             assert db_csv.exists(), f"{db_csv.name} does not exist for {mutant_name}"
 

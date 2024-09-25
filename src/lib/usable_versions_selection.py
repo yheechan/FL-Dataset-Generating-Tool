@@ -234,6 +234,7 @@ class UsableVersionSelection(Subject):
 
         for buggy_mutant in buggy_mutants_list:
             mutant_name = buggy_mutant.name
+            print(f"Checking usability of {mutant_name}")
 
             # 1. Read bug_info.csv
             target_code_file, mutant_code_file = self.get_mutant_info(buggy_mutant)
@@ -304,7 +305,8 @@ class UsableVersionSelection(Subject):
 
         
     def get_buggy_lineno(self, target_file_mutant_dir, mutant_name):
-        filename = mutant_name.split(".")[0]
+        filename = ".".join(mutant_name.split(".")[:-2])
+        print(filename)
 
         mut_db_csv_name = f"{filename}_mut_db.csv"
         mut_db_csv = target_file_mutant_dir / mut_db_csv_name

@@ -216,7 +216,7 @@ class Worker:
         function = f"{filename}#FUNCTIONNOTFOUND#{buggy_lineno}"
         return function
     
-    def set_lines_executed_by_failing_tc(self, version_dir, target_code_file_path, buggy_lineno):
+    def set_lines_executed_by_failing_tc(self, version_dir, target_code_file, buggy_lineno):
         lines_executed_by_failing_tc_file = version_dir / "coverage_info" / "lines_executed_by_failing_tc.json"
         assert lines_executed_by_failing_tc_file.exists(), f"Lines executed by failing tc file does not exist: {lines_executed_by_failing_tc_file}"
 
@@ -224,14 +224,16 @@ class Worker:
 
         executed_lines = {}
         for target_file in self.config["target_files"]:
-            filename = target_file.split("/")[-1]
+            # filename = target_file.split("/")[-1]
+            filename = target_file # FILENAME STRUCTURE! 20240925
             executed_lines[filename] = {}
         
-        buggy_filename = target_code_file_path.name
+        buggy_filename = target_code_file # FILENAME STRUCTURE! 20240925
         executed_buggy_line = False
         for key, tcs_list in lines_executed_by_failing_tc_json.items():
             info = key.split("#")
-            filename = info[0].split("/")[-1]
+            # filename = info[0].split("/")[-1]
+            filename = info[0] # FILENAME STRUCTURE! 20240925
             function_name = info[1]
             lineno = info[2]
 
@@ -270,9 +272,11 @@ class Worker:
         for target_file in self.targeted_files:
             target_file = target_file.split("/")[-1]
             if self.subject_lang == "C":
-                filename = target_file.split(".")[0]
+                # get filename without extension
+                # remember the filename can be x.y.cpp
+                filename = ".".join(target_file.split(".")[:-1])
             else:
-                filename = target_file.split(".")[0] + ".cpp"
+                filename = ".".join(target_file.split(".")[:-1]) + ".cpp"
             gcno_file = "*" + filename + ".gcno"
             gcda_file = "*" + filename + ".gcda"
             self.target_gcno_gcda.append(gcno_file)

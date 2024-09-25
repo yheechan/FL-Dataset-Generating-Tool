@@ -35,7 +35,7 @@ class WorkerStage04(Worker):
         assert version_name == self.buggy_code_filename, f"Version name {version_name} does not match with buggy code filename {self.buggy_code_filename}"
     
         self.set_testcases(self.version_dir)
-        self.set_lines_executed_by_failing_tc(self.version_dir, self.target_code_file_path, self.buggy_lineno)
+        self.set_lines_executed_by_failing_tc(self.version_dir, self.target_code_file, self.buggy_lineno)
         self.set_line2function_dict(self.version_dir)
         self.set_filtered_files_for_gcovr()
         self.set_target_preprocessed_files()
@@ -180,7 +180,8 @@ class WorkerStage04(Worker):
     def reduced_lines_executed_by_failing_tcs_based_on_past_trial(self): # 2024-08-07 add-mbfl
         reduced_dict = {}
         for filename, fileline2tcs in self.lines_executed_by_failing_tcs.items():
-            filename_last = filename.split("/")[-1]
+            # filename_last = filename.split("/")[-1] # FILENAME STRUCTURE! 20240925
+            filename_last = filename
 
             # file is in past selected file
             if filename_last in self.past_selected_mutants.keys():
@@ -710,7 +711,8 @@ class WorkerStage04(Worker):
     
     def conduct_mutation_testing(self):
         for target_file, lineno_mutants in self.selected_mutants.items():
-            target_file_path = self.get_target_file_path(target_file)
+            # target_file_path = self.get_target_file_path(target_file) # FILENAME STRUCTURE! 20240925
+            target_file_path = self.core_dir / target_file
             assert target_file_path.exists(), f"Target file {target_file_path} does not exist"
 
             for lineno, mutants in lineno_mutants.items():
@@ -907,7 +909,8 @@ class WorkerStage04(Worker):
         for target_file, fileline2tcs in self.lines_executed_by_failing_tcs.items():
             file_tot_mutant_cnt = 0
 
-            filename = target_file.split("/")[-1]
+            # filename = target_file.split("/")[-1] # FILENAME STRUCTURE! 20240925
+            filename = target_file
             # initiate dictionary for selected mutants on file-line basis
             # {filename: {lineno: [[TC1.sh, TC2.sh, ...], [mutant_line_info1, mutant_line_info2, ...]]}}
             files2mutants[filename] = {}
@@ -915,10 +918,11 @@ class WorkerStage04(Worker):
                 files2mutants[filename][lineno] = [tcs, []]
             
             # get mutants for each line
-            file_mutants_dir = self.version_mutant_dir / f"{self.name}-{filename}"
+            onlyfilename = filename.split("/")[-1] # FILENAME STRUCTURE! 20240925
+            file_mutants_dir = self.version_mutant_dir / f"{self.name}-{onlyfilename}"
             assert file_mutants_dir.exists(), f"File mutants directory {file_mutants_dir} does not exist"
             
-            code_name = target_file.split(".")[0]
+            code_name = ".".join(onlyfilename.split(".")[:-1]) # FILENAME STRUCTURE! 20240925
             mut_db_csv_name = f"{code_name}_mut_db.csv"
             mut_db_csv = file_mutants_dir / mut_db_csv_name
             # this is when failing tcs doesn't execute any line in the target file
@@ -972,7 +976,8 @@ class WorkerStage04(Worker):
         for target_file, fileline2tcs in self.lines_executed_by_failing_tcs.items():
             file_tot_mutant_cnt = 0
 
-            filename = target_file.split("/")[-1]
+            # filename = target_file.split("/")[-1] # FILENAME STRUCTURE! 20240925
+            filename = target_file
             # initiate dictionary for selected mutants on file-line basis
             # {filename: {lineno: [[TC1.sh, TC2.sh, ...], [mutant_line_info1, mutant_line_info2, ...]]}}
             files2mutants[filename] = {}
@@ -980,10 +985,11 @@ class WorkerStage04(Worker):
                 files2mutants[filename][lineno] = [tcs, []]
             
             # get mutants for each line
-            file_mutants_dir = self.version_mutant_dir / f"{self.name}-{filename}"
+            onlyfilename = filename.split("/")[-1] # FILENAME STRUCTURE! 20240925
+            file_mutants_dir = self.version_mutant_dir / f"{self.name}-{onlyfilename}"
             assert file_mutants_dir.exists(), f"File mutants directory {file_mutants_dir} does not exist"
             
-            code_name = target_file.split(".")[0]
+            code_name = ".".join(onlyfilename.split(".")[:-1]) # FILENAME STRUCTURE! 20240925
             mut_db_csv_name = f"{code_name}_mut_db.csv"
             mut_db_csv = file_mutants_dir / mut_db_csv_name
             # this is when failing tcs doesn't execute any line in the target file
@@ -1029,7 +1035,7 @@ class WorkerStage04(Worker):
                         cmp_mbfl_generated_mutants_dir = out_dir / f"{self.name}" / f"generated_mutants-mbfl-{cmp_trial_name}"
                         assert cmp_mbfl_generated_mutants_dir.exists(), f"{cmp_mbfl_generated_mutants_dir} doesn't exists"
                         cmp_version_mutant_dir = cmp_mbfl_generated_mutants_dir / self.version_name
-                        cmp_file_mutants_dir = cmp_version_mutant_dir / f"{self.name}-{filename}"
+                        cmp_file_mutants_dir = cmp_version_mutant_dir / f"{self.name}-{onlyfilename}" # FILENAME STRUCTURE! 20240925
                         assert cmp_file_mutants_dir.exists(), f"File mutants directory {cmp_file_mutants_dir} does not exist"
 
                         cmp_mutant_file = cmp_file_mutants_dir / cmp_mutant_name
@@ -1078,8 +1084,9 @@ class WorkerStage04(Worker):
         assert compile_command.exists(), f"Compile command file {compile_command} does not exist"
 
         # 5. Generate mutants
-        for target_file, mutant_dir in self.targetfile_and_mutantdir:
+        for target_file, mutant_dir, target_file_str in self.targetfile_and_mutantdir:
             filename = target_file.name
+            filename = target_file_str # FILENAME STRUCTURE! 20240925
             lines = list(self.lines_executed_by_failing_tcs[filename].keys())
             if len(lines) == 0:
                 print(f">> No failing test case executed lines on {filename}")
@@ -1092,11 +1099,15 @@ class WorkerStage04(Worker):
         self.apply_patch(self.target_code_file_path, self.buggy_code_file, patch_file, True)
         
         return 0
-    
+   
     def generate_mutants(self, compile_command, target_file, mutant_dir, lines):
         print(f">> Generating mutants on {self.version_dir.name}")
         unused_ops = ",".join(not_using_operators_in_mbfl)
         executed_lines = ",".join(lines)
+
+        # this is specially done for dxt.cpp (opencv_core) because it has too many constants to mutate
+        if target_file.name == "dxt.cpp":
+            unused_ops += "," + ",".join(["CGCR", "CLCR", "CGSR", "CLSR"])
 
         ll = self.max_mutants
         n = 5
@@ -1134,7 +1145,8 @@ class WorkerStage04(Worker):
             print_command(["mkdir", "-p", single_file_mutant_dir], self.verbose)
             single_file_mutant_dir.mkdir(exist_ok=True, parents=True)
 
-            targetfile_and_mutantdir.append((target_file_path, single_file_mutant_dir))
+            target_file_str = target_file
+            targetfile_and_mutantdir.append((target_file_path, single_file_mutant_dir, target_file_str))
         return targetfile_and_mutantdir
     
     def unzip_mutants(self, version_mutant_zip, mbfl_generated_mutants_dir, version_mutant_dir): # 2024-08-07 add-mbfl
@@ -1148,15 +1160,15 @@ class WorkerStage04(Worker):
         total_num_mutants = 0
         total_num_lines_executed = 0
         mutant_cnt_per_file = {}
-        for target_file, mutant_dir in self.targetfile_and_mutantdir:
+        for target_file, mutant_dir, target_file_str in self.targetfile_and_mutantdir:
             # mutant_files is a list of files that do not end with .csv
             mutant_files = [f for f in mutant_dir.iterdir() if not f.name.endswith(".csv")]
             num_mutants = len(mutant_files)
             total_num_mutants += num_mutants
-            mutant_cnt_per_file[target_file] = num_mutants
+            mutant_cnt_per_file[target_file_str] = num_mutants
 
             # get number of lines executed by failing test cases
-            filename = target_file.name
+            filename = target_file_str
             if filename in self.lines_executed_by_failing_tcs:
                 total_num_lines_executed += len(self.lines_executed_by_failing_tcs[filename])
 
@@ -1164,8 +1176,8 @@ class WorkerStage04(Worker):
         print(f">> Total number of mutants: {total_num_mutants}")
         print(f">> Total number of lines executed by failing test cases: {total_num_lines_executed}")
         print(f">> Mutants per file:")
-        for target_file, num_mutants in mutant_cnt_per_file.items():
-            print(f"\t >> {target_file.name}: {num_mutants} mutants, {len(self.lines_executed_by_failing_tcs[target_file.name])} lines executed by failing test cases")
+        for target_file_str, num_mutants in mutant_cnt_per_file.items():
+            print(f"\t >> {target_file_str}: {num_mutants} mutants, {len(self.lines_executed_by_failing_tcs[target_file_str])} lines executed by failing test cases")
     
     def print_selected_mutants_stats(self):
         total_num_selected_mutants = 0

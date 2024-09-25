@@ -105,20 +105,6 @@ class BuggyMutantCollection(Subject):
                 time.sleep(10)
             # time.sleep(0.5) # to avoid ssh connection error
 
-        # 2024-09-14 commented out to randomize build order for cores in machines
-        # for machine_core, mutants in self.mutant_assignments.items():
-        #     machine, core, homedir = machine_core.split("::")
-        #     job = multiprocessing.Process(
-        #         target=self.test_single_machine_core_remote,
-        #         args=(machine, core, homedir, mutants)
-        #     )
-        #     jobs.append(job)
-        #     job.start()
-        #     sleep_cnt += 1
-        #     if sleep_cnt%5==0:
-        #         time.sleep(10)
-        #     # time.sleep(0.5) # to avoid ssh connection error
-        
         for job in jobs:
             job.join()
     
@@ -240,8 +226,8 @@ class BuggyMutantCollection(Subject):
     # +++++++++++++++++++++++++++++
     def prepare_for_remote(self):
         self.fileManager.make_assigned_works_remote_stage01(self.mutant_assignments)
-        if self.redoing == False:
-            self.fileManager.send_mutants_remote_stage01(self.mutant_assignments)
+        # if self.redoing == False:
+        self.fileManager.send_mutants_remote_stage01(self.mutant_assignments)
         
         self.fileManager.send_repo_remote(self.subject_repo, self.experiment.machineCores_list)
 
@@ -290,19 +276,7 @@ class BuggyMutantCollection(Subject):
         # self.targetfile_and_mutantdir = self.initalize_mutants_dir()
 
         start_time = time.time()
-
-        # jobs = [] # 2024-09-14 commented out to limit max process to 5
-        # for target_file, mutant_dir in self.targetfile_and_mutantdir:
-        #     job = multiprocessing.Process(
-        #         target=self.generate_mutants_for_single_file,
-        #         args=(target_file, mutant_dir)
-        #     )
-        #     jobs.append(job)
-        #     job.start()
-        
-        # for job in jobs:
-        #     job.join()
-        
+       
         with concurrent.futures.ProcessPoolExecutor(max_workers=5) as executor:
         # Submit the tasks to the pool, it will ensure that only 5 run concurrently
             futures = [
@@ -319,7 +293,9 @@ class BuggyMutantCollection(Subject):
     def generate_mutants_for_single_file(self, target_file, mutant_dir):
         print(f'>> Generating mutants for {target_file.name}')
         unused_ops = ",".join(not_using_operators_in_buggy_mutant_collection)
-
+        # this is specially done for dxt.cpp (opencv_core) because it has too many constants to mutate
+        if target_file.name == "dxt.cpp":
+            unused_ops += "," + ",".join(["CGCR", "CLCR", "CGSR", "CLSR"])
         cmd = [
             self.musicup_exec,
             str(target_file),
@@ -375,13 +351,13 @@ class BuggyMutantCollection(Subject):
             for mutant in target_mutants:
                 mutants_list.append((target_file, mutant))
 
-            #     # TEMPORARY
-            #     if len(mutants_list) >= 8:
-            #         break
+                # TEMPORARY
+                if len(mutants_list) >= 8:
+                    break
 
-            # # TEMPORARY
-            # if len(mutants_list) >= 8:
-            #     break
+            # TEMPORARY
+            if len(mutants_list) >= 8:
+                break
         
         return mutants_list
 

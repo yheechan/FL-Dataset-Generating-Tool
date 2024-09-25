@@ -22,7 +22,7 @@ class WorkerStage05(Worker):
         assert version_name == self.buggy_code_filename, f"Version name {version_name} does not match with buggy code filename {self.buggy_code_filename}"
     
         self.set_testcases(self.version_dir)
-        self.set_lines_executed_by_failing_tc(self.version_dir, self.target_code_file_path, self.buggy_lineno)
+        self.set_lines_executed_by_failing_tc(self.version_dir, self.target_code_file, self.buggy_lineno)
         self.set_line2function_dict(self.version_dir)
 
         self.buggy_code_file = self.get_buggy_code_file(self.version_dir, self.buggy_code_filename)
