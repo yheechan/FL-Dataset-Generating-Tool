@@ -199,7 +199,7 @@ class WorkerStage04(Worker):
         return reduced_dict
     
     def reduced_lines_executed_by_failing_tcs(self):
-        buggy_code_filename = self.target_code_file_path.name
+        buggy_code_filename = self.target_code_file
         reduced_dict = {}
         total_selected_lines = 0
 
