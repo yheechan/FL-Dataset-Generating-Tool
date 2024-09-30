@@ -114,7 +114,7 @@ class Trainer(EngineBase):
             "test-accuracy.csv", self.params,
             self.model_line_susp_score_dir,
             self.model_function_susp_score_dir, self.bug_keys_dir,
-            train_end_time # 2024-08-21 save training time duration
+            train_end_time=train_end_time # 2024-08-21 save training time duration
         )
 
         # 8. Save Model

@@ -94,6 +94,26 @@ def handle_inference(args):
     )
     inference.run()
 
+def handle_part_real_world_bugs(args):
+    if args.real_world_bugs == None:
+        print("Error: Real-world bugs are not provided.")
+        print("Example: --real-world-bugs jsoncpp libxml2")
+        exit(1)
+    real_world_bugs = args.real_world_bugs
+
+    # Target dataset
+    if len(args.subject2setname_pair) == 0:
+        print("Error: No subject2setname pair is provided.")
+        print("Example: --subject2setname-pair jsoncpp:FL-dataset-jsoncpp-240803-v2 libxml2:FL-dataset-libxml2")
+        exit(1)
+    pair_list = [pair.split(":") for pair in args.subject2setname_pair]
+
+    for subject, set_name in pair_list:
+        print(f"Part real-world bug for {subject}...")
+        postprocessor = Postprocessor(subject, set_name)
+        postprocessor.part_real_world_bugs(real_world_bugs)
+        print()
+
 def main():
     parser = make_parser()
     args = parser.parse_args()
@@ -104,12 +124,18 @@ def main():
         handle_train(args)
     elif args.inference == True:
          handle_inference(args)
+    elif args.part_real_world_bugs == True:
+        handle_part_real_world_bugs(args)
         
         
 
 def make_parser():
     parser = argparse.ArgumentParser(description="Copy subject to working directory")
     parser.add_argument("--subject2setname-pair", type=str, nargs="+", help="Subject name and its FL dataset directory file name pair(s). EX: jsoncpp:FL-dataset-jsoncpp-240803-v2 libxml2:FL-dataset-libxml2", required=True)
+
+    # 0. Part real-world bug
+    parser.add_argument("--part-real-world-bugs", action="store_true", help="Part real-world bug.")
+    parser.add_argument("--real-world-bugs", type=str, nargs="+", help="Real-world bugs to be part.")
 
     # 1. Postprocess FL features
     parser.add_argument("--postprocess-fl-features", action="store_true", help="Formulate FL dataset with features for machine learning.")

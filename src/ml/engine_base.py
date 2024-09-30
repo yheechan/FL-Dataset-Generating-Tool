@@ -23,7 +23,7 @@ class EngineBase:
     # ===============================
     def start_testing(
             self, project_name, project_out_dir, raw_test_set, model, filename, params,
-            line_suspend_score_dir, function_susp_score_dir, bug_keys_dir, train_end_time # 2024-08-21 save training time duration
+            line_suspend_score_dir, function_susp_score_dir, bug_keys_dir, train_end_time="None" # 2024-08-21 save training time duration
     ):
         print(f"[{project_name}] Start Testing...")
         size = len(raw_test_set)
@@ -313,7 +313,7 @@ class EngineBase:
             f.write(f"acc@5: {len(acc_5)}\n")
             f.write(f"acc@5 perc.: {len(acc_5)/size}\n")
             f.write(f"acc@10: {len(acc_10)}\n")
-            f.write(f"acc@10 perc.: {len(acc_10)/size}")
+            f.write(f"acc@10 perc.: {len(acc_10)/size}\n")
             f.write(f"training time duration: {train_end_time}")
 
     # ===============================

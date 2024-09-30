@@ -150,3 +150,93 @@ class Postprocessor:
                     pass_cnt += 1
         
         return fail_cnt, pass_cnt
+    
+    # ++++++++++++++++++++++++++++++++++++
+    # PART REAL WORLD BUGS FROM MUTATED BUGS
+    # ++++++++++++++++++++++++++++++++++++
+    def part_real_world_bugs(self, real_world_bugs):
+        print(f"Parting real-world bugs from mutated bugs for {self.subject_name}:{self.dataset_name}...")
+        
+        # 1. make copy of dataset_dir as <dataset_dir>-mutated_bugs
+        mutated_bugs_dir = self.subject_dir / f"{self.dataset_dir.name}-mutated_bugs"
+        if mutated_bugs_dir.exists():
+            shutil.rmtree(mutated_bugs_dir)
+        shutil.copytree(self.dataset_dir, mutated_bugs_dir)
+
+        # 2. make copy of dataset_dir as <dataset_dir>-real_world_bugs
+        real_world_bugs_dir = self.subject_dir / f"{self.dataset_dir.name}-real_world_bugs"
+        if real_world_bugs_dir.exists():
+            shutil.rmtree(real_world_bugs_dir)
+        shutil.copytree(self.dataset_dir, real_world_bugs_dir)
+
+        # 3. remove real-world bugs from <dataset_dir>-mutated_bugs
+        self.remove_bugs(mutated_bugs_dir, real_world_bugs, keep_real_bugs=False)
+        self.remove_bugs(real_world_bugs_dir, real_world_bugs, keep_real_bugs=True)
+    
+    def remove_bugs(self, mutated_bugs_dir, real_world_bugs, keep_real_bugs=False):
+        file_data = self.return_dirs_and_files(mutated_bugs_dir)
+
+        # 1. remove bug dirs
+        self.remove_dirs(file_data["buggy_code_file_dir"], real_world_bugs, keep_real_bugs)
+        self.remove_dirs(file_data["test_case_info_dir"], real_world_bugs, keep_real_bugs)
+        
+        # 2. remove bug files
+        self.remove_files(file_data["buggy_line_key_dir"], real_world_bugs, keep_real_bugs)
+        self.remove_files(file_data["FL_features_dir"], real_world_bugs, keep_real_bugs)
+        self.remove_files(file_data["FL_feature_with_susp_score_dir"], real_world_bugs, keep_real_bugs)
+        self.remove_files(file_data["postprocessed_coverage_dir"], real_world_bugs, keep_real_bugs)
+    
+    def remove_dirs(self, dir_path, real_world_bugs, keep_real_bugs):
+        for bug_dir in dir_path.iterdir():
+            if bug_dir.name in real_world_bugs and not keep_real_bugs:
+                shutil.rmtree(bug_dir)
+            elif bug_dir.name not in real_world_bugs and keep_real_bugs:
+                shutil.rmtree(bug_dir)
+    
+    def remove_files(self, file_path, real_world_bugs, keep_real_bugs):
+        for file in file_path.iterdir():
+            bug_name = file.name.split(".")[0]
+            if bug_name in real_world_bugs and not keep_real_bugs:
+                file.unlink()
+            elif bug_name not in real_world_bugs and keep_real_bugs:
+                file.unlink()
+
+    
+    def return_dirs_and_files(self, dataset_dir):
+        buggy_code_file_dir = dataset_dir / "buggy_code_file_per_bug_version"
+        buggy_line_key_dir = dataset_dir / "buggy_line_key_per_bug_version"
+        FL_features_dir = dataset_dir / "FL_features_per_bug_version"
+        FL_feature_with_susp_score_dir = dataset_dir / "FL_features_per_bug_version_with_susp_scores"
+        postprocessed_coverage_dir = dataset_dir / "postprocessed_coverage_per_bug_version"
+        test_case_info_dir = dataset_dir / "test_case_info_per_bug_version"
+        assert buggy_code_file_dir.exists(), f"Error: {buggy_code_file_dir} does not exist"
+        assert buggy_line_key_dir.exists(), f"Error: {buggy_line_key_dir} does not exist"
+        assert FL_features_dir.exists(), f"Error: {FL_features_dir} does not exist"
+        assert FL_feature_with_susp_score_dir.exists(), f"Error: {FL_feature_with_susp_score_dir} does not exist"
+        assert postprocessed_coverage_dir.exists(), f"Error: {postprocessed_coverage_dir} does not exist"
+        assert test_case_info_dir.exists(), f"Error: {test_case_info_dir} does not exist"
+        
+        bug_version_mutation_info_csv = dataset_dir / "bug_version_mutation_info.csv"
+        document_md = dataset_dir / f"document-{self.subject_name}.md"
+        susp_score_py = dataset_dir / "susp_score.py"
+        assert bug_version_mutation_info_csv.exists(), f"Error: {bug_version_mutation_info_csv} does not exist"
+        assert document_md.exists(), f"Error: {document_md} does not exist"
+        assert susp_score_py.exists(), f"Error: {susp_score_py} does not exist"
+
+        data = {
+            "buggy_code_file_dir": buggy_code_file_dir,
+            "buggy_line_key_dir": buggy_line_key_dir,
+            "FL_features_dir": FL_features_dir,
+            "FL_feature_with_susp_score_dir": FL_feature_with_susp_score_dir,
+            "postprocessed_coverage_dir": postprocessed_coverage_dir,
+            "test_case_info_dir": test_case_info_dir,
+            "bug_version_mutation_info_csv": bug_version_mutation_info_csv,
+            "document_md": document_md,
+            "susp_score_py": susp_score_py
+        }
+        return data
+
+
+
+
+
