@@ -107,9 +107,10 @@ class Analyze:
             "#_excluded_failing_TCs", "#_excluded_passing_TCs",
             "#_CCTs", "#_total_TCs",
             "#_lines_executed_by_failing_TCs", "#_lines_executed_by_passing_TCs", "#_lines_executed_by_CCTs",
-            "#_total_lines_executed", "#_total_lines", "coverage", "coverage (no CCTs)", "#_lines_executed_on_initialization",
+            "#_total_lines_executed", "#_total_lines", "coverage", "coverage (no CCTs)",
+            "#_funcs_executed_by_failing_TCs",
+            "#_lines_executed_on_initialization",
             "#_funcs_executed_on_initialization",
-            "#_funcs_executed_by_failing_TCs", 
             "#_distinct_funcs_executed_by_failing_TCs",
             "#_distinct_lines_executed_by_failing_TCs",
             "buggy_func_is_included_in_func_executed_on_initialization", # 2024-08-13 to check whether buggy func/line is included in func/lines executed by intialization code
@@ -131,6 +132,7 @@ class Analyze:
         all_coverage_noCCTs = []
         total_funcs_executed_by_failing_tcs = []
         total_lines_executed_on_initialization = []
+        total_funcs_executed_on_initialization = []
         total_distinct_funcs_executed_by_failing_tcs = []
         total_distinct_lines_executed_by_failing_tcs = []
         total_files = []
@@ -190,6 +192,8 @@ class Analyze:
 
                 # 2024-08-05: Measure # of functions executed by failing TCss
                 lines_executed_by_failing_tcs_dict = get_lines_executed_by_failing_tcs_from_data(individual.dir_path)
+                func_executed_by_failing_tcs_dict = get_file_func_pair_executed_by_failing_tcs(lines_executed_by_failing_tcs_dict)
+                info.append(len(func_executed_by_failing_tcs_dict))
                 # 2024-08-12: measure distinct lines by failing TCs
                 lines_from_initialization = []
                 if removed_initialization_coverage:
@@ -202,15 +206,18 @@ class Analyze:
                     file_nm = key.split("#")[0]
                     func = key.split("#")[1]
                     lineno = int(key.split("#")[-1])
-                    if func not in funcs_from_initialization:
-                        funcs_from_initialization.append(func)
+                    if key not in lines_from_initialization:
+                        lines_from_initialization.append(key)
+                    if (file_nm, func) not in funcs_from_initialization:
+                        funcs_from_initialization.append((file_nm, func))
                     if buggy_file == file_nm and buggy_func == func: # 2024-08-13 to check whether buggy func/line is included in func/lines executed by intialization code
                         bug_func_is_included = 1
                     if buggy_file == file_nm and buggy_func == func and buggy_lineno == lineno:
                         bug_line_is_included = 1
                     
+                total_lines_executed_on_initialization.append(len(lines_from_initialization))
                 info.append(len(funcs_from_initialization))
-                total_lines_executed_on_initialization.append(len(funcs_from_initialization))
+                total_funcs_executed_on_initialization.append(len(funcs_from_initialization))
 
                 funcs_by_failing_tcs = []
                 distinct_funcs_by_failing_tcs = []
@@ -219,15 +226,14 @@ class Analyze:
                     file_nm = key.split("#")[0]
                     func = key.split("#")[1]
                     lineno = int(key.split("#")[-1])
-                    if func not in funcs_by_failing_tcs:
-                        funcs_by_failing_tcs.append(func)
+                    if (file_nm, func) not in funcs_by_failing_tcs:
+                        funcs_by_failing_tcs.append((file_nm, func))
                     
-                    if func not in funcs_from_initialization and func not in distinct_funcs_by_failing_tcs:
-                        distinct_funcs_by_failing_tcs.append(func)
+                    if (file_nm, func) not in funcs_from_initialization and (file_nm, func) not in distinct_funcs_by_failing_tcs:
+                        distinct_funcs_by_failing_tcs.append((file_nm, func))
                     if key not in lines_from_initialization and key not in distinct_lines_by_failing_tcs:
                         distinct_lines_by_failing_tcs.append(key)
 
-                info.append(len(funcs_by_failing_tcs))
                 info.append(len(distinct_funcs_by_failing_tcs))
                 info.append(len(distinct_lines_by_failing_tcs))
                 info.append(bug_func_is_included) # 2024-08-13 to check whether buggy func/line is included in func/lines executed by intialization code
@@ -284,6 +290,7 @@ class Analyze:
         output += f"Average # of funcs: {sum(total_funcs) / self.set_size}\n"
         output += f"Average # of files: {sum(total_files) / self.set_size}\n"
         output += f"Average # lines executed on initialization: {sum(total_lines_executed_on_initialization) / self.set_size}\n"
+        output += f"Average # funcs executed on initialization: {sum(total_funcs_executed_on_initialization) / self.set_size}\n"
         output += f"Average # distinct funcs executed by failing TCs: {sum(total_distinct_funcs_executed_by_failing_tcs) / self.set_size}\n"
         output += f"Average # distinct lines executed by failing TCs: {sum(total_distinct_lines_executed_by_failing_tcs) / self.set_size}\n"
         output += f"# of versions where buggy func is included in func executed on initialization: {total_bugfunc_included_in_initialization}\n"

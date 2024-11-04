@@ -265,6 +265,15 @@ def get_buggy_line_key_from_data(version_dir):
     
     return buggy_line_key
 
+def get_file_func_pair_executed_by_failing_tcs(lines_executed_by_failing_tcs):
+    funcs_executed_by_failing_tcs = []
+    for key in lines_executed_by_failing_tcs:
+        file_name = key.split('#')[0]
+        func_name = key.split('#')[1]
+        if (file_name, func_name) not in funcs_executed_by_failing_tcs:
+            funcs_executed_by_failing_tcs.append((file_name, func_name))
+    return funcs_executed_by_failing_tcs
+
 def divide_list(lst, n):
     k, m = divmod(len(lst), n)
     return [lst[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(n)]

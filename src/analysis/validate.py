@@ -147,6 +147,7 @@ class Validate:
     # ++++ VALIDATE MBFL FEATURES ++++
     # ++++++++++++++++++++++++++++++++
     def validate_mbfl_features(self, trialName=None):
+        # after_mut_json = []
         self.individual_list = get_dirs_in_dir(self.set_dir)
         for individual in self.individual_list:
             individual_name = individual.name
@@ -185,6 +186,18 @@ class Validate:
             else:
                 mutation_testing_results_noCCTs_csv_file = individual.dir_path / f"mutation_testing_results_noCCTs.csv"
             assert mutation_testing_results_noCCTs_csv_file.exists(), f"Mutation testing results no CCTs file {mutation_testing_results_noCCTs_csv_file} does not exist"
+
+        #     # VALIDATE: Assert that mutant_info.csv exists
+        #     mutant_info_csv_file = individual.dir_path / "mutant_info.csv"
+        #     assert mutant_info_csv_file.exists(), f"Mutant info file {mutant_info_csv_file} does not exist"
+        #     with open(mutant_info_csv_file, "r") as f:
+        #         lines = f.readlines()
+        #         line = lines[2]
+        #         info = line.split(",")
+        #         after_mut = info[11]
+        #         after_mut_json.append(after_mut)
+        
+        # print(json.dumps(after_mut_json, indent=4))
         
         print(f"All {len(self.individual_list)} individuals have been validated successfully")
     
@@ -323,12 +336,22 @@ class Validate:
         if mut_op == "":
             return
 
-        buggy_lineno = int(info[4])
+        buggy_lineno = None
+        if self.subject_name == "jsoncpp":
+            buggy_lineno = int(info[2])
+        else:
+            buggy_lineno = int(info[4])
         assert written_buggy_lineno == buggy_lineno, f"Buggy line number {written_buggy_lineno} does not match with buggy line number {buggy_lineno}"
 
-        before_mutation = info[8]
-        after_mutation = info[13]
-        
+        before_mutation = None
+        after_mutation = None
+        if self.subject_name == "jsoncpp":
+            before_mutation = info[4]
+            after_mutation = info[5]
+        else:
+            before_mutation = info[8]
+            after_mutation = info[13]
+            
         # print(f"bug_id: {bug_id}")
         # print(f"target_code_file_name: {target_code_file_name}")
         # print(f"line_no: {buggy_lineno}")

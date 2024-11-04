@@ -10,6 +10,7 @@ met_key = "met susp. score"
 muse_key = "muse susp. score"
 mbfl_formulas = [met_key, muse_key]
 bug_rank_key = "rank of buggy function (function level)"
+bug_rank_among_f_func_key = "rank of buggy function among functions executed by failing test cases"
 
 def get_operator_from_mutant_info_file(mutant_info_file):
     with open(mutant_info_file, 'r') as f:
@@ -95,9 +96,10 @@ def get_mbfl_rank_at_method_level(
         mbfl_features_csv_file,
         buggy_line_key,
         mbfl_formula,
-        mutant_keys
+        mutant_keys,
+        func_executed_by_failing_tcs
 ):
-    buggy_target_file = buggy_line_key.split('#')[0].split('/')[-1]
+    buggy_target_file = buggy_line_key.split('#')[0]
     buggy_function_name = buggy_line_key.split('#')[1]
     buggy_lineno = int(buggy_line_key.split('#')[-1])
 
@@ -106,7 +108,7 @@ def get_mbfl_rank_at_method_level(
     # 1. SET ALL BUGGY LINE OF BUGGY FUNCTION TO 1
     for index, row in mbfl_features_df.iterrows():
         key = row['key']
-        target_file = key.split('#')[0].split('/')[-1]
+        target_file = key.split('#')[0]
         function_name = key.split('#')[1]
         line_num = int(key.split('#')[-1])
 
@@ -203,13 +205,42 @@ def get_mbfl_rank_at_method_level(
 
     assert func_n == total_num_of_func, f"func_n != total_num_of_func"
 
+    # # Remove all rows if the (target_file, function_name) is not in the list of functions executed by failing test cases
+    for index, row in mbfl_features_df.iterrows():
+        target_file = row['target_file']
+        function_name = row['function_name']
+        if (target_file, function_name) not in func_executed_by_failing_tcs:
+            mbfl_features_df = mbfl_features_df.drop(index)
+    
+    # 4. SORT THE ROWS BY THE FORMULA VALUE
+    mbfl_features_df = mbfl_features_df.sort_values(by=[mbfl_formula], ascending=False).reset_index(drop=True)
+
+    # 5. CHANGE A RANK COLUMN TO THE DF
+    # THE RANK IS BASED ON FORMULA VALUE
+    # IF THE RANK IS A TIE, THE RANK IS THE UPPER BOUND OF THE TIERS
+    mbfl_features_df['rank'] = mbfl_features_df[mbfl_formula].rank(method='max', ascending=False).astype(int)
+    mbfl_features_df.to_csv('tmp2.csv', index=False)
+
+    # GET THE RANK OF BUGGY LINE
+    bug_rank_among_f_func = -1
+    for index, row in mbfl_features_df.iterrows():
+        curr_target_file = row['target_file']
+        curr_function_name = row['function_name']
+        if curr_target_file == buggy_target_file and \
+            curr_function_name == buggy_function_name:
+            bug_rank_among_f_func = row['rank']
+            assert row['bug'] == 1, f"bug is not 1"
+            break
+    assert bug_rank_among_f_func != -1, f"bug_rank_among_f_func is -1"
+
     # print(formula, best_rank, best_score, bug_rank, bug_score)
     data = {
         f'# of functions': total_num_of_func,
         f'# of functions with same highest score': best_rank,
         f'score of highest rank': best_score,
         f'rank of buggy function (function level)': bug_rank,
-        f'score of buggy function': bug_score
+        f'score of buggy function': bug_score,
+        f"rank of buggy function among functions executed by failing tcs ({mbfl_formula})": bug_rank_among_f_func
     }
     return data
 
@@ -220,7 +251,8 @@ def get_mbfl_rank_at_method_level(
 def get_sbfl_rank_at_method_level(
         sbfl_features_csv_file,
         buggy_line_key,
-        sbfl_formula
+        sbfl_formula,
+        func_executed_by_failing_tcs
 ):
     key_info = buggy_line_key.split('#')
     # bug_version = key_info[0].strip()
@@ -326,12 +358,41 @@ def get_sbfl_rank_at_method_level(
 
     assert func_n == total_num_of_func, f"func_n != total_num_of_func"
 
+    # # Remove all rows if the (target_file, function_name) is not in the list of functions executed by failing test cases
+    for index, row in sbfl_features_df.iterrows():
+        target_file = row['target_file']
+        function_name = row['function_name']
+        if (target_file, function_name) not in func_executed_by_failing_tcs:
+            sbfl_features_df = sbfl_features_df.drop(index)
+    
+    # 4. SORT THE ROWS BY THE FORMULA VALUE
+    sbfl_features_df = sbfl_features_df.sort_values(by=[sbfl_formula], ascending=False).reset_index(drop=True)
+
+    # 5. CHANGE A RANK COLUMN TO THE DF
+    # THE RANK IS BASED ON FORMULA VALUE
+    # IF THE RANK IS A TIE, THE RANK IS THE UPPER BOUND OF THE TIERS
+    sbfl_features_df['rank'] = sbfl_features_df[sbfl_formula].rank(method='max', ascending=False).astype(int)
+    sbfl_features_df.to_csv('tmp2.csv', index=False)
+
+    # GET THE RANK OF BUGGY LINE
+    bug_rank_among_f_func = -1
+    for index, row in sbfl_features_df.iterrows():
+        curr_target_file = row['target_file']
+        curr_function_name = row['function_name']
+        if curr_target_file == bug_target_file and \
+            curr_function_name == bug_function_name:
+            bug_rank_among_f_func = row['rank']
+            assert row['bug'] == 1, f"bug is not 1"
+            break
+    assert bug_rank_among_f_func != -1, f"bug_rank_among_f_func is -1"
+
     # print(formula, best_rank, best_score, bug_rank, bug_score)
     data = {
         f'total # of functions': total_num_of_func,
         f'# of functions with same highest {sbfl_formula} score': best_rank,
         f'{sbfl_formula} score of highest rank': best_score,
         f'rank of buggy function ({sbfl_formula})': bug_rank,
-        f'{sbfl_formula} score of buggy function': bug_score
+        f'{sbfl_formula} score of buggy function': bug_score,
+        f"rank of buggy function among functions executed by failing tcs ({sbfl_formula})": bug_rank_among_f_func
     }
     return data
