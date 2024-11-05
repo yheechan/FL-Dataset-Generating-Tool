@@ -254,12 +254,16 @@ class Rank(Analyze):
                 'bug_name': individual.name,
                 # 'bug_target_file': bug_target_file,
                 # 'bug_function_name': bug_function_name,
-                'key': buggy_line_key
+                'key': buggy_line_key,
+                "# of func. executed by failing tcs": number_of_funcs_executed_by_failing_tcs
             }
 
             for sbfl_formula in sbfl_formulas:
                 for key, value in ranks[sbfl_formula].items():
                     write_data[key] = value
+                    if "rank of buggy function among functions executed by failing tcs" in key:
+                        rank_among_f_func = value
+                        acc_among_f_func = (rank_among_f_func / number_of_funcs_executed_by_failing_tcs) * 100
 
             self.bugs_list.append(write_data)
 
@@ -271,10 +275,13 @@ class Rank(Analyze):
                         rank = ranks[formula][director]
                         acc = (rank / number_of_funcs_executed_by_failing_tcs) * 100
                         self.accuracy[key][formula].append(acc)
+
+                        new_key = f"{formula} accuracy among func. executed by failing tcs "
+                        write_data[new_key] = acc
                     else:
                         thresh = 5 if key == "acc@5" else 10
                         if ranks[formula][bug_rank_key] <= thresh:
-                            self.accuracy[key][formula].append(individual.name)              
+                            self.accuracy[key][formula].append(individual.name)
         
         self.print_sbfl_accuracy()
         self.write_sbfl_rank_results()

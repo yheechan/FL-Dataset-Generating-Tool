@@ -7,7 +7,7 @@ import json
 
 file_path = Path(__file__).resolve()
 cur_dir = file_path.parent
-df_file = cur_dir / "df.1"
+df_file = cur_dir / "df.6"
 
 keys = ["ssd_name", "size", "used", "avail.", "used%", "mounted_on"]
 
@@ -41,7 +41,7 @@ def main():
 
   for server in df_data:
     json_dat = df_data[server][0]
-    if int(json_dat["avail."][:-1]) < 200:
+    if float(json_dat["avail."][:-1]) < 300.0:
       print(server)
       print(json_dat)
     

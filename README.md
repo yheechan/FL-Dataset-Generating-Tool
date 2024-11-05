@@ -402,6 +402,10 @@ $ python3 machine_learning.py --subject2setname-pair <subject-name>:<fl-dataset-
 $ python3 machine_learning.py --subject2setname-pair <subject-name>:<fl-dataset-directory> --inference --project-name ML-<date>-<subject-name>-<version> --inference-name infer-<subject-name>-<version>
 ```
 
+## 7.4 part real-world bugs from mutated bugs
+```
+$ python3 machine_learning.py --subject2setname-pair <subject-name>:<fl-dataset-directory> --part-real-world-bugs --real-world-bugs [<str> ...]
+```
 
 ---
-last updated Sep 24, 2024
+last updated Sep 26, 2024
