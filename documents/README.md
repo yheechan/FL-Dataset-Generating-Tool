@@ -14,16 +14,16 @@
     * features2d: [features2d-문서](/documents/dataset_description/opencv/document-opencv_features2d.md)
 
 ## 프로젝트의 데이터셋 링크
-1. jsoncpp: [jsoncpp-데이터셋-링크](https://1drv.ms/u/c/b21ac1f9c8958389/EVB5-KocjYBOhKT2mcoDRIcBSLmHPv0rfNv1UXXiJaVGtQ)
-2. libxml2: [libxml-데이터셋-링크](https://1drv.ms/u/c/b21ac1f9c8958389/EaM4esEpcmlBno0mlu6azNcB7uzvEp6Nl32LxCfrY_PkDg)
+1. jsoncpp: [jsoncpp-데이터셋-링크](https://drive.google.com/file/d/1R0HTSE3MHSujkNHrmaOGyFRK-5dA4kEk/view?usp=drive_link)
+2. libxml2: [libxml-데이터셋-링크](https://drive.google.com/file/d/10HP8t0W60VNx1oAAhmggFFZfZazHChf3/view?usp=drive_link)
 3. NSFW_cpp: 공개 미제공
 4. NSFW_c: 공개 미제공
 5. opencv
-    * dnn: [opencv_dnn-데이터셋-링크](https://1drv.ms/u/c/b21ac1f9c8958389/EbF6-P6f0P5OmYln5KfCTKMBbpAAlll5ChmesnWy1UDjpQ?e=ZAs2Iv)
-    * core: [opencv_core-데이터셋-링크](https://1drv.ms/u/c/b21ac1f9c8958389/EQkD1VXefxNHsx6Yn4hCJhgBosBkXMsBhSK9ooPYqS9hBw?e=Ev6ntU)
-    * imgproc: [opencv_imgproc-데이터셋-링크](https://1drv.ms/u/c/b21ac1f9c8958389/EYGMY6mBGipIv7p8bzPJLP4BlHKjcpMqYgyq7c4c7GVAIw?e=xUjIIM)
-    * calib3d: [opencv_calib3d-데이터셋-링크](https://1drv.ms/u/c/b21ac1f9c8958389/EVXrlzgqmUBJpmTxqCwmmigBSfs_3nO2_GO3x_0wfp2BjA?e=Ruhd0W)
-    * features2d: [opencv_features2d-데이터셋-링크](https://1drv.ms/u/c/b21ac1f9c8958389/EQDGsyrIBnxIsZR_0cEo9MABEy0avo-lS-ba3uVWRWLPFg?e=WMfjIl)
+    * dnn: [opencv_dnn-데이터셋-링크](https://drive.google.com/file/d/1mL6lSmlHK4sefuCf0Zl6uOOiftZTh8Wy/view?usp=drive_link)
+    * core: [opencv_core-데이터셋-링크](https://drive.google.com/file/d/1gQua9HCkridZxemDJJ2XZfHFxuRiQ1xs/view?usp=drive_link)
+    * imgproc: [opencv_imgproc-데이터셋-링크](https://drive.google.com/file/d/14W1waiEUk4oh6p9bewN_za5-vGdQMoj2/view?usp=drive_link)
+    * calib3d: [opencv_calib3d-데이터셋-링크](https://drive.google.com/file/d/14xNBpvdK_GpyPe6B_C_tnmHeyl4SjtfQ/view?usp=drive_link)
+    * features2d: [opencv_features2d-데이터셋-링크](https://drive.google.com/file/d/17NsIqm2wrB9gi5XW2Q9hf-iGqtJN6WHy/view?usp=drive_link)
 
 ## 결함위치탐지 학습 데이터셋 파일 개수 현황
 * SBFL 기반 데이터: 총 2,558개
