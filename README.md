@@ -1,80 +1,96 @@
-# Fault Localization Dataset Generator for C/C++ Subjects
+# 결함위치탐지 데이터셋 새성 도구 (C/C++ 서브젝트 대상)
+이 프로젝트는 서브젝트에 대하여 결함위치탐 (FL: Fault Localization) 데이터셋 생성하는 도구로 만들어졌다. 서브젝트에 대한 결함위치탐지 데이터셋은 다음과 같은 6개의 단계를 거쳐 생성 된다:
+1. 변이기반 버그 버전 생성
+2. 버그 버전 사용 가능 여부 검증
+3. 결함위치탐지 데이터셋 생성에 필요한 사전 데이터 추출
+4. 변이기반 (MBFL: Mutation-Based) 데이터셋 추출
+5. 스펙트럼기반 (SBFL: Spectrum-Based) 데이터셋 추출
+6. 변이기반과 스펙트럼기반 데이터 병합하여 최종 결함위치탐지 데이터셋 완성
 
-# 1. Dependencies
+해당 보고서는 결함위치탐지 데이터셋 생성 도구의 사용법을 설명한다.
+
+# 0. 목차
+* [0. 목차](#0-목차)
+* [1. 의존 도구](#1-의존-도구)
+* [2. 도구 빌드 과정](#2-도구-빌드-과정)
+  * [2.1 ``MUSICUP`` 빌드](#21-musicup-빌드)
+  * [2.2 ``extractor`` 빌드](#22-extractor-빌드)
+* [3. 실행 파일 개요](#3-실행-파일-개요)
+* [4. configuration 설정 방법](#4-configuration-설정-방법)
+* [5. 결함위치탐지 데이터셋 생성 단계별 실행 방법](#5-결함위치탐지-데이터셋-생성-단계별-실행-방법)
+  * [5.1 [1단계] 변이기반 버그 버전 생성](#51-1단계-변이기반-버그-버전-생성)
+  * [5.2 [2단계] 버그 버전 사용 가능 여부 검증](#52-2단계-버그-버전-사용-가능-여부-검증)
+  * [5.3 [3단계] 결함위치탐지 데이터셋 생성에 필요한 사전 데이터 추출](#53-3단계-결함위치탐지-데이터셋-생성에-필요한-사전-데이터-추출)
+  * [5.4 [4단계] 변이기반 데이터셋 추출](#54-4단계-변이기반-mbfl-mutation-based-데이터셋-추출)
+  * [5.5 [5단계] 스펙트럼기반 데이터셋 추출](#55-5단계-스펙트럼기반-sbfl-spectrum-based-데이터셋-추출)
+  * [5.6 [6단계] 최종 결함위치탐지 데이터셋 완성](#56-6단계-최종-결함위치탐지-데이터셋-완성)
+
+
+# 1. 의존 도구
 * LLVM 13.0.1
-  * link: https://apt.llvm.org/
-  * required to install "all" packages of LLVM ($ sudo ./llvm.sh 13 all)
-
-* python 3.8
-  * numpy
-  * csv
-  * json
-  * math
-  * argparse
-  * time
-  * multiprocessing
-  * subprocess
-  * random
-  * pathlib
-  * os
-  * matplotlib
-  * shutil
-* gcovr 6.0 (and above)
+  * 버전: 13.0.1 (이 외 버전 사용 불가)
+  * 설치 방법 링크: https://apt.llvm.org/
+  * 설치 명령어:
+    ```
+    $ wget https:/apt.llvm.org/llvm.sh
+    $ chmod +x llvm.sh
+    $ sudo ./llvm.sh 13 all
+    ```
+* python
+  * 버전: 3.8
+* Python Modules
+  * 실행 명령어:
+    ```
+    $ pip install -r requirements.txt
+    ```
 * bear 2.3.11
 * GNU make 4.1
 * cmake 3.10.2
-
 * rsync  version 3.1.2  protocol version 31
 * diff (GNU diffutils) 3.6
 * GNU patch 2.7.6
 
-* VIM - Vi IMproved 8.0
-* OpenSSH_7.6p1 Ubuntu-4ubuntu0.7, OpenSSL 1.0.2n
-* Visual Studio Code
-* tmux 2.6
+# 2. 도구 빌드 과정
+## 2.1 MUSICUP 빌드
+* ``MUSICUP``은 C/C++ 소스 코드 파일에 대하여 변이를 생성해주는 용도로 사용된다.
+* 빌드 명령어는 다음과 같다:
+  ```
+  $ cd ./tools/MUSICUP/
+  $ make LLVM_BUILD_PATH=/usr/lib/llvm-13 -j20
+  ```
 
-# 2. Build Step
-## 2.1 Build MUSICUP
-```
-$ cd ./tools/MUSICUP/
-$ make LLVM_BUILD_PATH=/usr/lib/llvm-13 -j20
-```
+### 2.2 extractor 빌드
+* ``extractractor``은 C/C++ 소스 코드에 대하여 라인-함수 매핑 정보를 추출해주는 용도로 사용된다
+  ```
+  $ cd ./tools/extractor/
+  $ make -j20
+  ```
 
-### 2.2 Build extractor
-```
-$ cd ./tools/extractor/
-$ make -j20
-```
+# 3. 실행 파일 개요
+결함위치탐지 데이터셋 생성 도구는 총 6개 실행 파일로 나누어 작동한다. 모든 실행 파일은 ``./src/`` 폴더에 있으며 해당 위치에서 실행 할 수 있다.
 
-# 3. Executables Overview
-* directory: ``src/``
-* list of executables for dataset generation:
-  1. ``collect_buggy_mutants.py``
-  2. ``select_usable_versions.py``
-  3. ``prepare_prerequisites.py``
-  4. ``extract_mbfl_features.py``
-  5. ``extract_sbfl_features.py``
+* 결함위치탐지 데이터셋 생성을 위한 실행 파일 목록:
+  1. ``collect_buggy_mutants.py``: 서브젝트의 소스 코드의 변이를 심어 변이 버그 버전을 생성한다.
+  2. ``select_usable_versions.py``: 생성된 변이 버그 버전들의 사용 가능한 버전을 추려 검증한다.
+  3. ``prepare_prerequisites.py``: 결함위치탐지 데이터셋 생성에 필요한 사전 데이터들을 추출한다.
+  4. ``extract_mbfl_features.py``: 추출된 사전 데이터로부터 변이기반 데이터셋을 생성한다.
+  5. ``extract_sbfl_features.py``: 추출된 사전 데이터로부터 스펙트럼기반 데이터셋을 생성한다.
+  6. ``reconstructor.py``: 변이기반과 스펙트럼기반 데이터셋을 병합하여 결함위치탐지 데이터셋의 완성본을 생성한다.
 
-* list of executables for dataset generation on a single version of a subject:
-  1. ``test_mutant_buggy_collection.py``: tests a mutant for buggy collections (version saved when considered as buggy)
-  2. ``test_version_usability_check.py``: tests a buggy mutant for usability check (version saved when considered as usable)
-  3. ``test_version_prerequisites.py``: tests a version (from usable_buggy_versions) in order to extract (prepare) prerequisite data
-  4. ``test_version_mbfl_features.py``: tests a version (that includes prerequisite data) in order to extract mbfl features
-  5. ``test_version_sbfl_features.py``: tests a version (set after mbfl feature extraction) in order to extract sbfl features
 
-* other executables for analysis, reconstruction, training/inferring with ML:
-  * ``ranker.py``
-  * ``analyzer.py``
-  * ``validator.py``
-  * ``reconstructor.py``
-  * ``machine_learning.py``
+* 결함위치탐지 데이터셋 검증과 분석을 위한 실행 파일 목록:
+  * ``ranker.py``: 결함위치탐지 데이터셋에 대해 변이기반과 스펙트럼기반 정확도 계산한다.
+  * ``analyzer.py``: 버그 버전들에 대해 통계자료(e.g., 테스트 케이스의 개수, 커버리지 정보, 등)를 계산한다.
+  * ``validator.py``: 결함위치탐지 데이터셋의 유효함을 검증한다.
+  <!-- * ``machine_learning.py``: 최종 결함위치탐지 데이터셋으로 다층 퍼셉트론 (MLP: Multi-Layered Perceptron) 모델 학습과 추론을 수행한다. -->
 
-# 5. Configurations
-Users are required to give an experiment configurations written on ``./configs/config.json`` file and ``./configs/machines.json`` file and subject configurations within subject directory, ``./subjects/<subject-name>/``.
 
-## 5.1 Experiment Configurations
-### 5.1.2 ``config.json``
-The following code box shows an example of written ``config.json`` file for experiment configurations.
+# 4. Configuration 설정 방법
+결함위치탐지 데이터셋 생성 작업을 수행하기 앞서 데이터셋 생성 실험에 대한 configuration을 ``./configs/config.json``과 ``./configs/machines.json`` 파일에, 그리고 대상 서브젝트에 대한 configuration을 ``./subject/<subject-name>/`` 디렉토리에 설정해야 한다. 실험과 서브젝트에 대한 configuration 파일의 설정 방법은 [4.1장](#41-실험-fl-데이터셋-생성에-대한-configuration-설정-방법)과 [4.2장](#42-서브젝트에-대한-configurations-설정-방법-예시-기준-libxml2-서브젝트)에 설명한다.
+
+## 4.1 실험 (FL 데이터셋 생성)에 대한 configuration 설정 방법
+### 4.1.2 ``./configs/config.json`` 파일 설정
+``./configs/config.json`` 파일은 실험에 대한 configuration 정보를 설정하는 파일이며 다음과 같은 형식으로 설정한다.
 ```
 {
     "use_distributed_machines": false,
@@ -91,20 +107,21 @@ The following code box shows an example of written ``config.json`` file for expe
 }
 ```
 
-### 5.1.2 ``config.json`` field explanation
-  * ``use_distributed_machines``: either ``true`` or ``false`` to indicate the availability of utilization of distributed machines. If ``true``, the details of each distributed machines should be written within ``./configs/machines.json`` file (detailed explanation found in section 5.1.3).
-  * ``single_machine``: 3 features of the current using machine
-    * ``name``: name or address when connecting to the machine.
-    * ``core``: an integer value indicating the number of available cores of the machine.
-    * ``homedirectory``: absolute path to home directory
-  * ``number_of_versions_to_check_for_usability``: the number of buggy mutants to check for usability (detailed explanation found in section 6.2). All buggy versions is checked if the number is greater than the number of buggy versions within ``./out/<subject-name>/<buggy-versions-directory>/``.
-  * ``max_mutants``: an integer value indicating the number of maximum mutants to generate on a single line during MBFL feature extraction.
-  * ``number_of_lines_to_mutation_test``: an integer value indicating the number of lines to conduct mutation testing during MBFL feature extraction.
-  * ``abs_path_to_gcovr_executable``: absolute path to ``gcovr`` executable for coverage processing.
-  * ``gcovr_version``: the version of ``gcovr``
+### 4.1.3 ``./configs/config.json``의 설정 값 (변수) 설명
+  * ``use_distributed_machines``: 분산 시스템 활용이 가능할 시 ``true``, 그렇지 않을 시 ``false``로 설정한다. 해당 변수를 ``true``로 설정하게 되면 ``./configs/machines.json`` 파일에 분산 시스템 정보를 입력해야 한다. 이에 대한 자세한 설명은 [4.1.4](#414-configsmachinesjson-파일-설정)장에서 볼 수 있다.
+  * ``single_machine``: 현재 사용중인 서버의 정보를 설정한다.
+    * ``name``: 서버의 이름 혹은 ip 주소.
+    * ``core``: 현재 사용중인 서버의 core 개수.
+    * ``homedirectory``: 현재 사용중인 서버의 홈 디렉토리.
+  * ``number_of_versions_to_check_for_usability``: 1단계에서 생성된 버그 버전들 중 사용 가능성에 대한 검증을 수행할 버그 버전에 개수. 해당 변수는 결함위치탐지 데이터셋 생성의 2단계에서 사용되며 자세한 내용은 [5.2장](#52-2단계-버그-버전-사용-가능-여부-검증)에서 설명한다.
+  * ``max_mutants``: 변이기반 데이터셋 생성 시 각 라인별 생성할 변이의 최대 개수. 해당 변수는 결함위치탐지 데이터셋 생성의 4단계에서 사용되며 자세한 내용은 [5.4장](#54-4단계-변이기반-mbfl-mutation-based-데이터셋-추출)에서 설명한다.
+  * ``number_of_lines_to_mutation_test``: 변이기반 데이터셋 생성 시 변이 테스트를 수행할 코드 라인의 최대 개수. 해당 변수는 결함위치탐지 데이터셋 생성의 4단계에서 사용되며 자세한 내용은 [5.4장](#54-4단계-변이기반-mbfl-mutation-based-데이터셋-추출)에서 설명한다.
+  * ``abs_path_to_gcovr_executable``: ``gcovr`` 실행 파일의 절대 주소. 이는 서브젝트의 커버리지 정보를 추출할 때 사용된다.
+  * ``gcovr_version``: ``gcovr``의 버전.
 
-### 5.1.3 ``machines.json``
-The following code box shows an example of written ``machines.json`` for experiment configurations. 
+
+### 4.1.4 ``./configs/machines.json`` 파일 설정
+``./configs/machines.json``파일은 분산 시스템 사용이 가능할 시 (``use_distrbuted_machines = true``), 각 분산 시스템 (서버)의 정보를 설정하는 파일이며 다음과 같은 형식으로 설정한다:
 ```
 {
     "faster4.swtv": {
@@ -114,64 +131,65 @@ The following code box shows an example of written ``machines.json`` for experim
     "faster5.swtv": {
         "cores": 8,
         "homedirectory": "/home/yangheechan/"
-    } ...
+    },
+    ...
 }
 ```
 
-### 5.1.4 ``machines.json`` field aplanation
-This configuration file must contain a dictionary that writes key as the machine's connecting address or name and value as machine information.
-  * ``cores``: number of of cores
-  * ``homedirectory``: the absolute path to homedirectory.
+### 4.1.5 ``./configs/machines.json``의 설정 값 (변수) 설명
+각 분산 시스템 (서버)의 정보를 위와 같은 형식으로 설정한다. (1)서버 접속에 사용할 명칭 혹은 ip 주소와 (2)서버의 core 개수와 (3)홈디렉토리로 3가지 정보로 구성된다. 각 서버 별 아래의 정보를 입력해준다:
+  * ``cores``: 서버의 core 개수.
+  * ``homedirectory``: 서버의 홈디렉토리.
 
-In addition, the main server and the distributed servers must share their public key in order for enabling connecting without request of password.
+(참고 사항) 추가적으로 현재 사용중인 서버(main server)로부터 각 분산 시스템 (서버)에 자동 접속을 위해 공개키 (public key) 공유가 되어있어야 한다.
 
 
-## 5.2 Subject Configurations
-All information (subject repository, subject configurations, etc.) must be placed within ``./subjects`` directory. Therefore, user is required to first make ``./subjects`` directory. To explain subject configuration, this section 5.2 will show an example of how subject configuration should be structured and written in standard of subject ``libxml2``.
+## 4.2 서브젝트에 대한 configurations 설정 방법 (예시 기준: libxml2 서브젝트)
+서브젝트에 해당되는 모든 정보 (서브젝트 리포지토리, 서브젝트 configurations, etc.)는 ``./subjects/`` 디렉토리에 위치 시킨다. 그러므로 사용자는 가장 먼저 ``./subjects/`` 디렉토리를 생성해야 한다. 서브젝트데 대한 configuration 설정하는 방법은 [4.2.1장](#421-서브젝트의-main-디렉토리-설정) 부터 자세하게 설명한다 (설명은 ``libxml2`` 서브젝트 기준으로 예를 보인다).
 
-### 5.2.1 Subject's main directory
-  1. Make subject directory
+### 4.2.1 서브젝트의 가장 상위 디렉토리 설정
+  1. ``./subject/`` 디렉토리와 서브젝트 디렉토리 생성
       ```
-      mkdir -p ./subjecst/libxml2/
-      ```
-
-  2. Copy or clone or download subject repository (source files, test files, build scripts, etc.) within subject directory, ``./subjects/libxml2`` as the same name as the directory.
-      ```
-      cd ./subjects/libxml2
-      git clone <libxml2-link> libxml2
+      $ mkdir -p ./subjects/libxml2/
       ```
 
-#### 5.2.2 Subject's real world buggy versions directory
-  3. Make a directory, ``real_world_buggy_versions`` which will contain details of real world bugs found by user.
-      * details of each bug is contained in a directory of its own.
-      * The details must contain:
-        1. ``./real_world_buggy_versions/buggy_code_file/<source-file>``: the source file version which contains the buggy code line
-        2. ``./real_world_buggy_versions/testsuite_info/*``: which contains ``failing_tcs.txt`` and ``passing_tcs.txt``, in which both files writes a list of test case bash script name, ``<tc-id>.sh``.
-        3. ``bug_info.csv``: a csv of 3 feature and 1 row in following order
-          * ``target_code_file``: path to target code file (ex. libxml2/HTMLparser.c)
-          * ``buggy_code_file``: name of ``<source-file>`` in ``./real_world_buggy_versions/buggy_code_file/`` directory
-          * ``buggy_lineno``: line number of the buggy line within ``<source-file>``
+  2. 서브젝트의 리포지토리를 ``./subjects/libxml2/`` 디렉토리 위치에 복사, clone, 혹은 다운으로 내려 받는다 (서브젝트 리포지토리 디렉토리의 이름은 서브젝트 가장 상위 디렉토리의 이름과 동일하게 내려 받는다).
       ```
-      cd ./subjects/libxml2
-      mkdir real_world_buggy_versions
+      $ cd ./subjects/libxml2
+      $ git clone <libxml2-link> libxml2
       ```
 
-#### 5.2.3 Subject's configurations information and script to build, clean, etc.
-  4. ``./subjects/libxml2/configurations.json``: the following code box shows an example of ``configurations.json`` for a subject.
-      * ``subject_name``: name of the subject
-      * ``configuration_script_working_directory``: the directory in which ``configure_no_cov_script.sh`` and ``configure_yes_cov_script.sh`` must be executed.
-      * ``build_script_working_directory``: the directory in which ``build_script.sh`` and ``clean_script.sh`` must be executed.
-      * ``compile_command_path``: path where the ``compile_commands.json`` is generated after building the subject.
-      * ``test_case_directory``: path to ``testcases/`` directory. Users MUST MAKE THIS DIRECTORY which contains bash scripts for executing individual test case, ``<tc-id>.sh``, in following formatted name, TC1.sh, TC2.sh...
-      * ``subject_language``: a string value of either ``"C"`` or ``"CPP"`` indicating the programming language of the subject.
-      * ``target_files``: list of files to be targetted for FL feature extraction.
-      * ``target_preprocessed_files``: preprocessed files for each target files.
-      * ``real_world_buggy_versions``: boolean value ``true`` or ``false`` indicating the existance of user found real world buggy versions.
-      * ``environment_settings``: required environmental settings before test case execution.
-      * ``cov_compiled_with_clang``: boolean value ``true`` or ``false`` indicating whether the subject for coverage was built with clang.
-      * ``gcovr_source_root``: absolute path to root directory of source files (only given when ``cov_compiled_with_clang`` is ``false``, ``"None"`` if ``true``)
-      * ``gcovr_object_root``: absolute path to directory where object files are saved (only given when ``cov_compiled_with_clang`` is ``false``, ``"None"`` if ``true``).
-      * ``test_initialization``: command (``init_cmd``) and command working directory path (``execution_path``) if exists (``status``).
+#### 4.2.2 서브젝트의 실제 버그 (real-world bug) 버전 설정 방법
+  3. ``./subjects/libxml2/`` 위치에 ``real_world_buggy_versions`` 이름의 디렉토리를 생성한다. 이 디렉토리는 실제 버그 버전들에 디렉토리로 구성되며 각 버전의 디렉토리가 해당 되는 버전에대한 정보를 담는다.
+      ```
+      $ cd ./subjects/libxml2
+      $ mkdir real_world_buggy_versions
+      $ cd real_world_buggy_versions
+      $ mkdir HTMLparser.issue318.c
+      ```
+      * 각 실제 버그 버전들의 세부 정보는 해당의 디렉토리를 만들어 아래의 정보들을 담는다:.
+        * ``./real_world_buggy_versions/<버그-버전>/buggy_code_file/<source-file>``: 버그 라인을 포함하고 있는 소스 코드 파일.
+        * ``./real_world_buggy_versions/<버그-버전>/testsuite_info/``: 해당 디렉토리에는 다음과 같은 2개의 파일을 포함 시킨다:
+          * ``failing_tcs.txt``: 해당 버그 버전에서 실패하는 *테스트 케이스들의 목록*. 
+          * ``passing_tcs.txt``: 해당 버그 버전에서 패스하는 *테스트 케이스들의 목록*.
+          * (참고 사항) *테스트 케이스의 목록*은 각 파일의 실행 스크립트의 명칭(``<tc-id>.sh``)으로 나열한다. 각 실행 스크립트는 하나의 테스트 케이스를 실행하는 명령어가 포함되는 실행 파일이다.
+              ```
+              TC1.sh
+              TC2.sh
+              ...
+              TC<N>.sh
+              ```
+        * ``./real_world_buggy_versions/<버그-버전>/bug_info.csv``: 해당 csv 파일에는 해당 버그 버전에 대해 3개의 feature 정보를 다음과 같은 순서로 담는다:
+          ```
+          target_code_file,buggy_code_file,buggy_lineno
+          libxml2/HTMLparser.c,HTMLparser.issue318.c,3034
+          ```
+          * ``target_code_file``: 서브젝트의 리포지토리 디렉토리부터 타깃 소스코드 파일의 상대 경로 (ex. ``libxml2/HTMLparser.c``)
+          * ``buggy_code_file``: ``./real_world_buggy_versions/buggy_code_file/``에 저장한 ``<source-file>``의 이름.
+          * ``buggy_lineno``: ``<source-file>``에 버기 라인이 위차하고 있는 라인 번호.
+
+#### 4.2.3 서브젝트의 configurations 설정
+  4. ``./configs/libxml2/configurations.json`` 파일은 서브젝트에 대한 configuration을 설정하는 파일이며 다음과 같은 형식으로 설정.
       ```
       {
           "subject_name": "libxml2",
@@ -211,201 +229,298 @@ All information (subject repository, subject configurations, etc.) must be place
           }
       }
       ```
-  5. Build script for subject written in ``build_script.sh``. Must return 1 at build failure, 0 else.
-  6. Clean script for subject written in ``clean_script.sh``.
-  7. Configuration script for building subject with coverage ``confure_yes_cov_script.sh``.
-  8. Configuration script for building subject without coverage ``confure_yes_cov_script.sh``.
+      * ``subject_name``: 서브젝트의 이름.
+      * ``configuration_script_working_directory``: 서브젝트 configure 명령 실행 스크립트(``configure_no_cov_script.sh``와 ``configure_yes_cov_script.sh``)의 실행 위치를 서브젝트 리포지토리로부터의 상대 경로로 설정한다.
+      * ``build_script_working_directory``: 서브젝트의 빌드 명령 실행 스크립트(``build_script.sh``)의 실행 위치를 서브젝트 리포지토리로부터의 상대 경로로 설정한다.
+      * ``compile_command_path``: 서브젝트 빌드 후 생성 되는 ``compile_commands.json`` 파일의 위치를 서브젝트 리포지토리로부터의 상대 경로로 설정한다.
+      * ``test_case_directory``: 해당 서브젝트의 테스트 케이스 실행 스크립트들이 저장된 디렉토리(``testcases/``)의 경로를 서브젝트 리포지토리로부터의 상대 경로로 설정한다.
+        * (참고 사항) 사용자는 필수적으로 ``testcases/`` 이름으로 디렉토리를 서브젝트 리포지토리에 생성한 후, 각 테스트 케이스들의 실행 스크립트(``<tc-id>.sh``)를 ``TC1.sh``, ``TC2.sh`` ... ``TC<N>.sh`` 형식으로 만들어 해당 디렉토리의 위치 시켜야 한다.
+      * ``subject_language``: 해당 서브젝트의 프로그래밍 언어를 ``"C"`` 혹은 ``"CPP"`` 값으로 설정한다.
+      * ``target_files``: 결함위치탐지 데이터셋 생성에 타깃으로 하는 소스 코드 파일의 목록 (서브젝트 리포지토리로부터 상대 경로로 표기).
+      * ``target_preprocessed_files``: 결함위치탐지 데이터셋 생성에 타깃으로 하는 소스 코드 파일들의 전처리 파일의 목록 (서브젝트 리포지토리로부터 상대 경로로 표기).
+      * ``real_world_buggy_versions``: 실제 버그 버전이 있을 시 ``true``, 실제 버그 버전이 없을 시 ``false``로 설정한다.
+      * ``environment_settings``: 서브젝트 테스트 케이스를 실행 하기 앞서 요구되는 환경 변수 설정 값.
+        * ``needed``: 환경 변수 설정 필요 시 ``true``, 그렇지 않을 시 ``false``로 설정한다.
+        * ``variables``: 테스트 케이스 실행에 필요한 환경 변수 설정 값의 목록 (``<환경변수>: <환경변수-값>`` 형식으로 설정).
+      * ``cov_compiled_with_clang``: 서브젝트 빌드 명령이 ``clang`` 컴파일러를 사용 할 시 ``true``, ``gcc`` 컴파일러를 사용 할 시 ``false``로 설정한다.
+      * ``gcovr_source_root``: ``cov_compiled_with_clang`` 변수가 ``false``일 때 소스 코드 파일이 위치를 절대 경로로 절대 경로로 설정해주며, ``cov_compiled_with_clang``이 ``true``일 때는 ``"None"``으로 설정한다.
+      * ``gcovr_object_root``: ``cov_compiled_with_clang`` 변수가 ``false``일 때 소스 코드 파일의 object 파일이 저장되는 위치를 절대 경로로 설정해주며, ``cov_compiled_with_clang``이 ``true``일 때는 ``"None"``으로 설정한다.
+      * ``test_initialization``: 서브젝트의 모든 테스트 케이스들이 공통으로 실행하는 *초기화 코드 라인*이 있을 시 해당 코드 라인들을 제외하기 위해 필요한 정보를 다음과 같이 설정한다:
+        * ``status``: 서브젝트의 모든 테스트 케이스들이 공통으로 실행하는 *초기화 코드 라인*이 있을 시 ``true``, 그렇지 않을 시 ``false`` 값으로 설정한다.
+        * ``init_cmd``: *초기화 코드 라인*을 추출하기 위해 1개의 테스트 케이스 실행 스크립트의 상대 경로로 설정한다(서브젝트의 리포지토리 경로부터에서의 상대 경로).
+        * ``execution_path``: ``init_cmd``변수의 테스트 케이스 실행 스크립트의 실행 위치를 서브젝트 리포지토리로부터의 상대 경로로 설정한다.
+
+### 4.2.4 서브젝트의 빌드(build), 정리(clean), configure 명령어 실행 스크립트 파일
+  5. ``./configs/libxml2/build_script.sh`` 이름으로 서브젝트 빌드 명령어를 실행 스크립트 파일로 생성한다.
+      ```
+      # build_script.sh 예)
+      bear make -j20 runtest
+      ```
+  6. ``./configs/libxml2/clean_script.sh`` 이름으로 서브젝트 빌드 정리 명령어를 실행 스크립트 파일로 생성한다.
+      ```
+      # clean_script.sh 예)
+      make clean
+      ```
+  7. ``./configs/libxml2/configure_yes_cov_script.sh`` 이름으로 coverage와 컴파일 DB 추출 설정을 킨 configure 명령어를 실행 스크립트 파일로 생성한다. 이때 configure이 성공할 시 0 값을, 실패할 시 1 값을 반환하게 작성해준다.
+      ```
+      # configure_yes_cov_script.sh 예)
+      ./make_tc_scripts.py
+      ./autogen.sh CFLAGS='-O0 -fprofile-arcs -ftest-coverage --save-temps' \
+                    CC='clang-13' \
+                    CXX_FLAGS='-O0 -fprofile-arcs -ftest-coverage -g --save-temps' \
+                    CXX='clang++' --with-threads=no
+      # Check if failed
+      if [ $? -ne 0 ]; then
+        exit 1
+      fi
+      ```
+  8. ``./configs/libxml2/configure_no_cov_script.sh`` 이름으로 coverage와 컴파일 DB 추출 설정을 끈 configure 명령어를 실행 스크립트 파일로 생성한다.
+      ```
+      # configure_no_cov_script.sh 예)
+      ./make_tc_scripts.py
+      ./autogen.sh CC='clang-13' CFLAGS='-O3' \
+                  CXX='clang++' CXX_FLAGS='-O0' \
+                  --with-threads=no
+      # Check if failed
+      if [ $? -ne 0 ]; then
+        exit 1
+      fi
+      ```
 
 
-# 6. Detailed Steps and Execution for Fault-Localization Dataset Generation
-## 6.1 Buggy Mutant Collection
-### 6.1.1 Action for Step 6.1
-  1. **generates** mutants on lines of target source files indicated in the parameter ``target_files`` of ``./subjects/libxml2/configurations.json`` utilizing ``musicup``, a mutation generation tool for C/C++ (mutant source files saved within ``./out/<subject-name>/generated_mutants`` directory).
-  2. **executes** test cases (test case bash scripts) positioned within the directory indicated in the parameter ``test_case_directory`` of ``./subjects/libxml2/configurations.json``. 
-  3. **saves** mutants that cause a test case to fail within ``./out/<subject-name>/buggy_mutants/`` directory with indication of failing, passing, crashing test cases.
+# 5. 결함위치탐지 데이터셋 생성 단계별 실행 방법
+## 5.1 [1단계] 변이기반 버그 버전 생성
+### 5.1.1 [1단계]에서 수행되는 작업
+  1. **변이 생성**:
+      * ``./subjects/libxml2/configuration.json`` 설정 파일의 ``target_files`` 변수에 설정된 타깃 파일들의 대해 변이들을 **생성** 한다. 생성된 변이 파일들은 ``./out/<subject-name>/generated_mutants/`` 디렉토리에 저장한다.
+  2. **변이 버전 테스트**:
+      * ``./subjects/libxml2/configuration.json`` 설정 파일의 ``test_case_directory`` 변수에 설정된 디렉토리 경로에 저장된 테스트 케이스 실행 스크립트들을 각 변이 버전에 실행 한다.
+  3. **변이 버그 버전 저장**:
+      * 각 변이 버전에 테스트 케이스들을 실행하여 1개 이상의 실패하는 테스트 케이스와 1개 이상의 패싱하는 테스트 케이스가 발생하는 버전은 ``./out/<subject-names>/buggy_mutants/`` 디렉토리에 저장한다.
 
-### 6.1.2 CLI for buggy mutant collection
-```
-$ time python3 collect_buggy_mutants.py --subject <subject-name> [--verbose]
-```
-* command flag usage:
-  * ``--subject <str>``: name of the target subject
+### 5.1.2 [1단계] 실행 방법
+* 실행 명령어:
+  ```
+  $ time python3 collect_buggy_mutants.py --subject <subject-name> [--verbose]
+  ```
+* 옵션 설명:
+  * ``--subject <subject-name>``: 실험 대상 서브젝트의 이름.
 
-## 6.2 Usable Buggy Mutant Collection
-### 6.2.1 Action for Step 6.2
-  1. **selects** ``N`` amount of mutants within ``./out/<subject-name>/buggy_mutants/`` in which ``N`` is the number given in the paramter ``number_of_versions_to_check_for_usability`` of ``./configs/config.json``. (A limit ``N`` is given because there can be quite many buggy mutants to check with limitted amount of time).
-  2. **executes** failing TCs and measures coverage
-  3. **saves** mutants (to ``./out/<subject-name>/usable_buggy_mutants/`` directory) that...
-      * buggy line is covered by failing TCs line
-      * have at least 1 failing TC and 1 passing TC
 
-### 6.2.2 CLI for Usable Buggy Mutant Collection
-```
-$ time python3 select_usable_versions.py --subject <subject-name>
-```
-* command flag usage:
-  * ``--subject  <str>``: name of the target subject
 
-### 6.2.3 Validation command for Usable Buggy Mutants
-For each buggy versions within ``usable_buggy_versions`` directory, the following ``validator.py`` command validates that:
-  * ``bug_info.csv`` has been generated
-  * ``testsuite_info`` has been generated for both failing and passing test cases
-  * ``buggy_code_file`` directory contains the designated buggy code file
-```
-$ python3 validator.py --subject <subject-name> --set-name <usable_buggy_versions-directory> --validate-usable-buggy-versions
-```
+## 5.2 [2단계] 버그 버전 사용 가능 여부 검증
+### 5.2.1 [2단계]에서 수행되는 작업
+  1. **변이 버그 버전 선택**:
+      * ``./configs/config.json`` 설정 파일의 ``number_of_versions_to_check_for_usability`` 변수에 설정된 값 만큼의 변이 버그 버전을 ``./out/<subject-name>/buggy_mutants/`` 디렉토리에서 선택한다.
+        * (참고 사항) 제한된 시간 조건으로 인해 사용자가 설정한 개수 만큼만 검증하여 데이터 추출에 사용되는 것이다.
+  2. **실패 테스트 케이스 검증**:
+      * 선택된 각 변이 버그 버전 별로 실패하는 테스트 케이스들을 실행하여 커버리즈 정보를 추출한다.
+  3. **검증된 버그 버전 저장**:
+      * 각 변이 버그 버전의 실패하는 테스트 케이스들의 커버리지 정보를 확인하여 사용가능 여부가 검증되면 ``./out/<subject-name>/usable_buggy_mutants/`` 디렉토리에 저장한다.
+      * 검증 조건은 다음과 같다:
+        * 모든 실패하는 테스트 케이스는 버기 라인을 실행한다.
+        * 변이 버그 버전은 1개 이상의 실패하는 테스트 케이스와 1개 이상의 패싱하는 테스트 케이스를 보유한다.
 
-## 6.3 Prerequisite Data Preparation
-### 6.3.1 Action for Step 6.3
-  1. Prepares the following prerequisite data for mutants (and real world buggy versions) included in ``./out/<subject-name>/usable_buggy_mutants/`` directory by executing all test cases:
-      * postprocessed coverage information (CSV format)
-      * line-to-function map information (JSON format)
-      * lines executed by failing TCs (JSON format)
-      * lines executed by passing TCs (JSON format)
-      * lines executed by CCTs (Json format)
-      * coincidentally-correct-test-cases
+### 5.2.2 [2단계] 실행 방법
+* 실행 명령어:
+  ```
+  $ time python3 select_usable_versions.py --subject <subject-name>
+  ```
+* 옵션 설명:
+  * ``--subject <subject-name>``: 실험 대상 서브젝트의 이름.
 
-### 6.3.2 CLI for prerequisite data preparation
-```
-$ time python3 prepare_prerequisites.py --subject <subject-name> --target-set-name <usable_buggy_versions-directory> [--use-excluded-failing-tcs] [--passing-tcs-perc 0.05] [--failing-tcs-perc 0.1]
-```
-* command flag usage:
-  * ``--subject <str>``: name of the target subject
-  * ``--target-set-name <str>``: name of the directory that contains buggy versions targeted for prerequisite data preparation
+### 5.2.3 [2단계] 정상 작동 검증 방법
+* 실행 명령어:
+  ```
+  $ python3 validator.py --subject <subject-name> --set-name <usable_buggy_versions-directory> --validate-usable-buggy-versions
+  ```
 
-### 6.3.3 Validation command for Prerequisite Data
-For each buggy versions within ``prerequisite_data`` directory, the following ``validator.py`` command validates that:
-  * ``buggy_line_key.txt`` has been generated
-  * ``coverage_summary.csv`` has been generated
-  * ``postprocess_coverage.csv`` has been generated
-  * failing TCs executes the buggy line based on ``postprocessed_coverage.csv`` file
-  * ``lines_executed_by_failing_tc.json`` has been generated
-  * ``line2function.json`` has been generated
-  * at least 1 failing tc and 1 passing tc exists
-```
-$ python3 validator.py --subject <subject-name> --set-name <prerequisite_data-directory> --validate-prerequisite-data
-```
+* ``<usable_buggy_versions-directory>`` (입력: ``usable_buggy_mutants``) 디렉토리에 속한 각 변이 버그 버전의 결과물에 대해 다음 조건들의 만족 여부를 검증한다:
+  * 버그 버전에 대한 기본 정보(``target_code_file``,``buggy_code_file``,``buggy_lineno``)를 담는 csv 파일(``bug_info.csv``)의 생성 여부 검증.
+  * 실패와 패싱 테스트 케이스들의 목록 파일을 포함한 디렉토리(``testsuite_info/``)의 생성 여부 검증.
+  * 버기 라인을 포함한 소스 코드 파일을 포함한 디렉토리(``buggy_code_file/``)의 생성 여부 검증.
 
-### 6.3.4 Statistics result generation command for Prerequisite Data
-The following commands generates statistics regarding the prerequisite data and crashed buggy mutants information within ``./statistics/<subject-name>/`` directory.
-```
-$ python3 analyzer.py --subject <subject-name> --set-name <prerequisite_data-directory> --output-csv <prerequisite_data-directory>-tc-stats --prerequisite-data --removed-initialization-coverage
-$ python3 analyzer.py --subject <subject-name> --set-name crashed_buggy_mutants --output crashed_buggy_mutants --crashed-buggy-mutants
-```
 
-## 6.4 MBFL Feature Extraction
-### 6.4.1 Action for step 6.4
-  1. **generates** at maximum ``N`` amount of mutants on randomly selected ``X`` (at max) number of lines executed by failing TCs, where ``N`` is the number given in the parameter ``max_mutants`` and ``X`` is the number given in the parameter ``number_of_lines_to_mutation_test`` of ``./configs/config.json``, for mutants saved within ``./out/<subject-name>/<prerequisite_data-directory>/`` directory.
-  2. conducts MBFL on with the generated mutants
-  3. **saves** the results to ``./out/<subject-name>/mbfl_features/`` directory
+## 5.3 [3단계] 결함위치탐지 데이터셋 생성에 필요한 사전 데이터 추출
+### 5.3.1 [3단계]에서 수행되는 작업
+  1. **사전 데이터 추출**:
+      * ``./out/<subject-name>/usable_buggy_mutants/`` 디렉토리에 저장된 각 버그 버전에 대해 사전 데이터를 추출하여 ``./out/<subject-name>/prerequisite_data/`` 디렉토리에 저장한다. 
+      * 또한, ``/subjects/libxml2/configuration.json``의 ``real_world_buggy_versions`` 변수에 설정 된 값에 따라, ``true`` 값으로 설정 되어있을 시 ``./subjects/libxml2/real_world_buggy_versions/`` 디렉토리에 저장된 실제 버그 버전도 포함하여 사전 데이터를 추출하여 저장한다.
+      * 사전 데이터는 다음과 같은 정보를 의미한다:
+        * 후처리 된 커버리지 정보 (CSV format)
+        * 라인-함수 매핑 정보 (JSON format)
+        * 실패한 테스트 케이스들이 실행한 라인 정보 (JSON format)
+        * 패싱한 테스트 케이스들이 실행한 라인 정보 (JSON format)
+        * 우연히 통과한 테스트 케이스들이 실행한 라인 정보 (Json format)
+        * 우연히 실행 테스트 케이스들의 목록 (TXT format)
 
-### 6.4.2 CLI for mbfl feature extraction
-```
-$ time python3 extract_mbfl_features.py --subject <subject-name> --target-set-name <prerequisite_data-directory> --trial <trial-name> [--exclude-init-lines] [--parallel-cnt 2] [--dont-terminate-leftovers] [--remain-one-bug-per-line]
-```
-* command flag usage:
-  * ``--subject <str>``: name of the target subject
-  * ``--target-set-name <str>``: name of the directory that contains buggy versions targeted for mbfl feature extraction
-  * ``--trial <str>``: name of the experiment trial (ex. trial1)
-  * ``--exclude-init-lines``: flag when given, excludes lines executed during initialization (before test case execution) from MBFL targeted lines
-  * ``--prallel-cnt <int>``: conduct MBFL feature extraction of a buggy version in parallel of ``<int>`` amount.
-  * ``--dont-terminate-leftovers``: flag when given, waits until all mbfl exctraction of buggy versions has been finished in a batch.
-  * ``--remain-one-bug-per-line``: flag when given, only selects one buggy version per line.
+### 5.3.2 [3단계] 실행 방법
+* 실행 명령어:
+  ```
+  $ time python3 prepare_prerequisites.py --subject <subject-name> --target-set-name <usable_buggy_versions-directory>
+  ```
+* 옵션 설명:
+  * ``--subject <subject-name>``: 실험 대상 서브젝트의 이름.
+  * ``--target-set-name <usable_buggy_versions-directory>``: 사전 데이터를 추출하고자 하는 버그 버전들이 저장된 디렉토리 이름. (입력: ``usable_buggy_versions``)
 
-### 6.4.3 Validation command for MBFL features
-For each buggy versions within ``mbfl_features`` directory, the following ``validator.py`` command validates that:
-  * ``mbfl_features.csv`` has been generated
-  * ``mbfl_features.csv`` only contains one buggy line
-  * ``selected_mutants.csv`` has been generated
-  * ``mutation_testing_results.csv`` has been generated
-```
-$ python3 validator.py --subject <subject-name> --set-name <mbfl_features-directory> --validate-mbfl-features --trial <trial-name>
-```
+### 5.3.3 [3단계] 정상 작동 검증 방법
+* 실행 명령어:
+  ```
+  $ python3 validator.py --subject <subject-name> --set-name <prerequisite_data-directory> --validate-prerequisite-data
+  ```
+* ``<prerequisite_data-directory>`` (입력: ``prerequisite_data``) 디렉토리에 속한 각 버그 버전의 결과물에 대해 다음 조건들의 만족 여부를 검증한다:
+  * 버기 라인의 고유 키 값 정보가 담긴 txt 파일(``buggy_line_key.txt``)의 생성 여부 검증.
+  * 커버러지의 개요 정보가 담긴 csv 파일(``coverage_summary.csv``)의 생성 여부 검증.
+  * 각 테스트 케이스 별 라인 커버러지 정보가 담긴 csv 파일(``postprocess_coverage.csv``)의 생성 여부 검증.
+  * ``postprocess_coverage.csv`` 파일 데이터상 실패하는 테스트 케이스들의 버기 라인 실행 여부 검증.
+  * 실패 테스트 케이스들의 라인 커버리지 정보가 담긴 json 파일(``lines_executed_by_failing_tc.json``)의 생성 여부 검증.
+  * 각 라인 별 함수 매핑 정보가 담긴 파일(``line2function.json``)의 생성 여부 검증.
 
-### 6.4.4 Statistics results generation command for MBFL features
-The following commands generates statistics regarding the rank and statistical information of mbfl features data within ``./statistics/<subject-name>/`` directory.
+### 5.3.4 [3단계] 사전 데이터의 통계 자료 계산
+* 실행 명령어:
+  ```
+  $ python3 analyzer.py --subject <subject-name> --set-name <prerequisite_data-directory> --output-csv <prerequisite_data-directory>-tc-stats --prerequisite-data --removed-initialization-coverage
+  ```
+* ``<prerequisite_data-directory>`` (입력: ``prerequisite_data``) 디렉토리에 속한 각 버그 버전의 결과물로 부터 다양한 정보를 계산하여 ``./statistics/<subject-name>/`` 디렉토리에 ``<prerequisite_data-directory>-tc-stats.csv`` 이름으로 저장한다.
+* 사전 데이터의 통계 자료는 다음과 같은 정보들을 포함한다:
+  * 테스트 케이스들의 개수 (i.e., 실패, 패싱, 우연히 패싱하는 테스트 케이스) 정보
+  * 실패하는 테스트 케이스들이 실행하는 함수와 라인 개수 정보
+
+## 5.4 [4단계] 변이기반 (MBFL: Mutation-Based) 데이터셋 추출
+### 5.4.1 [4단계]단계에서 수행되는 작업
+  1. **변이 생성**:
+      * 각 버그 버전 별로 ``./configs/config.json`` 설정 파일의 ``number_of_lines_to_mutation_test`` 변수에 설정된 값 만큼의 라인을 선택하여, 각 라인별 ``max_mutants`` 변수에 설정된 값 만큼의 변이를 생성한다.
+  2. **변이기반 테스팅**:
+      * 각 버그 버전에 생성된 변이에 테스트 케이스들을 실행하여 변이기반 테스팅을 수행한다.
+  3. **변이기반 데이터 저장**:
+      * 변이기반 테스팅을 끝난 후 변이기반 데이터셋 결과를 ``./out/<subject-name>/mbfl_features/`` 디렉토리에 저장한다.
+
+
+### 5.4.2 [4단계] 실행 방법
+* 실행 명령어:
+  ```
+  $ time python3 extract_mbfl_features.py --subject <subject-name> --target-set-name <prerequisite_data-directory> --trial <trial-name> [--exclude-init-lines] [--parallel-cnt <int>] [--dont-terminate-leftovers]
+  ```
+* 옵션 설명:
+  * ``--subject <subject-name>``: 실험 대상 서브젝트의 이름.
+  * ``--target-set-name <prerequisite_data-directory>``: 변이기반 데이터셋 추출하고자 하는 버그 버전들이 저장된 디렉토리 이름. (입력: ``prerequisite_data``)
+  * ``--trial <trial-name>``: 실험 trial 이름 (ex. trial1)
+  * ``--exclude-init-lines``: 해당 옵션을 키게 되면, 테스트 환경 초기화할 때 실행 되는 공통 라인을 변이기반 테스팅 대상 라인에서 제외한다.
+  * ``--prallel-cnt <int>``: 변이기반 데이터셋 추출작업을 ``<int>`` 개수 만큼 병령적으로 수행한다.
+  * ``--dont-terminate-leftovers``: 해당 옵션을 키게 되면, 모든 버그버전의 변이기반 데이터셋 추출 작업이 끝날 때 까지 기다린다.
+
+
+### 5.4.3 [4단계] 정상 작동 검증 방법
+* 실행 명령어:
+  ```
+  $ python3 validator.py --subject <subject-name> --set-name <mbfl_features-directory> --validate-mbfl-features --trial <trial-name>
+  ```
+* ``<mbfl_features-directory>`` (입력: ``mbfl_features``) 디렉토리에 속한 각 버그 버전의 결과물에 대해 다음 조건들의 만족 여부를 검증한다:
+  * 변이기반 데이터셋 csv 파일(``mbfl_features.csv``)의 생성 여부 검증.
+  * ``mbfl_features.csv`` 변이기반 데이터셋 csv 파일에 1개의 버기 라인 존재 여부 검증.
+  * 변이기반 테스팅 수행에 활용된 변이 정보 csv 파일(``selected_mutants.csv``)의 생성 여부 검증.
+  * 변이기반 테스팅 결과 csv 파일(``mutation_testing_results.csv``)의 생성 여부 검증.
+
+### 5.4.4 [4단계] 변이기반 데이터셋의 정확도 계산 결과 추출 방법
+* 실행 명령어:
 ```
 $ python3 ranker.py --subject <subject-name> --set-name <mbfl_features-directory> --output-csv <mbfl_features-directory>-rank-stats --mbfl-features --trial <trial-name> [--no-ccts]
-$ python3 analyzer.py --subject <subject-name> --set-name <mbfl_features-directory> --output-csv <mbfl_features-directory>-tc-stats --prerequisite-data --removed-initialization-coverage
 ```
-* command flag usage:
-  * ``--no-ccts``: flag when given, measures rank of mbfl features measured without the usage of CCTs
+* ``<mbfl_features-directory>`` (입력: ``mbfl_features``) 디렉토리에 속한 각 버그 버전의 변이기반 데이터로부터 버기 함수 탐지 정확도를 계산한다. 정확도 결과는 ``./statistics/<subject-name>/`` 디렉토리에 ``<mbfl_features-directory>-rank-stats.csv`` 이름으로 저장한다.
+* 옵션 설명:
+  * ``--no-ccts``: 해당 옵션을 키게 되면, 우연히 통과한 테스트 케이스들을 제외한 데이터셋을 가지고 변이기반 데이터를 평가한다.
 
-## 6.5 SBFL Feature Extraction
-### 6.5.1 Action for step 6.5
-  1. extract SBFL feature based on the postprocessed coverage information measured on step 6.3.
-  2. **saves** the results to ``./out/<subject-name>/sbfl_features/`` directory
 
-### 6.5.2 CLI for mbfl feature extraction
-```
-$ time python3 extract_sbfl_features.py --subject <subject-name> --target-set-name <mbfl_features-directory>
-```
-* command flag usage:
-  * ``--subject <str>``: name of the target subject
-  * ``--target-set-name <str>``: name of the directory that contains buggy versions targeted for sbfl feature extraction
 
-### 6.5.3 Validation command for SBFL features
-For each buggy versions within ``sbfl_features`` directory, the following ``validator.py`` command validates that:
-  * ``sbfl_features.csv`` has been generated
-```
-$ python3 validator.py --subject <subject-name> --set-name <sbfl_features-directory> --validate-sbfl-features
-```
+## 5.5 [5단계] 스펙트럼기반 (SBFL: Spectrum-Based) 데이터셋 추출
+### 5.5.1 [5단계]에서 수행되는 작업
+  1. **스펙트럼기반 데이터 생성 및 정리**:
+      * 각 버그 버전 별 ``postprocess_coverage.csv``의 커버리지 정보를 활용하여 스펙트럼기반 데이터 생성하고 ``./out/<subject-name>/sbfl_features/`` 디렉토리에 저장한다.
 
-### 6.5.4 Statistics results generation command for SBFL features
-The following commands generates statistics regarding the rank information of sbfl features data within ``./statistics/<subject-name>/`` directory.
-```
-$ python3 ranker.py --subject <subject-name> --set-name <sbfl_features-directory> --output-csv <sbfl_features-directory>-rank-stats --sbfl-features [--no-ccts]
-```
-* command flag usage:
-  * ``--no-ccts``: flag when given, measures rank of sbfl features measured without the usage of CCTs
+### 5.5.2 [5단계] 실행 방법
+* 실행 명령어:
+  ```
+  $ time python3 extract_sbfl_features.py --subject <subject-name> --target-set-name <mbfl_features-directory>
+  ```
+* 옵션 설명:
+  * ``--subject <subject-name>``: 실험 대상 서브젝트의 이름.
+  * ``--target-set-name <mbfl_features-directory>``: 스펙트럼기반 데이터셋 추출하고자 하는 버그 버전들이 저장된 디렉토리 이름. (입력: ``mbfl_features``)
 
-## 6.6 FL Feature Dataset Finalization (combing MBFL and SBFL features)
-### 6.6.1 Action for step 6.6
-  1. combine both sbfl and mfbl feature to a single csv file.
-### 6.6.2 CLI for FL feature dataset finalization
-```
-$ python3 reconstructor.py --subject <subject-name> --set-name <sbfl_features-directory> --combine-mbfl-sbfl --combining-trials trial1 [--no-ccts] [--done-remotely]
-```
-* command flag usage:
-  * ``--subject <str>``: name of the target subject
-  * ``--target-set-name <str>``: name of the directory that contains buggy versions targeted for mbfl and sbfl combining action
-  * ``--combine-mbfl-sbfl``: flag when given, combines mbfl and sbfl feature csv file within buggy versions of targetted directory
-  * ``--combining-trials [<str> ...]``: name of the trials to combine
-  * ``--no-ccts``: flag when given, measures rank of sbfl features measured without the usage of CCTs
-  * ``--done-remotely``: flag when give, doesn't account in including generate mutatants for mbfl extraction because the data are in remote machines.
+### 5.5.3 [5단계] 정상 작동 검증 방법
+* 실행 명령어:
+  ```
+  $ python3 validator.py --subject <subject-name> --set-name <sbfl_features-directory> --validate-sbfl-features
+  ```
+* ``<sbfl_features-directory>`` (입력: ``sbfl_features``) 디렉토리의 각 버그 버전의 결과물에 대해 다음 조건들의 만족 여부를 검증한다:
+  * 스펙트럼기반 데이터셋 csv 파일(``sbfl_features.csv``)의 생성 여부 검증.
 
-### 6.6.3 Validation command for FL features
-For each buggy versions within ``FL-dataset-<subject-name>`` directory, the following ``validator.py`` command validates that:
-  * there is only one row with "bug" column as 1 within the ``<bug-id>.fl_features.csv``
-  * the the sum of SBFL spectrum (ep, ef, np, nf) add up to the utilized number of test cases
-  * all failing tcs executes buggy line based on postprocess coverage csv file
-  * Metallaxis and MUSE score is correctly measurable with the given features
-  * the mutated code exists within the specified line of buggy code file
-```
-$ python3 validator.py --subject <subject-name> --set-name FL-dataset-<subject-name> --validate-fl-features
-```
+### 5.5.4 [5단계] 스펙트럼기반 데이터셋의 정확도 계산 결과 추출 방법
+* 실행 명령어:
+  ```
+  $ python3 ranker.py --subject <subject-name> --set-name <sbfl_features-directory> --output-csv <sbfl_features-directory>-rank-stats --sbfl-features [--no-ccts]
+  ```
+* ``<sbfl_features-directory>`` (입력: ``sbfl_features``) 디렉토리에 속한 각 버그 버전의 스펙트럼기반 데이터로부터 버기 함수 탐지 정확도를 계산한다. 정확도 결과는 ``./statistics/<subject-name>`` 디렉토리에 ``<sbfl_features-directory>-rank-stats.csv`` 이름으로 저장한다.
+* 옵션 설명:
+  * ``--no-ccts``: 해당 옵션을 키게 되면, 우연히 통과한 테스트 케이스들을 제외한 데이터셋을 가지고 스펙트럼기반 데이터를 평가한다.
 
-# 7. Steps to training ML and inferring
 
-## 7.1 Postprocessing FL feature data
-```
-$ python3 machine_learning.py --subject2setname-pair <subject-name>:<fl-dataset-directory> --postprocess-fl-features
-```
 
-## 7.2 train/validae/test MLP model
-```
-$ python3 machine_learning.py --subject2setname-pair <subject-name>:<fl-dataset-directory> --train --project-name ML-<date>-<subject-name>-<version> --train-validate-test-ratio 6 1 3 --random-seed 42 --epoch 20 --batch-size 1024 --learning-rate 0.001 --dropout 0.2 --model-shape 35 64 32 1
-```
+## 5.6 [6단계] 최종 결함위치탐지 데이터셋 완성
+### 5.6.1 [6단계]에서 수행되는 작업
+  1. **최종 결함위치탐지 데이터셋 완성**:
+      * 변이기반과 스펙트럼기반 데이터셋을 병합하여 최종 결함위치탐지 데이터셋을 생성하고 ``./out/<subject-name>/FL-dataset-<subject-name/`` 디렉토리에 저장한다.
 
-## 7.3 inferring with MLP model
-```
-$ python3 machine_learning.py --subject2setname-pair <subject-name>:<fl-dataset-directory> --inference --project-name ML-<date>-<subject-name>-<version> --inference-name infer-<subject-name>-<version>
-```
+### 5.6.2 [6단계] 실행 방법
+* 실행 명령어:
+  ```
+  $ python3 reconstructor.py --subject <subject-name> --set-name <sbfl_features-directory> --combine-mbfl-sbfl --combining-trials <trial-name> [--no-ccts] [--done-remotely]
+  ```
+* 옵션 설명:
+  * ``--subject <subject-name>``: 실험 대상 서브젝트의 이름.
+  * ``--target-set-name <sbfl_features-directory>``: 스펙트럼기반 데이터셋 추출하고자 하는 버그 버전들이 저장된 디렉토리 이름. (입력: ``sbfl_features``)
+  * ``--combine-mbfl-sbfl``: 변이기반과 스펙트럼기반 데이터 병합하는 옵션.
+  * ``--combining-trials [<trial-name> ...]``: 실험 trial 이름 (ex. trial1)
+  * ``--no-ccts``: 해당 옵션을 키게 되면, 우연히 통과한 테스트 케이스들을 제외한 변이기반과 스펙트럼기반 데이터셋을 병합한다.
+  * ``--done-remotely``: 해당 옵션을 키게 되면, 변이기반 데이터셋 추출에 활용된 변이들을 분산 시스템으로부터 내려받는다.
 
-## 7.4 part real-world bugs from mutated bugs
-```
-$ python3 machine_learning.py --subject2setname-pair <subject-name>:<fl-dataset-directory> --part-real-world-bugs --real-world-bugs [<str> ...]
-```
+### 5.6.3 [6단계] 정상 작동 검증 방법
+* 실행 명령어:
+  ```
+  $ python3 validator.py --subject <subject-name> --set-name FL-dataset-<subject-name> --validate-fl-features
+  ```
+* ``FL-dataset-<subject-name>``, 즉, 최종 결함위치탐지 데이터셋에 대해 다음 조건들의 만족 여부를 검증한다:
+  * 각 버그 버전의 ``<bug-id>.fl_features.csv`` 파일에 단 1개의 버기 라인의 존재 여부를 검증한다.
+  * 각 버그 버전의 결함위치탐지 데이터의 스펙트럼 정보 (ep, ef, np, nf)의 합이 활용된 테스트 케이스의 개수와 동일한 것을 검증한다.
+  * 각 버그 버전의 실패하는 테스트 케이스들이 버기 라인을 실행하는 것을 검증한다.
+  * 각 버그 버전의 변이기반 데이터로부터 Metallaxis와 MUSE 의심도 값이 정상적 계산 여부를 검증한다.
+  * 각 버그 버전의 변이 코드 (1개의 라인)이 실제 버그 소스 코드 파일에 위치하고 있는 것을 검증한다.
+
+<!-- # 6. 다층 퍼셉트론 모델에 결함위치탐지 데이터셋 학습과 추론 방법
+다층 퍼셉트론 모델 학습과 추론을 위한 결함위치탐지 데이터셋은 ``./out/<subject-name>/`` 디렉토리에 위치해야한다. 모델 학습과 추론은 5장에서 생성한 결함위치탐지 데이터셋을 사용한다.
+
+## 6.1 결함위치탐지 데이터셋 후처리
+* 실행 명령어:
+  ```
+  $ python3 machine_learning.py --subject2setname-pair <subject-name>:<fl-dataset-directory> --postprocess-fl-features
+  ```
+
+## 6.2 학습/검증/테스트 데이터로 분할 후 모델 학습
+* 실행 명령어:
+  ```
+  $ python3 machine_learning.py --subject2setname-pair <subject-name>:<fl-dataset-directory> --train --project-name ML-<date>-<subject-name>-<version> --train-validate-test-ratio 6 1 3 --random-seed 42 --epoch 20 --batch-size 1024 --learning-rate 0.001 --dropout 0.2 --model-shape 35 64 32 1
+  ```
+
+## 6.3 학습 후 모델 추론
+* 실행 명령어:
+  ```
+  $ python3 machine_learning.py --subject2setname-pair <subject-name>:<fl-dataset-directory> --inference --project-name ML-<date>-<subject-name>-<version> --inference-name infer-<subject-name>-<version>
+  ```
+
+## 6.4 결함위치탐지 데이터로부터 실제 버그만 분할 처리
+* 실행 명령어:
+  ```
+  $ python3 machine_learning.py --subject2setname-pair <subject-name>:<fl-dataset-directory> --part-real-world-bugs --real-world-bugs [<str> ...]
+  ``` -->
 
 ---
-last updated Sep 26, 2024
+마지막 업데이트 2024년 11월 06일
