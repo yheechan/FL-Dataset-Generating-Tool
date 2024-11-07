@@ -100,7 +100,6 @@
     * 5단계의 정상 작동 및 검증을 실행하는 방법은 [6.5.3장](#653-5단계-정상-작동-검증-방법)에서 설명한다.
     * 6단계의 정상 작동 및 검증을 실행하는 방법은 [6.6.3장](#663-6단계-정상-작동-검증-방법)에서 설명한다.
 
-  <!-- * ``machine_learning.py``: 최종 결함위치탐지 데이터셋으로 다층 퍼셉트론 (MLP: Multi-Layered Perceptron) 모델 학습과 추론을 수행한다. -->
 
 
 # 5. Configuration 설정 방법
@@ -517,33 +516,6 @@
   * 각 버그 버전의 실패하는 테스트 케이스들이 버기 라인을 실행하는 것을 검증한다.
   * 각 버그 버전의 변이기반 데이터로부터 Metallaxis와 MUSE 의심도 값이 정상적 계산 여부를 검증한다.
   * 각 버그 버전의 변이 코드 (1개의 라인)이 실제 버그 소스 코드 파일에 위치하고 있는 것을 검증한다.
-
-<!-- # 6. 다층 퍼셉트론 모델에 결함위치탐지 데이터셋 학습과 추론 방법
-다층 퍼셉트론 모델 학습과 추론을 위한 결함위치탐지 데이터셋은 ``./out/<subject-name>/`` 디렉토리에 위치해야한다. 모델 학습과 추론은 5장에서 생성한 결함위치탐지 데이터셋을 사용한다.
-
-## 6.1 결함위치탐지 데이터셋 후처리
-* **실행 명령어**:
-  ```
-  $ python3 machine_learning.py --subject2setname-pair <subject-name>:<fl-dataset-directory> --postprocess-fl-features
-  ```
-
-## 6.2 학습/검증/테스트 데이터로 분할 후 모델 학습
-* **실행 명령어**:
-  ```
-  $ python3 machine_learning.py --subject2setname-pair <subject-name>:<fl-dataset-directory> --train --project-name ML-<date>-<subject-name>-<version> --train-validate-test-ratio 6 1 3 --random-seed 42 --epoch 20 --batch-size 1024 --learning-rate 0.001 --dropout 0.2 --model-shape 35 64 32 1
-  ```
-
-## 6.3 학습 후 모델 추론
-* **실행 명령어**:
-  ```
-  $ python3 machine_learning.py --subject2setname-pair <subject-name>:<fl-dataset-directory> --inference --project-name ML-<date>-<subject-name>-<version> --inference-name infer-<subject-name>-<version>
-  ```
-
-## 6.4 결함위치탐지 데이터로부터 실제 버그만 분할 처리
-* **실행 명령어**:
-  ```
-  $ python3 machine_learning.py --subject2setname-pair <subject-name>:<fl-dataset-directory> --part-real-world-bugs --real-world-bugs [<str> ...]
-  ``` -->
 
 ---
 마지막 업데이트 2024년 11월 07일
