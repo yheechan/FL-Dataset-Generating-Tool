@@ -2,7 +2,6 @@
 
 
 ## 프로젝트 데이터셋의 문서 링크
-프로젝트 명을 클릭하여 프로젝트 데이터셋의 문서로 이동
 1. jsoncpp: [jsoncpp-문서](/documents/dataset_description/document-jsoncpp.md)
 2. libxml2: [libxml2-문서](/documents/dataset_description/document-libxml2.md)
 3. NSFW_cpp: [NSFW_cpp-문서](/documents/dataset_description/document-NSFW_cpp.md)
