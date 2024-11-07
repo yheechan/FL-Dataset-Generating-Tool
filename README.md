@@ -1,7 +1,7 @@
 # 결함위치탐지 데이터셋 생성 결과
 
 
-## 프로젝트의 문서 링크
+## 프로젝트 데이터셋의 문서 링크
 프로젝트 명을 클릭하여 프로젝트 데이터셋의 문서로 이동
 1. jsoncpp: [jsoncpp-문서](/documents/dataset_description/document-jsoncpp.md)
 2. libxml2: [libxml2-문서](/documents/dataset_description/document-libxml2.md)
@@ -15,7 +15,7 @@
     * features2d: [features2d-문서](/documents/dataset_description/opencv/document-opencv_features2d.md)
 
 
-## 프로젝트의 데이터셋 링크
+## 프로젝트의 데이터셋 파일 링크
 1. jsoncpp: [jsoncpp-데이터셋-링크](https://drive.google.com/file/d/1R0HTSE3MHSujkNHrmaOGyFRK-5dA4kEk/view?usp=drive_link)
 2. libxml2: [libxml-데이터셋-링크](https://drive.google.com/file/d/10HP8t0W60VNx1oAAhmggFFZfZazHChf3/view?usp=drive_link)
 3. NSFW_cpp: 공개 미제공
@@ -28,7 +28,7 @@
     * features2d: [opencv_features2d-데이터셋-링크](https://drive.google.com/file/d/17NsIqm2wrB9gi5XW2Q9hf-iGqtJN6WHy/view?usp=drive_link)
 
 
-## 결함위치탐지 학습 데이터셋 파일 개수 현황
+## 결함위치탐지 학습 데이터셋 파일 개수
 * SBFL 기반 feature csv 파일 데이터: 총 2,558개
     프로젝트 | 파일 개수 |
     --|--|
