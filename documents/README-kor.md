@@ -423,9 +423,9 @@
 
 ### 5.4.4 [4단계] 변이기반 데이터셋의 정확도 계산 결과 추출 방법
 * 실행 명령어:
-```
-$ python3 ranker.py --subject <subject-name> --set-name <mbfl_features-directory> --output-csv <mbfl_features-directory>-rank-stats --mbfl-features --trial <trial-name> [--no-ccts]
-```
+  ```
+  $ python3 ranker.py --subject <subject-name> --set-name <mbfl_features-directory> --output-csv <mbfl_features-directory>-rank-stats --mbfl-features --trial <trial-name> [--no-ccts]
+  ```
 * ``<mbfl_features-directory>`` (입력: ``mbfl_features``) 디렉토리에 속한 각 버그 버전의 변이기반 데이터로부터 버기 함수 탐지 정확도를 계산한다. 정확도 결과는 ``./statistics/<subject-name>/`` 디렉토리에 ``<mbfl_features-directory>-rank-stats.csv`` 이름으로 저장한다.
 * 옵션 설명:
   * ``--no-ccts``: 해당 옵션을 키게 되면, 우연히 통과한 테스트 케이스들을 제외한 데이터셋을 가지고 변이기반 데이터를 평가한다.
