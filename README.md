@@ -18,8 +18,8 @@
 ## 프로젝트의 데이터셋 파일 링크
 1. jsoncpp: [jsoncpp-데이터셋-링크](https://drive.google.com/file/d/1R0HTSE3MHSujkNHrmaOGyFRK-5dA4kEk/view?usp=drive_link)
 2. libxml2: [libxml-데이터셋-링크](https://drive.google.com/file/d/10HP8t0W60VNx1oAAhmggFFZfZazHChf3/view?usp=drive_link)
-3. NSFW_cpp: 공개 미제공
-4. NSFW_c: 공개 미제공
+3. NSFW_cpp: 8월에 LIGNex1에 기전달
+4. NSFW_c: 8월에 LIGNex1에 기전달
 5. opencv
     * dnn: [opencv_dnn-데이터셋-링크](https://drive.google.com/file/d/1mL6lSmlHK4sefuCf0Zl6uOOiftZTh8Wy/view?usp=drive_link)
     * core: [opencv_core-데이터셋-링크](https://drive.google.com/file/d/1gQua9HCkridZxemDJJ2XZfHFxuRiQ1xs/view?usp=drive_link)
@@ -49,8 +49,9 @@
     NSFW_cpp | 579,207개
 
 
-## SBFL/MBFL 기반 데이터 생성 도구 링크
+## SBFL/MBFL 기반 데이터 생성 도구 설명
 * [FL-Dataset-Generating-Tool](/documents/README-kor.md)
+
 
 ## 결함위치탐지 데이터셋에 대한 평가 결과
 1. jsoncpp: [jsoncpp-평가결과](/documents/dataset_description/document-jsoncpp.md#9-데이터셋의-오류-탐지-정확도-평가-총-165개-버그-버전-총-363개-함수)

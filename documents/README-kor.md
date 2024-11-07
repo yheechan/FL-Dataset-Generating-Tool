@@ -1,32 +1,35 @@
 # 결함위치탐지 데이터셋 생성 도구 (C/C++ 서브젝트 대상)
+
+# 0. 소개
 이 프로젝트는 서브젝트에 대하여 결함위치탐 (FL: Fault Localization) 데이터셋 생성하는 도구로 만들어졌다. 서브젝트에 대한 결함위치탐지 데이터셋은 다음과 같은 6개의 단계를 거쳐 생성 된다:
-1. 변이기반 버그 버전 생성
-2. 버그 버전 사용 가능 여부 검증
-3. 결함위치탐지 데이터셋 생성에 필요한 사전 데이터 추출
-4. 변이기반 (MBFL: Mutation-Based) 데이터셋 추출
-5. 스펙트럼기반 (SBFL: Spectrum-Based) 데이터셋 추출
-6. 변이기반과 스펙트럼기반 데이터 병합하여 최종 결함위치탐지 데이터셋 완성
+1. [변이기반 버그 버전 생성]
+2. [버그 버전 사용 가능 여부 검증]
+3. [결함위치탐지 데이터셋 생성에 필요한 사전 데이터 추출]
+4. [변이기반 (MBFL: Mutation-Based) 데이터셋 추출]
+5. [스펙트럼기반 (SBFL: Spectrum-Based) 데이터셋 추출]
+6. [변이기반과 스펙트럼기반 데이터 병합하여 최종 결함위치탐지 데이터셋 완성]
 
 해당 문서는 결함위치탐지 데이터셋 생성 도구의 사용법을 설명한다.
 
-# 0. 목차
-* [0. 목차](#0-목차)
-* [1. 의존 도구](#1-의존-도구)
-* [2. 도구 빌드 과정](#2-도구-빌드-과정)
-  * [2.1 ``MUSICUP`` 빌드](#21-musicup-빌드)
-  * [2.2 ``extractor`` 빌드](#22-extractor-빌드)
-* [3. 실행 파일 개요](#3-실행-파일-개요)
-* [4. configuration 설정 방법](#4-configuration-설정-방법)
-* [5. 결함위치탐지 데이터셋 생성 단계별 실행 방법](#5-결함위치탐지-데이터셋-생성-단계별-실행-방법)
-  * [5.1 [1단계] 변이기반 버그 버전 생성](#51-1단계-변이기반-버그-버전-생성)
-  * [5.2 [2단계] 버그 버전 사용 가능 여부 검증](#52-2단계-버그-버전-사용-가능-여부-검증)
-  * [5.3 [3단계] 결함위치탐지 데이터셋 생성에 필요한 사전 데이터 추출](#53-3단계-결함위치탐지-데이터셋-생성에-필요한-사전-데이터-추출)
-  * [5.4 [4단계] 변이기반 데이터셋 추출](#54-4단계-변이기반-mbfl-mutation-based-데이터셋-추출)
-  * [5.5 [5단계] 스펙트럼기반 데이터셋 추출](#55-5단계-스펙트럼기반-sbfl-spectrum-based-데이터셋-추출)
-  * [5.6 [6단계] 최종 결함위치탐지 데이터셋 완성](#56-6단계-최종-결함위치탐지-데이터셋-완성)
+# 1. 목차
+* [0. 소개](#0-소개)
+* [1. 목차](#1-목차)
+* [2. 의존 도구](#2-의존-도구)
+* [3. 도구 빌드 과정](#3-도구-빌드-과정)
+  * [3.1 ``MUSICUP`` 빌드](#31-musicup-빌드)
+  * [3.2 ``extractor`` 빌드](#32-extractor-빌드)
+* [4. 실행 파일 개요](#4-실행-파일-개요)
+* [5. configuration 설정 방법](#5-configuration-설정-방법)
+* [6. 결함위치탐지 데이터셋 생성 단계별 실행 방법](#6-결함위치탐지-데이터셋-생성-단계별-실행-방법)
+  * [6.1 [1단계] 변이기반 버그 버전 생성](#61-1단계-변이기반-버그-버전-생성)
+  * [6.2 [2단계] 버그 버전 사용 가능 여부 검증](#62-2단계-버그-버전-사용-가능-여부-검증)
+  * [6.3 [3단계] 결함위치탐지 데이터셋 생성에 필요한 사전 데이터 추출](#63-3단계-결함위치탐지-데이터셋-생성에-필요한-사전-데이터-추출)
+  * [6.4 [4단계] 변이기반 데이터셋 추출](#64-4단계-변이기반-mbfl-mutation-based-데이터셋-추출)
+  * [6.5 [5단계] 스펙트럼기반 데이터셋 추출](#65-5단계-스펙트럼기반-sbfl-spectrum-based-데이터셋-추출)
+  * [6.6 [6단계] 변이기반과 스펙트럼기반 데이터 병합하여 최종 결함위치탐지 데이터셋 완성](#66-6단계-변이기반과-스펙트럼기반-데이터-병합하여-최종-결함위치탐지-데이터셋-완성)
 
 
-# 1. 의존 도구
+# 2. 의존 도구
 * LLVM 13.0.1
   * 버전: 13.0.1 (이 외 버전 사용 불가)
   * 설치 방법 링크: https://apt.llvm.org/
@@ -50,46 +53,47 @@
 * diff (GNU diffutils) 3.6
 * GNU patch 2.7.6
 
-# 2. 도구 빌드 과정
-## 2.1 MUSICUP 빌드
-* ``MUSICUP``은 C/C++ 소스 코드 파일에 대하여 변이를 생성해주는 용도로 사용된다.
+# 3. 도구 빌드 과정
+## 3.1 MUSICUP 빌드
+``MUSICUP``은 C/C++ 소스 코드 파일에 대하여 변이를 생성해주는 용도로 사용된다.
 * 빌드 명령어는 다음과 같다:
   ```
   $ cd ./tools/MUSICUP/
   $ make LLVM_BUILD_PATH=/usr/lib/llvm-13 -j20
   ```
 
-### 2.2 extractor 빌드
+### 3.2 extractor 빌드
 * ``extractor``은 C/C++ 소스 코드에 대하여 라인-함수 매핑 정보를 추출해주는 용도로 사용된다
   ```
   $ cd ./tools/extractor/
   $ make -j20
   ```
 
-# 3. 실행 파일 개요
-결함위치탐지 데이터셋 생성 도구는 총 6개 실행 파일로 나누어 작동한다. 모든 실행 파일은 ``./src/`` 폴더에 있으며 해당 위치에서 실행 할 수 있다.
+# 4. 실행 파일 개요
+결함위치탐지 데이터셋 생성 도구는 총 6개 실행 파일로 나누어 작동한다. 아래 6개의 실행 파일은 [0장](#0-소개)에서 나열한 각 단계에 해당하는 실행 파일이다. (참고 사항) 모든 실행 파일은 ``./src/`` 폴더에 있으며 해당 위치에서 실행 할 수 있다.
 
 * 결함위치탐지 데이터셋 생성을 위한 실행 파일 목록:
-  1. ``collect_buggy_mutants.py``: 서브젝트의 소스 코드의 변이를 심어 변이 버그 버전을 생성한다.
-  2. ``select_usable_versions.py``: 생성된 변이 버그 버전들의 사용 가능한 버전을 추려 검증한다.
-  3. ``prepare_prerequisites.py``: 결함위치탐지 데이터셋 생성에 필요한 사전 데이터들을 추출한다.
-  4. ``extract_mbfl_features.py``: 추출된 사전 데이터로부터 변이기반 데이터셋을 생성한다.
-  5. ``extract_sbfl_features.py``: 추출된 사전 데이터로부터 스펙트럼기반 데이터셋을 생성한다.
-  6. ``reconstructor.py``: 변이기반과 스펙트럼기반 데이터셋을 병합하여 결함위치탐지 데이터셋의 완성본을 생성한다.
+  1. [1단계](#61-1단계-변이기반-버그-버전-생성) ``collect_buggy_mutants.py``: 서브젝트의 소스 코드의 변이를 심어 변이 버그 버전을 생성한다.
+  2. [2단계](#62-2단계-버그-버전-사용-가능-여부-검증) ``select_usable_versions.py``: 생성된 변이 버그 버전들의 사용 가능한 버전을 추려 검증한다.
+  3. [3단계](#63-3단계-결함위치탐지-데이터셋-생성에-필요한-사전-데이터-추출) ``prepare_prerequisites.py``: 결함위치탐지 데이터셋 생성에 필요한 사전 데이터들을 추출한다.
+  4. [4단계](#64-4단계-변이기반-mbfl-mutation-based-데이터셋-추출) ``extract_mbfl_features.py``: 추출된 사전 데이터로부터 변이기반 데이터셋을 생성한다.
+  5. [5단계](#65-5단계-스펙트럼기반-sbfl-spectrum-based-데이터셋-추출) ``extract_sbfl_features.py``: 추출된 사전 데이터로부터 스펙트럼기반 데이터셋을 생성한다.
+  6. [6단계](#66-6단계-변이기반과-스펙트럼기반-데이터-병합하여-최종-결함위치탐지-데이터셋-완성) ``reconstructor.py``: 변이기반과 스펙트럼기반 데이터셋을 병합하여 결함위치탐지 데이터셋의 완성본을 생성한다.
 
 
 * 결함위치탐지 데이터셋 검증과 분석을 위한 실행 파일 목록:
   * ``ranker.py``: 결함위치탐지 데이터셋에 대해 변이기반과 스펙트럼기반 정확도 계산한다.
+    * 해당 실행 파일은 [4단계](#64-4단계-변이기반-mbfl-mutation-based-데이터셋-추출)와 [5단계](#65-5단계-스펙트럼기반-sbfl-spectrum-based-데이터셋-추출)에서 생성된 변이기반과 스펙트럼기반 데이터에 버기 함수 정확도를 계산하여 평가하는데 사용된다.
   * ``analyzer.py``: 버그 버전들에 대해 통계자료(e.g., 테스트 케이스의 개수, 커버리지 정보, 등)를 계산한다.
   * ``validator.py``: 결함위치탐지 데이터셋의 유효함을 검증한다.
   <!-- * ``machine_learning.py``: 최종 결함위치탐지 데이터셋으로 다층 퍼셉트론 (MLP: Multi-Layered Perceptron) 모델 학습과 추론을 수행한다. -->
 
 
-# 4. Configuration 설정 방법
-결함위치탐지 데이터셋 생성 작업을 수행하기 앞서 데이터셋 생성 실험에 대한 configuration을 ``./configs/config.json``과 ``./configs/machines.json`` 파일에, 그리고 대상 서브젝트에 대한 configuration을 ``./subject/<subject-name>/`` 디렉토리에 설정해야 한다. 실험과 서브젝트에 대한 configuration 파일의 설정 방법은 [4.1장](#41-실험-fl-데이터셋-생성에-대한-configuration-설정-방법)과 [4.2장](#42-서브젝트에-대한-configurations-설정-방법-예시-기준-libxml2-서브젝트)에 설명한다.
+# 5. Configuration 설정 방법
+결함위치탐지 데이터셋 생성 작업을 수행하기 앞서 데이터셋 생성 실험에 대한 configuration을 ``./configs/config.json``과 ``./configs/machines.json`` 파일에, 그리고 대상 서브젝트에 대한 configuration을 ``./subject/<subject-name>/`` 디렉토리에 설정해야 한다. 실험과 서브젝트에 대한 configuration 파일의 설정 방법은 [5.1장](#51-실험-fl-데이터셋-생성에-대한-configuration-설정-방법)과 [5.2장](#52-서브젝트에-대한-configurations-설정-방법-예시-기준-libxml2-서브젝트)에 설명한다.
 
-## 4.1 실험 (FL 데이터셋 생성)에 대한 configuration 설정 방법
-### 4.1.2 ``./configs/config.json`` 파일 설정
+## 5.1 실험 (FL 데이터셋 생성)에 대한 configuration 설정 방법
+### 5.1.2 ``./configs/config.json`` 파일 설정
 ``./configs/config.json`` 파일은 실험에 대한 configuration 정보를 설정하는 파일이며 다음과 같은 형식으로 설정한다.
 ```
 {
@@ -107,20 +111,20 @@
 }
 ```
 
-### 4.1.3 ``./configs/config.json``의 설정 값 (변수) 설명
-  * ``use_distributed_machines``: 분산 시스템 활용이 가능할 시 ``true``, 그렇지 않을 시 ``false``로 설정한다. 해당 변수를 ``true``로 설정하게 되면 ``./configs/machines.json`` 파일에 분산 시스템 정보를 입력해야 한다. 이에 대한 자세한 설명은 [4.1.4](#414-configsmachinesjson-파일-설정)장에서 볼 수 있다.
+### 5.1.3 ``./configs/config.json``의 설정 값 (변수) 설명
+  * ``use_distributed_machines``: 분산 시스템 활용이 가능할 시 ``true``, 그렇지 않을 시 ``false``로 설정한다. 해당 변수를 ``true``로 설정하게 되면 ``./configs/machines.json`` 파일에 분산 시스템 정보를 입력해야 한다. 이에 대한 자세한 설명은 [5.1.4](#514-configsmachinesjson-파일-설정)장에서 볼 수 있다.
   * ``single_machine``: 현재 사용중인 서버의 정보를 설정한다.
     * ``name``: 서버의 이름 혹은 ip 주소.
     * ``core``: 현재 사용중인 서버의 core 개수.
     * ``homedirectory``: 현재 사용중인 서버의 홈 디렉토리.
-  * ``number_of_versions_to_check_for_usability``: 1단계에서 생성된 버그 버전들 중 사용 가능성에 대한 검증을 수행할 버그 버전에 개수. 해당 변수는 결함위치탐지 데이터셋 생성의 2단계에서 사용되며 자세한 내용은 [5.2장](#52-2단계-버그-버전-사용-가능-여부-검증)에서 설명한다.
-  * ``max_mutants``: 변이기반 데이터셋 생성 시 각 라인별 생성할 변이의 최대 개수. 해당 변수는 결함위치탐지 데이터셋 생성의 4단계에서 사용되며 자세한 내용은 [5.4장](#54-4단계-변이기반-mbfl-mutation-based-데이터셋-추출)에서 설명한다.
-  * ``number_of_lines_to_mutation_test``: 변이기반 데이터셋 생성 시 변이 테스트를 수행할 코드 라인의 최대 개수. 해당 변수는 결함위치탐지 데이터셋 생성의 4단계에서 사용되며 자세한 내용은 [5.4장](#54-4단계-변이기반-mbfl-mutation-based-데이터셋-추출)에서 설명한다.
+  * ``number_of_versions_to_check_for_usability``: 1단계에서 생성된 버그 버전들 중 사용 가능성에 대한 검증을 수행할 버그 버전에 개수. 해당 변수는 결함위치탐지 데이터셋 생성의 2단계에서 사용되며 자세한 내용은 [6.2장](#62-2단계-버그-버전-사용-가능-여부-검증)에서 설명한다.
+  * ``max_mutants``: 변이기반 데이터셋 생성 시 각 라인별 생성할 변이의 최대 개수. 해당 변수는 결함위치탐지 데이터셋 생성의 4단계에서 사용되며 자세한 내용은 [6.4장](#64-4단계-변이기반-mbfl-mutation-based-데이터셋-추출)에서 설명한다.
+  * ``number_of_lines_to_mutation_test``: 변이기반 데이터셋 생성 시 변이 테스트를 수행할 코드 라인의 최대 개수. 해당 변수는 결함위치탐지 데이터셋 생성의 4단계에서 사용되며 자세한 내용은 [6.4장](#64-4단계-변이기반-mbfl-mutation-based-데이터셋-추출)에서 설명한다.
   * ``abs_path_to_gcovr_executable``: ``gcovr`` 실행 파일의 절대 주소. 이는 서브젝트의 커버리지 정보를 추출할 때 사용된다.
   * ``gcovr_version``: ``gcovr``의 버전.
 
 
-### 4.1.4 ``./configs/machines.json`` 파일 설정
+### 5.1.4 ``./configs/machines.json`` 파일 설정
 ``./configs/machines.json``파일은 분산 시스템 사용이 가능할 시 (``use_distrbuted_machines = true``), 각 분산 시스템 (서버)의 정보를 설정하는 파일이며 다음과 같은 형식으로 설정한다:
 ```
 {
@@ -136,7 +140,7 @@
 }
 ```
 
-### 4.1.5 ``./configs/machines.json``의 설정 값 (변수) 설명
+### 5.1.5 ``./configs/machines.json``의 설정 값 (변수) 설명
 각 분산 시스템 (서버)의 정보를 위와 같은 형식으로 설정한다. (1)서버 접속에 사용할 명칭 혹은 ip 주소와 (2)서버의 core 개수와 (3)홈디렉토리로 3가지 정보로 구성된다. 각 서버 별 아래의 정보를 입력해준다:
   * ``cores``: 서버의 core 개수.
   * ``homedirectory``: 서버의 홈디렉토리.
@@ -144,10 +148,10 @@
 (참고 사항) 추가적으로 현재 사용중인 서버(main server)로부터 각 분산 시스템 (서버)에 자동 접속을 위해 공개키 (public key) 공유가 되어있어야 한다.
 
 
-## 4.2 서브젝트에 대한 configurations 설정 방법 (예시 기준: libxml2 서브젝트)
-서브젝트에 해당되는 모든 정보 (서브젝트 리포지토리, 서브젝트 configurations, etc.)는 ``./subjects/`` 디렉토리에 위치 시킨다. 그러므로 사용자는 가장 먼저 ``./subjects/`` 디렉토리를 생성해야 한다. 서브젝트데 대한 configuration 설정하는 방법은 [4.2.1장](#421-서브젝트의-main-디렉토리-설정) 부터 자세하게 설명한다 (설명은 ``libxml2`` 서브젝트 기준으로 예를 보인다).
+## 5.2 서브젝트에 대한 configurations 설정 방법 (예시 기준: libxml2 서브젝트)
+서브젝트에 해당되는 모든 정보 (서브젝트 리포지토리, 서브젝트 configurations, etc.)는 ``./subjects/`` 디렉토리에 위치 시킨다. 그러므로 사용자는 가장 먼저 ``./subjects/`` 디렉토리를 생성해야 한다. 서브젝트데 대한 configuration 설정하는 방법은 [5.2.1장](#521-서브젝트의-가장-상위-디렉토리-설정) 부터 자세하게 설명한다 (설명은 ``libxml2`` 서브젝트 기준으로 예를 보인다).
 
-### 4.2.1 서브젝트의 가장 상위 디렉토리 설정
+### 5.2.1 서브젝트의 가장 상위 디렉토리 설정
   1. ``./subject/`` 디렉토리와 서브젝트 디렉토리 생성
       ```
       $ mkdir -p ./subjects/libxml2/
@@ -159,7 +163,7 @@
       $ git clone <libxml2-link> libxml2
       ```
 
-#### 4.2.2 서브젝트의 실제 버그 (real-world bug) 버전 설정 방법
+#### 5.2.2 서브젝트의 실제 버그 (real-world bug) 버전 설정 방법
   3. ``./subjects/libxml2/`` 위치에 ``real_world_buggy_versions`` 이름의 디렉토리를 생성한다. 이 디렉토리는 실제 버그 버전들에 디렉토리로 구성되며 각 버전의 디렉토리가 해당 되는 버전에대한 정보를 담는다.
       ```
       $ cd ./subjects/libxml2
@@ -188,7 +192,7 @@
           * ``buggy_code_file``: ``./real_world_buggy_versions/buggy_code_file/``에 저장한 ``<source-file>``의 이름.
           * ``buggy_lineno``: ``<source-file>``에 버기 라인이 위차하고 있는 라인 번호.
 
-#### 4.2.3 서브젝트의 configurations 설정
+#### 5.2.3 서브젝트의 configurations 설정
   4. ``./configs/libxml2/configurations.json`` 파일은 서브젝트에 대한 configuration을 설정하는 파일이며 다음과 같은 형식으로 설정.
       ```
       {
@@ -250,7 +254,7 @@
         * ``init_cmd``: *초기화 코드 라인*을 추출하기 위해 1개의 테스트 케이스 실행 스크립트의 상대 경로로 설정한다(서브젝트의 리포지토리 경로부터에서의 상대 경로).
         * ``execution_path``: ``init_cmd``변수의 테스트 케이스 실행 스크립트의 실행 위치를 서브젝트 리포지토리로부터의 상대 경로로 설정한다.
 
-### 4.2.4 서브젝트의 빌드(build), 정리(clean), configure 명령어 실행 스크립트 파일
+### 5.2.4 서브젝트의 빌드(build), 정리(clean), configure 명령어 실행 스크립트 파일
   5. ``./configs/libxml2/build_script.sh`` 이름으로 서브젝트 빌드 명령어를 실행 스크립트 파일로 생성한다.
       ```
       # build_script.sh 예)
@@ -288,9 +292,9 @@
       ```
 
 
-# 5. 결함위치탐지 데이터셋 생성 단계별 실행 방법
-## 5.1 [1단계] 변이기반 버그 버전 생성
-### 5.1.1 [1단계]에서 수행되는 작업
+# 6. 결함위치탐지 데이터셋 생성 단계별 실행 방법
+## 6.1 [1단계] 변이기반 버그 버전 생성
+### 6.1.1 [1단계]에서 수행되는 작업
   1. **변이 생성**:
       * ``./subjects/libxml2/configuration.json`` 설정 파일의 ``target_files`` 변수에 설정된 타깃 파일들의 대해 변이들을 **생성** 한다. 생성된 변이 파일들은 ``./out/<subject-name>/generated_mutants/`` 디렉토리에 저장한다.
   2. **변이 버전 테스트**:
@@ -298,7 +302,7 @@
   3. **변이 버그 버전 저장**:
       * 각 변이 버전에 테스트 케이스들을 실행하여 1개 이상의 실패하는 테스트 케이스와 1개 이상의 패싱하는 테스트 케이스가 발생하는 버전은 ``./out/<subject-names>/buggy_mutants/`` 디렉토리에 저장한다.
 
-### 5.1.2 [1단계] 실행 방법
+### 6.1.2 [1단계] 실행 방법
 * 실행 명령어:
   ```
   $ time python3 collect_buggy_mutants.py --subject <subject-name> [--verbose]
@@ -308,8 +312,8 @@
 
 
 
-## 5.2 [2단계] 버그 버전 사용 가능 여부 검증
-### 5.2.1 [2단계]에서 수행되는 작업
+## 6.2 [2단계] 버그 버전 사용 가능 여부 검증
+### 6.2.1 [2단계]에서 수행되는 작업
   1. **변이 버그 버전 선택**:
       * ``./configs/config.json`` 설정 파일의 ``number_of_versions_to_check_for_usability`` 변수에 설정된 값 만큼의 변이 버그 버전을 ``./out/<subject-name>/buggy_mutants/`` 디렉토리에서 선택한다.
         * (참고 사항) 제한된 시간 조건으로 인해 사용자가 설정한 개수 만큼만 검증하여 데이터 추출에 사용되는 것이다.
@@ -321,7 +325,7 @@
         * 모든 실패하는 테스트 케이스는 버기 라인을 실행한다.
         * 변이 버그 버전은 1개 이상의 실패하는 테스트 케이스와 1개 이상의 패싱하는 테스트 케이스를 보유한다.
 
-### 5.2.2 [2단계] 실행 방법
+### 6.2.2 [2단계] 실행 방법
 * 실행 명령어:
   ```
   $ time python3 select_usable_versions.py --subject <subject-name>
@@ -329,7 +333,7 @@
 * 옵션 설명:
   * ``--subject <subject-name>``: 실험 대상 서브젝트의 이름.
 
-### 5.2.3 [2단계] 정상 작동 검증 방법
+### 6.2.3 [2단계] 정상 작동 검증 방법
 * 실행 명령어:
   ```
   $ python3 validator.py --subject <subject-name> --set-name <usable_buggy_versions-directory> --validate-usable-buggy-versions
@@ -341,8 +345,8 @@
   * 버기 라인을 포함한 소스 코드 파일을 포함한 디렉토리(``buggy_code_file/``)의 생성 여부 검증.
 
 
-## 5.3 [3단계] 결함위치탐지 데이터셋 생성에 필요한 사전 데이터 추출
-### 5.3.1 [3단계]에서 수행되는 작업
+## 6.3 [3단계] 결함위치탐지 데이터셋 생성에 필요한 사전 데이터 추출
+### 6.3.1 [3단계]에서 수행되는 작업
   1. **사전 데이터 추출**:
       * ``./out/<subject-name>/usable_buggy_mutants/`` 디렉토리에 저장된 각 버그 버전에 대해 사전 데이터를 추출하여 ``./out/<subject-name>/prerequisite_data/`` 디렉토리에 저장한다. 
       * 또한, ``/subjects/libxml2/configuration.json``의 ``real_world_buggy_versions`` 변수에 설정 된 값에 따라, ``true`` 값으로 설정 되어있을 시 ``./subjects/libxml2/real_world_buggy_versions/`` 디렉토리에 저장된 실제 버그 버전도 포함하여 사전 데이터를 추출하여 저장한다.
@@ -354,7 +358,7 @@
         * 우연히 통과한 테스트 케이스들이 실행한 라인 정보 (Json format)
         * 우연히 실행 테스트 케이스들의 목록 (TXT format)
 
-### 5.3.2 [3단계] 실행 방법
+### 6.3.2 [3단계] 실행 방법
 * 실행 명령어:
   ```
   $ time python3 prepare_prerequisites.py --subject <subject-name> --target-set-name <usable_buggy_versions-directory>
@@ -363,7 +367,7 @@
   * ``--subject <subject-name>``: 실험 대상 서브젝트의 이름.
   * ``--target-set-name <usable_buggy_versions-directory>``: 사전 데이터를 추출하고자 하는 버그 버전들이 저장된 디렉토리 이름. (입력: ``usable_buggy_versions``)
 
-### 5.3.3 [3단계] 정상 작동 검증 방법
+### 6.3.3 [3단계] 정상 작동 검증 방법
 * 실행 명령어:
   ```
   $ python3 validator.py --subject <subject-name> --set-name <prerequisite_data-directory> --validate-prerequisite-data
@@ -376,7 +380,7 @@
   * 실패 테스트 케이스들의 라인 커버리지 정보가 담긴 json 파일(``lines_executed_by_failing_tc.json``)의 생성 여부 검증.
   * 각 라인 별 함수 매핑 정보가 담긴 파일(``line2function.json``)의 생성 여부 검증.
 
-### 5.3.4 [3단계] 사전 데이터의 통계 자료 계산
+### 6.3.4 [3단계] 사전 데이터의 통계 자료 계산
 * 실행 명령어:
   ```
   $ python3 analyzer.py --subject <subject-name> --set-name <prerequisite_data-directory> --output-csv <prerequisite_data-directory>-tc-stats --prerequisite-data --removed-initialization-coverage
@@ -386,8 +390,8 @@
   * 테스트 케이스들의 개수 (i.e., 실패, 패싱, 우연히 패싱하는 테스트 케이스) 정보
   * 실패하는 테스트 케이스들이 실행하는 함수와 라인 개수 정보
 
-## 5.4 [4단계] 변이기반 (MBFL: Mutation-Based) 데이터셋 추출
-### 5.4.1 [4단계]단계에서 수행되는 작업
+## 6.4 [4단계] 변이기반 (MBFL: Mutation-Based) 데이터셋 추출
+### 6.4.1 [4단계]단계에서 수행되는 작업
   1. **변이 생성**:
       * 각 버그 버전 별로 ``./configs/config.json`` 설정 파일의 ``number_of_lines_to_mutation_test`` 변수에 설정된 값 만큼의 라인을 선택하여, 각 라인별 ``max_mutants`` 변수에 설정된 값 만큼의 변이를 생성한다.
   2. **변이기반 테스팅**:
@@ -396,7 +400,7 @@
       * 변이기반 테스팅을 끝난 후 변이기반 데이터셋 결과를 ``./out/<subject-name>/mbfl_features/`` 디렉토리에 저장한다.
 
 
-### 5.4.2 [4단계] 실행 방법
+### 6.4.2 [4단계] 실행 방법
 * 실행 명령어:
   ```
   $ time python3 extract_mbfl_features.py --subject <subject-name> --target-set-name <prerequisite_data-directory> --trial <trial-name> [--exclude-init-lines] [--parallel-cnt <int>] [--dont-terminate-leftovers]
@@ -410,7 +414,7 @@
   * ``--dont-terminate-leftovers``: 해당 옵션을 키게 되면, 모든 버그버전의 변이기반 데이터셋 추출 작업이 끝날 때 까지 기다린다.
 
 
-### 5.4.3 [4단계] 정상 작동 검증 방법
+### 6.4.3 [4단계] 정상 작동 검증 방법
 * 실행 명령어:
   ```
   $ python3 validator.py --subject <subject-name> --set-name <mbfl_features-directory> --validate-mbfl-features --trial <trial-name>
@@ -421,7 +425,7 @@
   * 변이기반 테스팅 수행에 활용된 변이 정보 csv 파일(``selected_mutants.csv``)의 생성 여부 검증.
   * 변이기반 테스팅 결과 csv 파일(``mutation_testing_results.csv``)의 생성 여부 검증.
 
-### 5.4.4 [4단계] 변이기반 데이터셋의 정확도 계산 결과 추출 방법
+### 6.4.4 [4단계] 변이기반 데이터셋의 정확도 계산 결과 추출 방법
 * 실행 명령어:
   ```
   $ python3 ranker.py --subject <subject-name> --set-name <mbfl_features-directory> --output-csv <mbfl_features-directory>-rank-stats --mbfl-features --trial <trial-name> [--no-ccts]
@@ -432,12 +436,12 @@
 
 
 
-## 5.5 [5단계] 스펙트럼기반 (SBFL: Spectrum-Based) 데이터셋 추출
-### 5.5.1 [5단계]에서 수행되는 작업
+## 6.5 [5단계] 스펙트럼기반 (SBFL: Spectrum-Based) 데이터셋 추출
+### 6.5.1 [5단계]에서 수행되는 작업
   1. **스펙트럼기반 데이터 생성 및 정리**:
       * 각 버그 버전 별 ``postprocess_coverage.csv``의 커버리지 정보를 활용하여 스펙트럼기반 데이터 생성하고 ``./out/<subject-name>/sbfl_features/`` 디렉토리에 저장한다.
 
-### 5.5.2 [5단계] 실행 방법
+### 6.5.2 [5단계] 실행 방법
 * 실행 명령어:
   ```
   $ time python3 extract_sbfl_features.py --subject <subject-name> --target-set-name <mbfl_features-directory>
@@ -446,7 +450,7 @@
   * ``--subject <subject-name>``: 실험 대상 서브젝트의 이름.
   * ``--target-set-name <mbfl_features-directory>``: 스펙트럼기반 데이터셋 추출하고자 하는 버그 버전들이 저장된 디렉토리 이름. (입력: ``mbfl_features``)
 
-### 5.5.3 [5단계] 정상 작동 검증 방법
+### 6.5.3 [5단계] 정상 작동 검증 방법
 * 실행 명령어:
   ```
   $ python3 validator.py --subject <subject-name> --set-name <sbfl_features-directory> --validate-sbfl-features
@@ -454,7 +458,7 @@
 * ``<sbfl_features-directory>`` (입력: ``sbfl_features``) 디렉토리의 각 버그 버전의 결과물에 대해 다음 조건들의 만족 여부를 검증한다:
   * 스펙트럼기반 데이터셋 csv 파일(``sbfl_features.csv``)의 생성 여부 검증.
 
-### 5.5.4 [5단계] 스펙트럼기반 데이터셋의 정확도 계산 결과 추출 방법
+### 6.5.4 [5단계] 스펙트럼기반 데이터셋의 정확도 계산 결과 추출 방법
 * 실행 명령어:
   ```
   $ python3 ranker.py --subject <subject-name> --set-name <sbfl_features-directory> --output-csv <sbfl_features-directory>-rank-stats --sbfl-features [--no-ccts]
@@ -465,12 +469,12 @@
 
 
 
-## 5.6 [6단계] 최종 결함위치탐지 데이터셋 완성
-### 5.6.1 [6단계]에서 수행되는 작업
+## 6.6 [6단계] 변이기반과 스펙트럼기반 데이터 병합하여 최종 결함위치탐지 데이터셋 완성
+### 6.6.1 [6단계]에서 수행되는 작업
   1. **최종 결함위치탐지 데이터셋 완성**:
       * 변이기반과 스펙트럼기반 데이터셋을 병합하여 최종 결함위치탐지 데이터셋을 생성하고 ``./out/<subject-name>/FL-dataset-<subject-name/`` 디렉토리에 저장한다.
 
-### 5.6.2 [6단계] 실행 방법
+### 6.6.2 [6단계] 실행 방법
 * 실행 명령어:
   ```
   $ python3 reconstructor.py --subject <subject-name> --set-name <sbfl_features-directory> --combine-mbfl-sbfl --combining-trials <trial-name> [--no-ccts] [--done-remotely]
@@ -483,7 +487,7 @@
   * ``--no-ccts``: 해당 옵션을 키게 되면, 우연히 통과한 테스트 케이스들을 제외한 변이기반과 스펙트럼기반 데이터셋을 병합한다.
   * ``--done-remotely``: 해당 옵션을 키게 되면, 변이기반 데이터셋 추출에 활용된 변이들을 분산 시스템으로부터 내려받는다.
 
-### 5.6.3 [6단계] 정상 작동 검증 방법
+### 6.6.3 [6단계] 정상 작동 검증 방법
 * 실행 명령어:
   ```
   $ python3 validator.py --subject <subject-name> --set-name FL-dataset-<subject-name> --validate-fl-features
