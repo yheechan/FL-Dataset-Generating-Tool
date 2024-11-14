@@ -41,11 +41,17 @@
     opencv_calib3d | 211개
     opencv_features2d | 296개
 
-* MBFL 기반 변이 소스 코드 파일 데이터: 총 1,003,614개
+* MBFL 기반 변이 소스 코드 파일 데이터: 총 85,897개
     프로젝트|파일 개수|
     --|--|
-    NSFW_c | 424,407개
-    NSFW_cpp | 579,207개
+    [jsoncpp](https://drive.google.com/file/d/1h9-tREd5DxgTUI_l5EvUCjqkTAtdV94a/view?usp=sharing) | 2,190개
+    [libxml2](https://drive.google.com/file/d/1aCg8yPBIhACDQSuYf_st5n7hQNxBCGuz/view?usp=sharing) | 27,769개
+    [opencv_dnn](https://drive.google.com/file/d/1hELKmZccOMtPQ2DA_ncfElEqSin2Zn8J/view?usp=sharing) | 12,123개
+    [opencv_core](https://drive.google.com/file/d/1UmNNy_whRprx78OPU3dclQGT_wzRjSTr/view?usp=sharing) | 7,839개
+    [opencv_imgproc](https://drive.google.com/file/d/1KnAgqLUanQsel1uJknUjbdyE9TfnloJk/view?usp=sharing) | 13,612개
+    [opencv_calib3d](https://drive.google.com/file/d/1SQNvUzLQB3ZgYjTqdCyzJsNsqFtpTZ1_/view?usp=sharing) | 12,451개
+    [opencv_features2d](https://drive.google.com/file/d/150cY2b0_0XZsS0iBfy816it2lw91SUum/view?usp=sharing) | 9,913개
+
 
 
 ## SBFL/MBFL 기반 데이터 생성 도구 설명
@@ -65,4 +71,4 @@
     * features2d: [features2d-평가결과](/documents/dataset_description/opencv/document-opencv_features2d.md#9-데이터셋의-결함-위치-탐지-정확도-평가-총-296개-버그-버전)
 
 ---
-마지막 업데이트 2024년 11월 07일
+마지막 업데이트 2024년 11월 14일
