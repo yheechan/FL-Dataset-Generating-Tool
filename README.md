@@ -28,13 +28,13 @@
 
 
 ## 결함위치탐지 학습 데이터셋 파일 개수
-* SBFL 기반 feature csv 파일 데이터: 총 2,558개
+* SBFL 기반 feature csv 파일 데이터: 총 1,471개
     프로젝트 | 파일 개수 |
     --|--|
     jsoncpp | 165개
     libxml2 | 152개
-    NSFW_c | 709개
-    NSFW_cpp | 378개
+    NSFW_cpp | 8월에 LIGNex1에 기전달
+    NSFW_c | 8월에 LIGNex1에 기전달
     opencv_dnn | 182개
     opencv_core | 258개
     opencv_imgproc | 207개
@@ -46,6 +46,8 @@
     --|--|
     [jsoncpp](https://drive.google.com/file/d/1h9-tREd5DxgTUI_l5EvUCjqkTAtdV94a/view?usp=sharing) | 2,190개
     [libxml2](https://drive.google.com/file/d/1aCg8yPBIhACDQSuYf_st5n7hQNxBCGuz/view?usp=sharing) | 27,769개
+    NSFW_cpp | 8월에 LIGNex1에 기전달
+    NSFW_c | 8월에 LIGNex1에 기전달
     [opencv_dnn](https://drive.google.com/file/d/1hELKmZccOMtPQ2DA_ncfElEqSin2Zn8J/view?usp=sharing) | 12,123개
     [opencv_core](https://drive.google.com/file/d/1UmNNy_whRprx78OPU3dclQGT_wzRjSTr/view?usp=sharing) | 7,839개
     [opencv_imgproc](https://drive.google.com/file/d/1KnAgqLUanQsel1uJknUjbdyE9TfnloJk/view?usp=sharing) | 13,612개
