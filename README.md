@@ -2,16 +2,16 @@
 
 
 ## 프로젝트 데이터셋의 문서 링크
-1. jsoncpp: [jsoncpp-문서](/documents/dataset_description/document-jsoncpp.md)
-2. libxml2: [libxml2-문서](/documents/dataset_description/document-libxml2.md)
-3. NSFW_cpp: [NSFW_cpp-문서](/documents/dataset_description/document-NSFW_cpp.md)
-4. NSFW_c: [NSFW_c-문서](/documents/dataset_description/document-NSFW_c.md)
+1. jsoncpp: [jsoncpp-문서](./documents/dataset_description/document-jsoncpp.md)
+2. libxml2: [libxml2-문서](./documents/dataset_description/document-libxml2.md)
+3. NSFW_cpp: [NSFW_cpp-문서](./documents/dataset_description/document-NSFW_cpp.md)
+4. NSFW_c: [NSFW_c-문서](./documents/dataset_description/document-NSFW_c.md)
 5. opencv
-    * dnn: [dnn-문서](/documents/dataset_description/opencv/document-opencv_dnn.md)
-    * core: [core-문서](/documents/dataset_description/opencv/document-opencv_core.md)
-    * imgproc: [imgproc-문서](/documents/dataset_description/opencv/document-opencv_imgproc.md)
-    * calib3d: [calib3d-문서](/documents/dataset_description/opencv/document-opencv_calib3d.md)
-    * features2d: [features2d-문서](/documents/dataset_description/opencv/document-opencv_features2d.md)
+    * dnn: [dnn-문서](./documents/dataset_description/opencv/document-opencv_dnn.md)
+    * core: [core-문서](./documents/dataset_description/opencv/document-opencv_core.md)
+    * imgproc: [imgproc-문서](./documents/dataset_description/opencv/document-opencv_imgproc.md)
+    * calib3d: [calib3d-문서](./documents/dataset_description/opencv/document-opencv_calib3d.md)
+    * features2d: [features2d-문서](./documents/dataset_description/opencv/document-opencv_features2d.md)
 
 
 ## 프로젝트의 데이터셋 파일 링크
@@ -57,20 +57,20 @@
 
 
 ## SBFL/MBFL 기반 데이터 생성 도구 설명
-* [FL-Dataset-Generating-Tool](/documents/README-kor.md)
+* [FL-Dataset-Generating-Tool](./documents/README-kor.md)
 
 
 ## 결함위치탐지 데이터셋에 대한 평가 결과
-1. jsoncpp: [jsoncpp-평가결과](/documents/dataset_description/document-jsoncpp.md#9-데이터셋의-오류-탐지-정확도-평가-총-165개-버그-버전-총-363개-함수)
-2. libxml2: [libxml2-평가결과](/documents/dataset_description/document-libxml2.md#9-데이터셋의-결함-위치-탐지-정확도-평가-총-152개-버그-버전-총-918개-함수)
-3. NSFW_cpp: [NSFW_cpp-평가결과](/documents/dataset_description/document-NSFW_cpp.md#9-데이터셋의-결함-위치-탐지-정확도-평가-총-378개-버그-버전)
-4. NSFW_c: [NSFW_c-평가결과](/documents/dataset_description/document-NSFW_c.md#9-데이터셋의-결함-위치-탐지-정확도-평가-총-709개-버그-버전)
+1. jsoncpp: [jsoncpp-평가결과](./documents/dataset_description/document-jsoncpp.md#9-데이터셋의-오류-탐지-정확도-평가-총-165개-버그-버전-총-363개-함수)
+2. libxml2: [libxml2-평가결과](./documents/dataset_description/document-libxml2.md#9-데이터셋의-결함-위치-탐지-정확도-평가-총-152개-버그-버전-총-918개-함수)
+3. NSFW_cpp: [NSFW_cpp-평가결과](./documents/dataset_description/document-NSFW_cpp.md#9-데이터셋의-결함-위치-탐지-정확도-평가-총-378개-버그-버전)
+4. NSFW_c: [NSFW_c-평가결과](./documents/dataset_description/document-NSFW_c.md#9-데이터셋의-결함-위치-탐지-정확도-평가-총-709개-버그-버전)
 5. opencv
-    * dnn: [dnn-평가결과](/documents/dataset_description/opencv/document-opencv_dnn.md#9-데이터셋의-결함-위치-탐지-정확도-평가-총-182개-버그-버전)
-    * core: [core-평가결과](/documents/dataset_description/opencv/document-opencv_core.md#9-데이터셋의-결함-위치-탐지-정확도-평가-총-258개-버그-버전)
-    * imgproc: [imgproc-평가결과](/documents/dataset_description/opencv/document-opencv_imgproc.md#9-데이터셋의-결함-위치-탐지-정확도-평가-총-207개-버그-버전)
-    * calib3d: [calib3d-평가결과](/documents/dataset_description/opencv/document-opencv_calib3d.md#9-데이터셋의-결함-위치-탐지-정확도-평가-총-211개-버그-버전)
-    * features2d: [features2d-평가결과](/documents/dataset_description/opencv/document-opencv_features2d.md#9-데이터셋의-결함-위치-탐지-정확도-평가-총-296개-버그-버전)
+    * dnn: [dnn-평가결과](./documents/dataset_description/opencv/document-opencv_dnn.md#9-데이터셋의-결함-위치-탐지-정확도-평가-총-182개-버그-버전)
+    * core: [core-평가결과](./documents/dataset_description/opencv/document-opencv_core.md#9-데이터셋의-결함-위치-탐지-정확도-평가-총-258개-버그-버전)
+    * imgproc: [imgproc-평가결과](./documents/dataset_description/opencv/document-opencv_imgproc.md#9-데이터셋의-결함-위치-탐지-정확도-평가-총-207개-버그-버전)
+    * calib3d: [calib3d-평가결과](./documents/dataset_description/opencv/document-opencv_calib3d.md#9-데이터셋의-결함-위치-탐지-정확도-평가-총-211개-버그-버전)
+    * features2d: [features2d-평가결과](./documents/dataset_description/opencv/document-opencv_features2d.md#9-데이터셋의-결함-위치-탐지-정확도-평가-총-296개-버그-버전)
 
 ---
-마지막 업데이트 2024년 11월 14일
+마지막 업데이트 2024년 11월 20일
