@@ -52,7 +52,7 @@
     [opencv_core](https://drive.google.com/file/d/1UmNNy_whRprx78OPU3dclQGT_wzRjSTr/view?usp=sharing) | 7,839개
     [opencv_imgproc](https://drive.google.com/file/d/1KnAgqLUanQsel1uJknUjbdyE9TfnloJk/view?usp=sharing) | 13,612개
     [opencv_calib3d](https://drive.google.com/file/d/1SQNvUzLQB3ZgYjTqdCyzJsNsqFtpTZ1_/view?usp=sharing) | 12,451개
-    [opencv_features2d](https://drive.google.com/file/d/150cY2b0_0XZsS0iBfy816it2lw91SUum/view?usp=sharing) | 9,913개
+    [opencv_features2d](https://drive.google.com/file/d/150cY2b0_0XZsS0iBfy816it2lw91SUum/view?usp=sharing) | 8,913개
 
 
 
@@ -73,4 +73,4 @@
     * features2d: [features2d-평가결과](./documents/dataset_description/opencv/document-opencv_features2d.md#9-데이터셋의-결함-위치-탐지-정확도-평가-총-296개-버그-버전)
 
 ---
-마지막 업데이트 2024년 11월 20일
+마지막 업데이트 2024년 11월 22일
