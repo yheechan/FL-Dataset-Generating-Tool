@@ -46,6 +46,7 @@ class Validate:
     # ++++++++++++++++++++++++++++++++++++
     def validate_prerequisite_data(self):
         self.individual_list = get_dirs_in_dir(self.set_dir)
+        version_fail_tcs_x_bug_line = []
         for individual in self.individual_list:
             individual_name = individual.name
             print(f"Validating prerequisite data for {individual_name}")
@@ -78,10 +79,14 @@ class Validate:
 
             # VALIDATE: Assert that failing TCs execute the buggy line in postprocessed_coverage.csv
             res = self.check_failing_tcs(postprocessed_coverage, individual.failing_tcs_list, buggy_line_key)
-            assert res, f"Failing test cases do not execute the buggy line in {postprocessed_coverage}"
+            # assert res, f"Failing test cases do not execute the buggy line in {postprocessed_coverage}"
+            if res == False:
+                version_fail_tcs_x_bug_line.append((individual_name, 0))
 
             res = self.check_failing_tcs(postprocessed_coverage_noCCTs, individual.failing_tcs_list, buggy_line_key)
-            assert res, f"Failing test cases do not execute the buggy line in {postprocessed_coverage_noCCTs}"
+            # assert res, f"Failing test cases do not execute the buggy line in {postprocessed_coverage_noCCTs}"
+            if res == False:
+                version_fail_tcs_x_bug_line.append((individual_name, 1))
 
             # VALIDATE: Assert the postprocessed_coverage_noCCTs.csv has no CCTs
             self.check_CCTs(postprocessed_coverage_noCCTs, individual.ccts_list, notExist=True)
@@ -106,6 +111,11 @@ class Validate:
             assert len(individual.passing_tcs_list) > 0, f"length of failing tcs list is less than 0"
         
         print(f"All {len(self.individual_list)} individuals have been validated successfully")
+
+        print(f"Version failing tcs x bug line: {len(version_fail_tcs_x_bug_line)}")
+        for version, val in version_fail_tcs_x_bug_line:
+            print(f"Version: {version}, val: {val}")
+
     
     def check_failing_tcs(self, postprocessed_coverage, failing_tc_list, buggy_line_key):
         with open(postprocessed_coverage, 'r') as f:

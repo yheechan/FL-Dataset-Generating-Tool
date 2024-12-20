@@ -204,8 +204,30 @@ class Worker:
         self.line2function_dict = line2function_dict
     
     def make_key(self, target_code_file, buggy_lineno):
-        # filename = target_code_file_path.split('/')[-1]
-        filename = target_code_file
+        # This was include because in case of libxml2
+        # gcovr makes target files as <target-file>.c
+        # instead of libxml2/<target-file>.c 2024-12-18
+        '''
+        model_file = ""
+        for key, value in self.line2function_dict.items():
+            tmp_filename = target_code_file.split("/")[-1]
+            if key.endswith(tmp_filename):
+                model_file = key
+                break
+        if model_file == "":
+            model_file = target_code_file
+        '''
+
+        if "libxml2" in self.name:
+            model_file = target_code_file.split("/")[-1]
+        else:
+            model_file = target_code_file
+
+        if len(model_file.split("/")) == 1:
+            filename = target_code_file.split("/")[-1]
+        else:
+            filename = target_code_file
+
         function = None
         for key, value in self.line2function_dict.items():
             if key.endswith(filename):
@@ -222,18 +244,33 @@ class Worker:
 
         lines_executed_by_failing_tc_json = json.loads(lines_executed_by_failing_tc_file.read_text())
 
+        # This was include because in case of libxml2
+        # gcovr makes target files as <target-file>.c
+        # instead of libxml2/<target-file>.c 2024-12-18
+        model_key =  list(lines_executed_by_failing_tc_json.keys())[0].split("#")[0]
+        if len(model_key.split("/")) == 1:
+            key_type = 0 # 0 for single filename
+        else:
+            key_type = 1 # 1 for filename with path
+
         executed_lines = {}
         for target_file in self.config["target_files"]:
-            # filename = target_file.split("/")[-1]
-            filename = target_file # FILENAME STRUCTURE! 20240925
+            if key_type == 0:
+                filename = target_file.split("/")[-1]
+            else:
+                filename = target_file
+            filename = target_file
             executed_lines[filename] = {}
         
-        buggy_filename = target_code_file # FILENAME STRUCTURE! 20240925
+        if key_type == 0:
+            buggy_filename = target_code_file.split("/")[-1]
+        else:
+            buggy_filename = target_code_file
+        
         executed_buggy_line = False
         for key, tcs_list in lines_executed_by_failing_tc_json.items():
             info = key.split("#")
-            # filename = info[0].split("/")[-1]
-            filename = info[0] # FILENAME STRUCTURE! 20240925
+            filename = info[0]
             function_name = info[1]
             lineno = info[2]
 
@@ -337,12 +374,12 @@ class Worker:
         with raw_cov_file.open() as f:
             cov_data = json.load(f)
         
-        # target_file = target_file.name
-
-        # filename_list = [file["file"].split("/")[-1] for file in cov_data["files"]]
-
-        # if target_file not in filename_list:
-        #     return -2
+        # This was include because in case of libxml2
+        # gcovr makes target files as <target-file>.c
+        # instead of libxml2/<target-file>.c 2024-12-18
+        model_file = cov_data["files"][0]["file"]
+        if len(model_file.split("/")) == 1:
+            target_file = target_file.split("/")[-1]
         
         file_exists = False
         for file in cov_data["files"]:
@@ -429,6 +466,13 @@ class Worker:
         buggy_code_file = target_dir / "buggy_code_file" / code_filename
         assert buggy_code_file.exists(), f"Buggy code file does not exist: {buggy_code_file}"
         return buggy_code_file
+    
+    def get_buggy_line_key(self, target_dir):
+        buggy_line_key_txt = target_dir / "buggy_line_key.txt"
+        assert buggy_line_key_txt.exists(), f"Buggy line key txt does not exist: {buggy_line_key_txt}"
+        with open(buggy_line_key_txt, "r") as f:
+            buggy_line_key = f.read().strip()
+        return buggy_line_key
 
     def save_version(self, version_dir, destination_dir):
         print(f">> Saving version {version_dir.name} to {destination_dir}")

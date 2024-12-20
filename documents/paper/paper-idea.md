@@ -1,6 +1,17 @@
 # FL Dataset Generation Paper Idea
 
 
+## Abstract
+## Introduction
+## Motivation
+## Background
+## Approach
+## Experiment Design
+## Results
+## Findings
+## Conclusion
+
+
 ## Q1: Impact of the Number of buggy versions per line
 * Question: How does the **number of buggy versions per line** affect the acc@5 performance of MLP model?
 * Experiment plan:

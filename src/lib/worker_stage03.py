@@ -93,6 +93,9 @@ class WorkerStage03(Worker):
 
         # 4. Save the version to self.prerequisite_data_dir
         self.save_version(self.version_dir, self.prerequisite_data_dir)
+
+        # 5. delete the coverage directory
+        sp.check_call(["rm", "-rf", self.cov_dir])
     
     def postprocess_coverage(self):
         self.total_tcs = self.failing_tcs_list + self.passing_tcs_list + self.excluded_failing_tcs_list + self.excluded_passing_tcs_list + self.ccts_list

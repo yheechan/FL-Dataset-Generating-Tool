@@ -41,7 +41,7 @@ class WorkerStage04(Worker):
         self.set_target_preprocessed_files()
 
         self.buggy_code_file = self.get_buggy_code_file(self.version_dir, self.buggy_code_filename)
-        self.buggy_line_key = self.make_key(self.target_code_file, self.buggy_lineno)
+        self.buggy_line_key = self.get_buggy_line_key(self.version_dir)
 
         self.musicup_exe = self.tools_dir / "music"
 
@@ -200,6 +200,14 @@ class WorkerStage04(Worker):
     
     def reduced_lines_executed_by_failing_tcs(self):
         buggy_code_filename = self.target_code_file
+        # This was include because in case of libxml2
+        # gcovr makes target files as <target-file>.c
+        # instead of libxml2/<target-file>.c 2024-12-18
+        model_key =  list(self.lines_executed_by_failing_tcs.keys())[0].split("#")[0]
+        if len(model_key.split("/")) == 1:
+            buggy_code_filename = self.target_code_file.split("/")[-1]
+        else:
+            buggy_code_filename = self.target_code_file
         reduced_dict = {}
         total_selected_lines = 0
 

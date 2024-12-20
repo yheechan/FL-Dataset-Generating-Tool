@@ -27,7 +27,7 @@ class WorkerStage05(Worker):
 
         self.buggy_code_file = self.get_buggy_code_file(self.version_dir, self.buggy_code_filename)
         
-        self.buggy_line_key = self.make_key(self.target_code_file, self.buggy_lineno)
+        self.buggy_line_key = self.get_buggy_line_key(self.version_dir)
         buggy_line_key_from_data = get_buggy_line_key_from_data(self.version_dir)
         assert self.buggy_line_key == buggy_line_key_from_data, f"Buggy line key {self.buggy_line_key} does not match with buggy line key from data {buggy_line_key_from_data}"
 

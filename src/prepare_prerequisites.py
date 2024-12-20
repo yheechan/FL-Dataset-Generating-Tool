@@ -1,6 +1,8 @@
 import argparse
 
 from lib.prerequisite_preparation import PrerequisitePreparation
+from lib.slack import Slack
+import time
 
 # This script it to executes passing and failing tcs of versions
 # then retrieves following prerequisite data:
@@ -12,12 +14,23 @@ def main():
     parser = make_parser()
     args = parser.parse_args()
 
+    slack = Slack(channel_name="C0837SKQLK0", bot_name="prerequisite-data-preparer-bot")
     subject = PrerequisitePreparation(
         args.subject, args.target_set_name,
         args.use_excluded_failing_tcs,
         args.passing_tcs_perc, args.failing_tcs_perc, args.verbose
     )
+    start_time = time.time()
+    slack.send_message(f"Worker started at {start_time}")
     subject.run()
+
+    end_time = time.time()
+
+    sec = end_time - start_time
+    minute = sec / 60
+    hour = minute / 60
+
+    slack.send_message(f"Worker finished in:\n\tsec: {sec}\n\tmin: {minute}\n\thour: {hour}")
 
 def make_parser():
     parser = argparse.ArgumentParser(description="Copy subject to working directory")
