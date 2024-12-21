@@ -2,19 +2,20 @@ import time
 import multiprocessing
 import subprocess as sp
 import concurrent.futures
+import csv
 
 from lib.utils import *
 from lib.subject_base import Subject
 from lib.file_manager import FileManager
 
 class BuggyMutantCollection(Subject):
-    def __init__(self, subject_name, verbose=False):
+    def __init__(self, subject_name, experiment_name, verbose=False):
         super().__init__(subject_name, "stage01", verbose)
+        self.experiment_name = experiment_name
+
         self.mutants_dir = out_dir / self.name / f"generated_mutants"
         self.mutants_dir.mkdir(exist_ok=True)
 
-        self.buggy_mutants_dir = out_dir / self.name / "buggy_mutants"
-        self.buggy_mutants_dir.mkdir(exist_ok=True)
 
         self.crashed_buggy_mutants_dir = out_dir / f"{self.name}" / "crashed_buggy_mutants"
         self.crashed_buggy_mutants_dir.mkdir(exist_ok=True, parents=True)
@@ -63,6 +64,7 @@ class BuggyMutantCollection(Subject):
 
         # 6. Assign mutants to cores
         # mutant_assignments format: {machine_core: [(target_file, mutant)]}
+        self.mutants_list = self.mutants_list[:8]
         self.mutant_assignments = self.assign_works_to_machines(self.mutants_list)
         # self.print_mutant_assignments()
 
@@ -71,8 +73,75 @@ class BuggyMutantCollection(Subject):
 
         # 8. Test mutants
         self.test_mutants()
+
+        # 9. write mut_op to bug_info table
+        self.write_mut_op_to_bug_info_table()
     
 
+    def write_mut_op_to_bug_info_table(self):
+        self.connect_to_db()
+
+        # add_column to bug_info table: mut_op
+        if not self.db.column_exists("bug_info", "mut_op"):
+            new_columns = [
+                "mut_op TEXT",
+                "pre_start_line INT",
+                "pre_start_col INT",
+                "pre_end_line INT",
+                "pre_end_col INT",
+                "pre_mut TEXT",
+                "post_start_line INT",
+                "post_start_col INT",
+                "post_end_line INT",
+                "post_end_col INT",
+                "post_mut TEXT"
+            ]
+            for column in new_columns:
+                self.db.add_column("bug_info", column)
+
+        # get mutation info
+        mut_info = self.get_mutants_info()
+
+        # get bug_info
+        bug_info = self.db.read("bug_info")
+
+        # update bug_info
+        for bug in bug_info:
+            subject = bug[0]
+            experiment_name = bug[1]
+            version = bug[2]
+            target_code_file = bug[3]
+            mutant_code_file = bug[4]
+
+            assert version in mut_info, f"{version} not in mut_info"
+            mut_data = mut_info[version]
+            this_values = {
+                "mut_op": mut_data["mut_op"],
+                "pre_start_line": mut_data["pre_start_line"],
+                "pre_start_col": mut_data["pre_start_col"],
+                "pre_end_line": mut_data["pre_end_line"],
+                "pre_end_col": mut_data["pre_end_col"],
+                "pre_mut": mut_data["pre_mut"],
+                "post_start_line": mut_data["post_start_line"],
+                "post_start_col": mut_data["post_start_col"],
+                "post_end_line": mut_data["post_end_line"],
+                "post_end_col": mut_data["post_end_col"],
+                "post_mut": mut_data["post_mut"]
+            }
+
+            this_conditions = {
+                "subject": subject,
+                "experiment_name": experiment_name,
+                "version": version,
+                "target_code_file": target_code_file,
+                "mutant_code_file": mutant_code_file
+            }
+
+            self.db.update(
+                "bug_info",
+                set_values=this_values,
+                conditions=this_conditions
+            )
 
 
     # +++++++++++++++++++++++++++
@@ -108,8 +177,7 @@ class BuggyMutantCollection(Subject):
         for job in jobs:
             job.join()
     
-        print(f">> Finished testing mutants now retrieving buggy mutants...")
-        self.fileManager.collect_data_remote("buggy_mutants", self.buggy_mutants_dir, self.mutant_assignments)
+        print(f">> Finished testing mutants for buggy mutants...")
         self.fileManager.collect_data_remote("crashed_buggy_mutants", self.crashed_buggy_mutants_dir, self.mutant_assignments)
         
     def test_single_machine_core_remote(self, machine, core, homedir, mutants):
@@ -139,7 +207,7 @@ class BuggyMutantCollection(Subject):
             
             cmd = [
                 "ssh", f"{machine_name}",
-                f"cd {homedir}/FL-dataset-generation-{subject_name}/src && python3 test_mutant_buggy_collection.py --subject {subject_name} --machine {machine_name} --core {core_name} --mutant-path {mutant_input} --target-file-path {target_file_path} {optional_flag}"
+                f"cd {homedir}/FL-dataset-generation-{subject_name}/src && python3 test_mutant_buggy_collection.py --subject {subject_name} --experiment-name {self.experiment_name} --machine {machine_name} --core {core_name} --mutant-path {mutant_input} --target-file-path {target_file_path} {optional_flag}"
             ]
             print_command(cmd, self.verbose)
             res = sp.run(cmd, stderr=sp.PIPE, stdout=sp.PIPE, cwd=src_dir)
@@ -191,7 +259,7 @@ class BuggyMutantCollection(Subject):
 
             cmd = [
                 "python3", "test_mutant_buggy_collection.py",
-                "--subject", subject_name, "--machine", machine_name, "--core", core_name,
+                "--subject", subject_name, "--experiment-name", self.experiment_name, "--machine", machine_name, "--core", core_name,
                 "--mutant-path", mutant_input, "--target-file-path", target_file_path,
             ]
             if need_configure:
@@ -360,6 +428,49 @@ class BuggyMutantCollection(Subject):
             #     break
         
         return mutants_list
+    
+    def get_mutants_info(self):
+        mut_info = {}
+        for target_mutants_dir in self.mutants_dir.iterdir():
+            target_file = target_mutants_dir.name.replace('-', '/')
+            target_file_source_filename = target_file.split('/')[-1].split(".")[0]
+            mut_db_file = target_mutants_dir / f"{target_file_source_filename}_mut_db.csv"
+            assert mut_db_file.exists(), f"{mut_db_file} doesn't exists"
+
+            with open(mut_db_file, "r") as fp:
+                # read with csv
+                csv_reader = csv.reader(fp, escapechar='\\', quotechar='"', delimiter=',')
+                next(csv_reader)
+                for row in csv_reader:
+                    mut_name = row[0]
+                    op = row[1]
+                    pre_start_line = row[2]
+                    pre_start_col = row[3]
+                    pre_end_line = row[4]
+                    pre_end_col = row[5]
+                    pre_mut = row[6]
+                    post_start_line = row[7]
+                    post_start_col = row[8]
+                    post_end_line = row[9]
+                    post_end_col = row[10]
+                    post_mut = row[11]
+
+                    mut_info[mut_name] = {
+                        "mut_op": op,
+                        "pre_start_line": pre_start_line,
+                        "pre_start_col": pre_start_col,
+                        "pre_end_line": pre_end_line,
+                        "pre_end_col": pre_end_col,
+                        "pre_mut": pre_mut,
+                        "post_start_line": post_start_line,
+                        "post_start_col": post_start_col,
+                        "post_end_line": post_end_line,
+                        "post_end_col": post_end_col,
+                        "post_mut": post_mut
+                    }
+        return mut_info
+
+            
 
     def print_number_of_mutants(self):
         print(f">> Generated {len(self.mutants_list)} mutants")

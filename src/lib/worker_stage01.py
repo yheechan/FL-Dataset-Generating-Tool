@@ -4,8 +4,11 @@ from lib.utils import *
 from lib.worker_base import Worker
 
 class WorkerStage01(Worker):
-    def __init__(self, subject_name, machine, core, mutant_path, target_file_path, need_configure, last_mutant, verbose=False):
+    def __init__(self, subject_name, experiment_name, machine, core, mutant_path, target_file_path, need_configure, last_mutant, verbose=False):
         super().__init__(subject_name, "stage01", "collecting_mutants", machine, core, verbose)
+
+        self.subject_name = subject_name
+        self.experiment_name = experiment_name
         
         self.test_suite = self.get_testsuite()
         self.assigned_works_dir = self.core_dir / f"stage01-assigned_works"
@@ -20,9 +23,6 @@ class WorkerStage01(Worker):
         self.target_file_path = target_file_path
         self.target_file_code_file = self.core_dir / self.target_file_path
         assert self.target_file_code_file.exists(), f"Target file code file does not exist: {self.target_file_code_file}"
-
-        self.buggy_mutants_dir = out_dir / f"{self.name}" / "buggy_mutants"
-        self.buggy_mutants_dir.mkdir(exist_ok=True, parents=True)
 
         self.crashed_buggy_mutants_dir = out_dir / f"{self.name}" / "crashed_buggy_mutants"
         self.crashed_buggy_mutants_dir.mkdir(exist_ok=True, parents=True)
@@ -110,38 +110,54 @@ class WorkerStage01(Worker):
     
 
     def save_mutant(self):
-        print(f">> Saving buggy mutant {self.assigned_mutant_code_file.name}")
-        buggy_mutant_dir = self.buggy_mutants_dir / self.assigned_mutant_code_file.name
-        print_command(["mkdir", "-p", buggy_mutant_dir], self.verbose)
-        buggy_mutant_dir.mkdir(parents=True, exist_ok=True)
+        self.connect_to_db()
+
+        # Create table if not exists: tc_info
+        if not self.db.table_exists("tc_info"):
+            self.db.create_table(
+                "tc_info",
+                "subject TEXT, experiment_name TEXT, version TEXT, tc_name TEXT, tc_result TEXT, tc_ret_code INT"
+            )
         
-        failing_tcs_file = buggy_mutant_dir / "failing_tcs.txt"
-        with failing_tcs_file.open("w") as f:
-            content = "\n".join(self.failing_tcs)
-            f.write(content)
+        # Delete existing data for the version
+        self.db.delete(
+            "tc_info",
+            f"subject='{self.subject_name}' AND experiment_name='{self.experiment_name}' AND version='{self.mutant_name}'"
+        )
+
+        # Write test case info
+        self.write_tc_info(self.failing_tcs, "fail")
+        self.write_tc_info(self.passing_tcs, "pass")
+        self.write_tc_info(self.crashed_tcs, "crash")
+    
+        # Create table if not exists: bug_info
+        if not self.db.table_exists("bug_info"):
+            self.db.create_table(
+                "bug_info",
+                "subject TEXT, experiment_name TEXT, version TEXT, target_code_file TEXT, mutant_code_file TEXT"
+            )
         
-        passing_tcs_file = buggy_mutant_dir / "passing_tcs.txt"
-        with passing_tcs_file.open("w") as f:
-            content = "\n".join(self.passing_tcs)
-            f.write(content)
-        
-        crashed_tcs_file = buggy_mutant_dir / "crashed_tcs.txt" # 2024-08-09 save-crashed-buggy-mutants
-        with crashed_tcs_file.open("w") as f:
-            data = [tc[0] for tc in self.crashed_tcs]
-            content = "\n".join(data)
-            f.write(content)
-        
-        bug_info_csv = buggy_mutant_dir / "bug_info.csv"
-        with bug_info_csv.open("w") as f:
-            f.write(f"target_code_file,mutant_code_file\n") 
-            f.write(f"{self.target_file_path},{self.assigned_mutant_code_file.name}")
+        # Write bug info
+        self.db.insert(
+            "bug_info",
+            "subject, experiment_name, version, target_code_file, mutant_code_file",
+            f"'{self.subject_name}', '{self.experiment_name}', '{self.mutant_name}', '{self.target_file_path}', '{self.assigned_mutant_code_file.name}'"
+        )
 
         print(f">> Saved buggy mutant {self.assigned_mutant_code_file.name}")
         print(f"\t - Failing test cases: {len(self.failing_tcs)}")
         print(f"\t - Passing test cases: {len(self.passing_tcs)}")
         print(f"\t - Crashing test cases: {len(self.crashed_tcs)}")
 
-    
+
+    def write_tc_info(self, tc_list, result):
+        for tc in tc_list:
+            self.db.insert(
+                "tc_info",
+                "subject, experiment_name, version, tc_name, tc_result, tc_ret_code",
+                f"'{self.subject_name}', '{self.experiment_name}', '{self.mutant_name}', '{tc[0]}', '{result}', {tc[1]}"
+            )
+
     def run_test_suite(self):
         passing_tcs = []
         failing_tcs = []
@@ -152,9 +168,9 @@ class WorkerStage01(Worker):
                 # return [-1], [-1], res 
                 crashed_tcs.append((tc_script, res)) # 2024-08-09 save-crashed-buggy-mutants
             elif res == 0:
-                passing_tcs.append(tc_script)
+                passing_tcs.append((tc_script, res))
             else:
-                failing_tcs.append(tc_script)
+                failing_tcs.append((tc_script, res))
         return passing_tcs, failing_tcs, crashed_tcs
     
     def get_testsuite(self):

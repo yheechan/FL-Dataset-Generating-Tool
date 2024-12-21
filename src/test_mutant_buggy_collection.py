@@ -10,7 +10,7 @@ def main():
     args = parser.parse_args()
 
     worker = WorkerStage01(
-        args.subject, args.machine, args.core,
+        args.subject, args.experiment_name, args.machine, args.core,
         args.mutant_path, args.target_file_path, args.need_configure,
         args.last_mutant, args.verbose
     )
@@ -19,6 +19,7 @@ def main():
 def make_parser():
     parser = argparse.ArgumentParser(description="Copy subject to working directory")
     parser.add_argument("--subject", type=str, help="Subject name", required=True)
+    parser.add_argument("--experiment-name", type=str, help="Experiment name", required=True)
     parser.add_argument("--machine", type=str, help="Machine name", required=True)
     parser.add_argument("--core", type=str, help="Core name", required=True)
     parser.add_argument("--mutant-path", type=str, help="Mutant path", required=True)

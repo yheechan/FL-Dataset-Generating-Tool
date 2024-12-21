@@ -3,6 +3,7 @@ import subprocess as sp
 
 from lib.utils import *
 from lib.experiment import Experiment
+from lib.database import CRUD
 
 class Subject:
     def __init__(self, subject_name, stage_name, verbose=False):
@@ -30,6 +31,21 @@ class Subject:
         self.log = log_dir / f"{self.name}/{self.stage_name}"
         self.log.mkdir(exist_ok=True, parents=True)
 
+    def connect_to_db(self):
+        # Settings for database
+        self.host = self.experiment.experiment_config["database"]["host"]
+        self.port = self.experiment.experiment_config["database"]["port"]
+        self.user = self.experiment.experiment_config["database"]["user"]
+        self.password = self.experiment.experiment_config["database"]["password"]
+        self.database = self.experiment.experiment_config["database"]["database"]
+
+        self.db = CRUD(
+            host=self.host,
+            port=self.port,
+            user=self.user,
+            password=self.password,
+            database=self.database
+        )
     
     def read_configs(self):
         configs = None
