@@ -49,11 +49,17 @@ class CRUD(Database):
         self.cursor.execute(query)
         self.commit()
 
-    def read(self, table_name, columns="*", condition=None):
+    def read(self, table_name, columns="*", conditions={}, special=""):
         query = f"SELECT {columns} FROM {table_name}"
-        if condition:
-            query += f" WHERE {condition}"
-        return self.execute(query)
+        if conditions:
+            condition_clause = " AND ".join([f"{col} = %s" for col in conditions.keys()])
+            query += f" WHERE {condition_clause}"
+            values = list(conditions.values())
+        else:
+            values = []
+        if special != "":
+            query += f" {special}"
+        return self.execute(query, values)
 
     def update(self, table_name, set_values={}, conditions={}):
         """
@@ -72,9 +78,11 @@ class CRUD(Database):
         self.cursor.execute(query, values)
         self.commit()
 
-    def delete(self, table_name, condition):
-        query = f"DELETE FROM {table_name} WHERE {condition}"
-        self.cursor.execute(query)
+    def delete(self, table_name, conditions={}):
+        condition_clause = " AND ".join([f"{col} = %s" for col in conditions.keys()])
+        query = f"DELETE FROM {table_name} WHERE {condition_clause}"
+        values = list(conditions.values())
+        self.cursor.execute(query, values)
         self.commit()
 
 
@@ -110,4 +118,15 @@ class CRUD(Database):
         )
         """
         result = self.execute(query)
+        return 1 if result[0][0] else 0
+    
+    def value_exists(self, table_name, conditions={}):
+        """
+        Check if a value exists in a column based on given conditions
+        returns 1 if exists, 0 otherwise
+        """
+        condition_clause = " AND ".join([f"{col} = %s" for col in conditions.keys()])
+        query = f"SELECT EXISTS (SELECT 1 FROM {table_name} WHERE {condition_clause})"
+        values = list(conditions.values())
+        result = self.execute(query, values)
         return 1 if result[0][0] else 0

@@ -82,36 +82,41 @@ class BuggyMutantCollection(Subject):
         self.connect_to_db()
 
         # add_column to bug_info table: mut_op
-        if not self.db.column_exists("bug_info", "mut_op"):
-            new_columns = [
-                "mut_op TEXT",
-                "pre_start_line INT",
-                "pre_start_col INT",
-                "pre_end_line INT",
-                "pre_end_col INT",
-                "pre_mut TEXT",
-                "post_start_line INT",
-                "post_start_col INT",
-                "post_end_line INT",
-                "post_end_col INT",
-                "post_mut TEXT"
-            ]
-            for column in new_columns:
+        new_columns = [
+            "mut_op TEXT",
+            "pre_start_line INT",
+            "pre_start_col INT",
+            "pre_end_line INT",
+            "pre_end_col INT",
+            "pre_mut TEXT",
+            "post_start_line INT",
+            "post_start_col INT",
+            "post_end_line INT",
+            "post_end_col INT",
+            "post_mut TEXT"
+        ]
+        for column in new_columns:
+            col_name = column.split()[0]
+            if not self.db.column_exists("bug_info", col_name):
                 self.db.add_column("bug_info", column)
 
         # get mutation info
         mut_info = self.get_mutants_info()
 
         # get bug_info
-        bug_info = self.db.read("bug_info")
+        bug_info = self.db.read(
+            "bug_info",
+            columns="subject, experiment_name, version, type, target_code_file, buggy_code_file"
+        )
 
         # update bug_info
         for bug in bug_info:
             subject = bug[0]
             experiment_name = bug[1]
             version = bug[2]
-            target_code_file = bug[3]
-            mutant_code_file = bug[4]
+            version_type = bug[3]
+            target_code_file = bug[4]
+            mutant_code_file = bug[5]
 
             assert version in mut_info, f"{version} not in mut_info"
             mut_data = mut_info[version]
@@ -133,8 +138,9 @@ class BuggyMutantCollection(Subject):
                 "subject": subject,
                 "experiment_name": experiment_name,
                 "version": version,
+                "type": version_type,
                 "target_code_file": target_code_file,
-                "mutant_code_file": mutant_code_file
+                "buggy_code_file": mutant_code_file
             }
 
             self.db.update(

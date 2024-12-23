@@ -8,8 +8,10 @@ from lib.subject_base import Subject
 from lib.file_manager import FileManager
 
 class UsableVersionSelection(Subject):
-    def __init__(self, subject_name, verbose=False):
+    def __init__(self, subject_name, experiment_name, verbose=False):
         super().__init__(subject_name, "stage02", verbose)
+        self.experiment_name = experiment_name
+
         self.initial_selected_dir = out_dir / self.name / f"initial_selected_buggy_versions"
         self.initial_selected_dir.mkdir(exist_ok=True)
 
@@ -21,8 +23,6 @@ class UsableVersionSelection(Subject):
 
         self.generated_mutants_dir = out_dir / self.name / "generated_mutants"
         assert self.generated_mutants_dir.exists(), "Generated mutants directory does not exist"
-        self.buggy_mutants_dir = out_dir / self.name / "buggy_mutants"
-        assert self.buggy_mutants_dir.exists(), "Buggy mutants directory does not exist"
 
         self.crashed_buggy_mutants_dir = out_dir / f"{self.name}" / "crashed_buggy_mutants"
         self.crashed_buggy_mutants_dir.mkdir(exist_ok=True, parents=True)
@@ -31,18 +31,25 @@ class UsableVersionSelection(Subject):
         # 1. Read configurations and initialize working directory: self.work
         self.initialize_working_directory()
         
+        # THIS IS REMOVED WHILE CHANGING FROM FILE TO DB
+        """
         self.versions_list = get_dirs_in_dir(self.initial_selected_dir)
         if len(self.versions_list) != 0:
             self.redoing = True
         else:
             self.redoing = False
-        
         if self.redoing == False:
             # 2. Select initial buggy versions at random
             self.select_initial_buggy_versions()
 
             # 3. Get versions to test
             self.versions_list = get_dirs_in_dir(self.initial_selected_dir)
+        """
+
+        # 1. Select initial buggy versions at random
+        self.select_initial_buggy_versions()
+        self.versions_list = get_dirs_in_dir(self.initial_selected_dir)
+
 
         # 4. Assign versions to machines
         self.versions_assignments = self.assign_works_to_machines(self.versions_list)
@@ -222,128 +229,162 @@ class UsableVersionSelection(Subject):
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     def select_initial_buggy_versions(self):
-        # Copy real world buggy versions if exists
+        # connect to db
+        self.connect_to_db()
+
+        # Update by adding a initial column to bug_info table
+        if not self.db.column_exists("bug_info", "initial"):
+            self.db.add_column("bug_info", "initial BOOLEAN DEFAULT NULL")
+        if not self.db.column_exists("bug_info", "usable"):
+            self.db.add_column("bug_info", "usable BOOLEAN DEFAULT NULL")
+
+        # write real world buggy versions to bug_info table in db
+        # and copy the source file to initial_selected_buggy_versions directory
         if self.real_world_buggy_versions_status:
-            self.copy_real_world_buggy_versions()
+            self.include_real_world_buggy_versions()
 
         # Select buggy mutants at random
-        buggy_mutants_list = get_dirs_in_dir(self.buggy_mutants_dir)
+        buggy_mutants_list = self.db.read(
+            "bug_info",
+            columns="version",
+            conditions={
+                "subject": self.name,
+                "experiment_name": self.experiment_name,
+            },
+            special="AND initial IS NULL"
+        )
+        buggy_mutants_list = [row[0] for row in buggy_mutants_list]
+
+        # Select N amount of buggy mutants to check for usability
         if len(buggy_mutants_list) > self.num_to_check:
             buggy_mutants_list = random.sample(buggy_mutants_list, self.num_to_check)
         print(f"Selected {len(buggy_mutants_list)} buggy mutants to check for usability at random")
 
         for buggy_mutant in buggy_mutants_list:
-            mutant_name = buggy_mutant.name
-            print(f"Checking usability of {mutant_name}")
+            # 1. Update bug_info table in db
+            self.db.update(
+                "bug_info",
+                {"initial": True},
+                {
+                    "subject": self.name,
+                    "experiment_name": self.experiment_name,
+                    "version": buggy_mutant,
+                }
+            )
 
-            # 1. Read bug_info.csv
-            target_code_file, mutant_code_file = self.get_mutant_info(buggy_mutant)
+            # 2. get bug info
+            data = self.db.read(
+                "bug_info",
+                columns="target_code_file, buggy_code_file",
+                conditions={
+                    "subject": self.name,
+                    "experiment_name": self.experiment_name,
+                    "version": buggy_mutant
+                }
+            )
+            assert len(data) == 1, "Data does not exist in bug_info table"
+            target_code_file, buggy_code_file = data[0]
 
-            # 2. Get target file mutant directory ex) libxml2/HTMLparser.c, HTMLparser.MUT123.c
+            # 3. copy buggy_code_file into initial_selected_buggy_versions directory
+            buggy_code_file_dir = self.initial_selected_dir / buggy_mutant / "buggy_code_file"
+            buggy_code_file_dir.mkdir(exist_ok=True, parents=True)
+
+
+            # Get target file mutant directory ex) libxml2/HTMLparser.c, HTMLparser.MUT123.c
             target_file_mutant_dir_name = target_code_file.replace("/", "-")
             target_file_mutant_dir = self.generated_mutants_dir / target_file_mutant_dir_name
             assert target_file_mutant_dir.exists(), "Target file mutant directory does not exist"
 
-            # 3. Get buggy_code_file
-            buggy_code_file = target_file_mutant_dir / mutant_code_file
+            # Get buggy_code_file
+            buggy_code_file = target_file_mutant_dir / buggy_code_file
             assert buggy_code_file.exists(), "Buggy code file does not exist"
 
-            # 4. Get buggy_lineno and mut_db_line
-            buggy_lineno, mut_db_line = self.get_buggy_lineno(target_file_mutant_dir, mutant_name)
+            sp.check_call(["cp", buggy_code_file, buggy_code_file_dir])
 
-            # 5. Check if buggy_lineno is in the target file
-            mutant_dir_dest = self.initial_selected_dir / mutant_name
-            print_command(["mkdir", "-p", mutant_dir_dest], self.verbose)
-            mutant_dir_dest.mkdir(exist_ok=True)
+            buggy_code_file = buggy_code_file_dir / buggy_code_file.name
+            assert buggy_code_file.exists(), "Buggy code file does not exist in initial_selected_buggy_versions directory"
 
-            # 6. Write bug info
-            self.write_bug_info(
-                buggy_mutant, buggy_code_file, mutant_dir_dest, target_code_file, mutant_code_file, buggy_lineno, mut_db_line,
-            )
     
-    def write_bug_info(self, buggy_mutant, buggy_code_file, mutant_dir_dest, target_code_file, mutant_code_file, buggy_lineno, mut_db_line):
-        # Write bug_info.csv
-        bug_info_csv = mutant_dir_dest / "bug_info.csv"
-        with bug_info_csv.open("w") as f:
-            f.write("target_code_file,buggy_code_file,buggy_lineno\n")
-            f.write(f"{target_code_file},{mutant_code_file},{buggy_lineno}\n")
-        
-        # Write mutant_info.csv
-        mutant_info_csv = mutant_dir_dest / "mutant_info.csv"
-        with mutant_info_csv.open("w") as f:
-            f.write(",,,Before Mutation,,,,,After Mutation\n")
-            f.write("Mutant Filename,Mutation Operator,Start Line#,Start Col#,End Line#,End Col#,Target Token,Start Line#,Start Col#,End Line#,End Col#,Mutated Token,Extra Info\n")
-            f.write(mut_db_line)
 
-        # Copy testsuite_info
-        testsuite_info_dir = mutant_dir_dest / "testsuite_info"
-        print_command(["mkdir", "-p", testsuite_info_dir], self.verbose)
-        testsuite_info_dir.mkdir(exist_ok=True)
-
-        failing_tcs_file = buggy_mutant / "failing_tcs.txt"
-        assert failing_tcs_file.exists(), "Failing testcases file does not exist"
-        print_command(["cp", failing_tcs_file, testsuite_info_dir], self.verbose)
-        sp.check_call(["cp", failing_tcs_file, testsuite_info_dir])
-
-        passing_tcs_file = buggy_mutant / "passing_tcs.txt"
-        assert passing_tcs_file.exists(), "Passing testcases file does not exist"
-        print_command(["cp", passing_tcs_file, testsuite_info_dir], self.verbose)
-        sp.check_call(["cp", passing_tcs_file, testsuite_info_dir])
-
-        crashed_tcs_file = buggy_mutant / "crashed_tcs.txt"
-        assert crashed_tcs_file.exists(), "crashed testcases file does not exist"
-        print_command(["cp", crashed_tcs_file, testsuite_info_dir], self.verbose)
-        sp.check_call(["cp", crashed_tcs_file, testsuite_info_dir]) # 2024-08-12
-
-        # Copy buggy code file
-        buggy_code_file_dir = mutant_dir_dest / "buggy_code_file"
-        print_command(["mkdir", "-p", buggy_code_file_dir], self.verbose)
-        buggy_code_file_dir.mkdir(exist_ok=True)
-        print_command(["cp", buggy_code_file, buggy_code_file_dir], self.verbose)
-        sp.check_call(["cp", buggy_code_file, buggy_code_file_dir])
-        
-
-        
-    def get_buggy_lineno(self, target_file_mutant_dir, mutant_name):
-        filename = ".".join(mutant_name.split(".")[:-2])
-        print(filename)
-
-        mut_db_csv_name = f"{filename}_mut_db.csv"
-        mut_db_csv = target_file_mutant_dir / mut_db_csv_name
-        assert mut_db_csv.exists(), "Mutant database csv does not exist"
-
-        with mut_db_csv.open() as f:
-            lines = f.readlines()
-            for line in lines[2:]:
-                mut_db_line = line.strip()
-                info = mut_db_line.split(",")
-
-                mut_name = info[0]
-                if mut_name == mutant_name:
-                    buggy_lineno = int(info[2])
-                    return buggy_lineno, mut_db_line
-
-
-    def get_mutant_info(self, buggy_mutant):
-        bug_info_csv = buggy_mutant / "bug_info.csv"
-        assert bug_info_csv.exists(), "Bug info csv does not exist"
-
-        with bug_info_csv.open() as f:
-            lines = f.readlines()
-            info = lines[1].strip().split(",")
-            target_code_file = info[0]
-            mutant_code_file = info[1]
-
-        return target_code_file, mutant_code_file
-
-    def copy_real_world_buggy_versions(self):
+    def include_real_world_buggy_versions(self):
+        # 1. get real world buggy versions directory
         real_world_buggy_versions_dir = self.work / "real_world_buggy_versions"
         
         for buggy_version in real_world_buggy_versions_dir.iterdir():
+            # check if the version is already in the db
+            exists = self.db.value_exists(
+                "bug_info",
+                conditions={
+                    "subject": self.name,
+                    "experiment_name": self.experiment_name,
+                    "version": buggy_version.name,
+                    "type": "real_world",
+                    "initial": True
+                }
+            )
+            if exists:
+                bug_dir = self.initial_selected_dir / buggy_version.name
+                assert bug_dir.exists(), "Real world buggy version does not exist in initial_selected_buggy_versions directory"
+                continue
+
             if not buggy_version.is_dir():
                 continue
             
-            # Copy buggy version to out_dir
-            sp.check_call(["cp", "-r", buggy_version, self.initial_selected_dir])
+            # 2. copy buggy_code_file_dir into initial_selected_buggy_versions directory
+            init_version_dir = self.initial_selected_dir / buggy_version.name
+            init_version_dir.mkdir(exist_ok=True)
+
+            buggy_code_file_dir = buggy_version / "buggy_code_file"
+            sp.check_call(["cp", "-r", buggy_code_file_dir, init_version_dir])
+
+            # 3. write bug_info to bug_info table in db
+            bug_info_csv = buggy_version / "bug_info.csv"
+            with open(bug_info_csv, "r") as f:
+                lines = f.readlines()
+                info = lines[1].strip().split(",")
+                target_code_file = info[0]
+                buggy_code_file = info[1]
+                buggy_lineno = int(info[2])
+
+                self.db.insert(
+                    "bug_info",
+                    "subject, experiment_name, version, type, target_code_file, buggy_code_file, pre_start_line, initial",
+                    f"'{self.name}', '{self.experiment_name}', '{buggy_version.name}', 'real_world', '{target_code_file}', '{buggy_code_file}', {buggy_lineno}, TRUE"
+                )
+            
+            # 4. write test case info to tc_info table in db
+            self.db.delete(
+                "tc_info",
+                conditions={
+                    "subject": self.name,
+                    "experiment_name": self.experiment_name,
+                    "version": buggy_version.name
+                }
+            )
+
+            failing_tcs_txt = buggy_version / "testsuite_info/failing_tcs.txt"
+            with open(failing_tcs_txt, "r") as f:
+                lines = f.readlines()
+                for line in lines:
+                    tc_name = line.strip()
+                    tc_result = "fail"
+                    tc_ret_code = 1
+                    self.db.insert(
+                        "tc_info",
+                        "subject, experiment_name, version, tc_name, tc_result, tc_ret_code",
+                        f"'{self.name}', '{self.experiment_name}', '{buggy_version.name}', '{tc_name}', '{tc_result}', {tc_ret_code}"
+                    )
+            passing_tcs_txt = buggy_version / "testsuite_info/passing_tcs.txt"
+            with open(passing_tcs_txt, "r") as f:
+                lines = f.readlines()
+                for line in lines:
+                    tc_name = line.strip()
+                    tc_result = "pass"
+                    tc_ret_code = 0
+                    self.db.insert(
+                        "tc_info",
+                        "subject, experiment_name, version, tc_name, tc_result, tc_ret_code",
+                        f"'{self.name}', '{self.experiment_name}', '{buggy_version.name}', '{tc_name}', '{tc_result}', {tc_ret_code}"
+                    )
 
             self.num_to_check -= 1

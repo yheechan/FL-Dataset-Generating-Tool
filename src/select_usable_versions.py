@@ -14,7 +14,7 @@ def main():
     args = parser.parse_args()
 
     slack = Slack(channel_name="C0837SKQLK0", bot_name="usable-version-selecting-bot")
-    subject = UsableVersionSelection(args.subject, args.verbose)
+    subject = UsableVersionSelection(args.subject, args.experiment_name, args.verbose)
     start_time = time.time()
     slack.send_message(f"Worker started at {start_time}")
     subject.run()
@@ -29,6 +29,7 @@ def main():
 def make_parser():
     parser = argparse.ArgumentParser(description="Copy subject to working directory")
     parser.add_argument("--subject", type=str, help="Subject name", required=True)
+    parser.add_argument("--experiment-name", type=str, help="Experiment name", required=True)
     parser.add_argument("--verbose", action="store_true", help="Verbose mode")
     return parser
 

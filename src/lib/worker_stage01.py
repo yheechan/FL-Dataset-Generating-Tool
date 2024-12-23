@@ -7,7 +7,6 @@ class WorkerStage01(Worker):
     def __init__(self, subject_name, experiment_name, machine, core, mutant_path, target_file_path, need_configure, last_mutant, verbose=False):
         super().__init__(subject_name, "stage01", "collecting_mutants", machine, core, verbose)
 
-        self.subject_name = subject_name
         self.experiment_name = experiment_name
         
         self.test_suite = self.get_testsuite()
@@ -122,7 +121,11 @@ class WorkerStage01(Worker):
         # Delete existing data for the version
         self.db.delete(
             "tc_info",
-            f"subject='{self.subject_name}' AND experiment_name='{self.experiment_name}' AND version='{self.mutant_name}'"
+            conditions={
+                "subject": self.name,
+                "experiment_name": self.experiment_name,
+                "version": self.mutant_name
+            }
         )
 
         # Write test case info
@@ -134,14 +137,14 @@ class WorkerStage01(Worker):
         if not self.db.table_exists("bug_info"):
             self.db.create_table(
                 "bug_info",
-                "subject TEXT, experiment_name TEXT, version TEXT, target_code_file TEXT, mutant_code_file TEXT"
+                "subject TEXT, experiment_name TEXT, version TEXT, type TEXT, target_code_file TEXT, buggy_code_file TEXT"
             )
         
         # Write bug info
         self.db.insert(
             "bug_info",
-            "subject, experiment_name, version, target_code_file, mutant_code_file",
-            f"'{self.subject_name}', '{self.experiment_name}', '{self.mutant_name}', '{self.target_file_path}', '{self.assigned_mutant_code_file.name}'"
+            "subject, experiment_name, version, type, target_code_file, buggy_code_file",
+            f"'{self.name}', '{self.experiment_name}', '{self.mutant_name}', 'mutant', '{self.target_file_path}', '{self.assigned_mutant_code_file.name}'"
         )
 
         print(f">> Saved buggy mutant {self.assigned_mutant_code_file.name}")
@@ -155,7 +158,7 @@ class WorkerStage01(Worker):
             self.db.insert(
                 "tc_info",
                 "subject, experiment_name, version, tc_name, tc_result, tc_ret_code",
-                f"'{self.subject_name}', '{self.experiment_name}', '{self.mutant_name}', '{tc[0]}', '{result}', {tc[1]}"
+                f"'{self.name}', '{self.experiment_name}', '{self.mutant_name}', '{tc[0]}', '{result}', {tc[1]}"
             )
 
     def run_test_suite(self):

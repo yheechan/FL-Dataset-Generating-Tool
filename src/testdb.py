@@ -26,7 +26,18 @@ database = config["database"]["database"]
 db = CRUD(host, port, user, password, database)
 res = db.table_exists("test_table")
 print(res)
+res = db.read(
+    "test_table",
+    columns="*",
+    conditions={"name": "Heechan"},
+    special="AND test is NULL"
+)
 
+for row in res:
+    print(row)
+print()
+
+"""
 if not db.table_exists("test_table"):
     print("Creating test_table")
     db.create_table("test_table", "name TEXT, age INT")
@@ -51,7 +62,7 @@ for row in res:
     print(row)
 print()
 
-db.delete("test_table", "name='Alice'")
+db.delete("test_table", conditions={"name": "Alice"})
 res = db.read("test_table")
 for row in res:
     print(row)
@@ -77,3 +88,23 @@ res = db.read("test_table")
 for row in res:
     print(row)
 print()
+
+res = db.value_exists("test_table", conditions={"name": "David"})
+if res == 1:
+    print("David exists")
+else:
+    print("David does not exist")
+res = db.value_exists("test_table", conditions={"name": "Alice"})
+if res == 1:
+    print("Alice exists")
+else:
+    print("Alice does not exist")
+
+
+if not db.column_exists("test_table", "test"):
+    db.add_column("test_table", "test BOOLEAN DEFAULT NULL")
+
+res = db.read("test_table")
+for row in res:
+    print(row)
+"""
