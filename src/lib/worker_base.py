@@ -415,6 +415,9 @@ class Worker:
         return raw_cov_file
 
     def check_buggy_line_covered(self, tc_script_name, raw_cov_file, target_file, buggy_lineno):
+        """
+        Return 0 if the buggy line is covered
+        """
         with raw_cov_file.open() as f:
             cov_data = json.load(f)
         
@@ -521,7 +524,15 @@ class Worker:
             buggy_line_key = f.read().strip()
         return buggy_line_key
 
-    def save_version(self, version_dir, destination_dir):
-        print(f">> Saving version {version_dir.name} to {destination_dir}")
-        print_command(["cp", "-r", version_dir, destination_dir], self.verbose)
-        sp.check_call(["cp", "-r", version_dir, destination_dir])
+    def save_version(self, version_dir, col_key, experiment_name):
+        print(f">> Saving version {self.version_dir.name} to database")
+        self.db.update(
+            "bug_info",
+            set_values={col_key: True},
+            conditions={
+                "subject": self.name,
+                "version": version_dir.name,
+                "experiment_name": experiment_name
+            }
+        )
+

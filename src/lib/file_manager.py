@@ -79,13 +79,13 @@ class FileManager():
         ])
     
     def send_works_remote(self, work_assignments, stage):
-        # work_assignments format: {machine_core: [work_dir, ...]}
+        # work_assignments format: {machine_core: [(version_name, buggy_code_file_path), ...]}
         tasks = []
-        for machine_core, work_dirs in work_assignments.items():
+        for machine_core, work_infos in work_assignments.items():
             machine, core, homedir = machine_core.split("::")
 
-            for work_dir in work_dirs:
-                tasks.append((machine, core, homedir, stage, work_dir))
+            for work_info in work_infos:
+                tasks.append((machine, core, homedir, stage, work_info))
         
         limit = 100
         print(f"Number of tasks (works): {len(tasks)}")
@@ -93,13 +93,29 @@ class FileManager():
             pool.map(self.single_send_work_remote, tasks)
     
     def single_send_work_remote(self, task):
-        machine, core, homedir, stage, work_dir = task
+        machine, core, homedir, stage, work_info = task
+        version_name = work_info[0]
+        buggy_code_file_path = work_info[1]
+
+        # initialize verison directory
         print_command([
-            "rsync", "-t", "-r", f"{work_dir}", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}/working_env/{machine}/{core}/{stage}-assigned_works"
+            "ssh", f"{machine}",
+            f"mkdir -p {homedir}FL-dataset-generation-{self.name}/work/{self.name}/working_env/{machine}/{core}/{stage}-assigned_works/{version_name}/buggy_code_file"
         ], self.verbose)
         sp.check_call([
-            "rsync", "-t", "-r", f"{work_dir}", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}/working_env/{machine}/{core}/{stage}-assigned_works"
-        ])  
+            "ssh", f"{machine}",
+            f"mkdir -p {homedir}FL-dataset-generation-{self.name}/work/{self.name}/working_env/{machine}/{core}/{stage}-assigned_works/{version_name}/buggy_code_file"
+        ])
+
+
+        # send buggy code file
+        print_command([
+            "rsync", "-t", "-r", f"{buggy_code_file_path}", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}/working_env/{machine}/{core}/{stage}-assigned_works/{version_name}/buggy_code_file"
+        ], self.verbose)
+        sp.check_call([
+            "rsync", "-t", "-r", f"{buggy_code_file_path}", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}/working_env/{machine}/{core}/{stage}-assigned_works/{version_name}/buggy_code_file"
+        ])
+
 
     def send_repo_remote(self, repo, machinesCores_list):
         # machinesCores_list format: [(machine, core, homedir), ...]

@@ -35,9 +35,19 @@ class CRUD(Database):
 
     # CRUD FUNCTIONS
     def create_table(self, table_name, columns):
-        query = f"CREATE TABLE IF NOT EXISTS {table_name} ({columns})"
-        self.cursor.execute(query)
-        self.commit()
+        """
+        Create a table with explicit locking to prevent deadlocks.
+        """
+        try:
+            query = f"CREATE TABLE IF NOT EXISTS {table_name} ({columns})"
+            self.cursor.execute(query)
+            self.commit()
+        except psycopg2.errors.DeadlockDetected as e:
+            print(f"Deadlock detected while creating table '{table_name}': {e}")
+            self.db.rollback()
+        except Exception as e:
+            print(f"Error creating table: {e}")
+            self.db.rollback()
 
     def drop_table(self, table_name):
         query = f"DROP TABLE IF EXISTS {table_name}"
@@ -61,7 +71,7 @@ class CRUD(Database):
             query += f" {special}"
         return self.execute(query, values)
 
-    def update(self, table_name, set_values={}, conditions={}):
+    def update(self, table_name, set_values={}, conditions={}, special=""):
         """
         Update method for database.
         
@@ -70,10 +80,19 @@ class CRUD(Database):
         :param conditions: dict, column-value pairs for WHERE clause
         """
         set_clause = ", ".join([f"{col} = %s" for col in set_values.keys()])
-        condition_clause = " AND ".join([f"{col} = %s" for col in conditions.keys()])
+        query = f"UPDATE {table_name} SET {set_clause}"
         
-        query = f"UPDATE {table_name} SET {set_clause} WHERE {condition_clause}"
-        values = list(set_values.values()) + list(conditions.values())
+        values = list(set_values.values())
+        
+        if conditions:
+            condition_clause = " AND ".join([f"{col} = %s" for col in conditions.keys()])
+            query += f" WHERE {condition_clause}"
+            values += list(conditions.values())
+        
+        if special != "":
+            query += f" {special}"
+        
+        print(query, values)
         
         self.cursor.execute(query, values)
         self.commit()
@@ -88,11 +107,19 @@ class CRUD(Database):
 
     def add_column(self, table_name, column_definition):
         """
-        Add a new column to an existing table
+        Add a new column to an existing table after checking its existence.
         """
-        query = f"ALTER TABLE {table_name} ADD COLUMN {column_definition}"
-        self.cursor.execute(query)
-        self.commit()
+        try:
+            self.cursor.execute(f"LOCK TABLE {table_name} IN ACCESS EXCLUSIVE MODE")
+            query = f"ALTER TABLE {table_name} ADD COLUMN {column_definition}"
+            self.cursor.execute(query)
+            self.commit()
+        except psycopg2.errors.DeadlockDetected as e:
+            print(f"Deadlock detected while adding column to table '{table_name}': {e}")
+            self.db.rollback()
+        except Exception as e:
+            print(f"Error adding column: {e}")
+            self.db.rollback()
 
     # HELPER FUNCTIONS
     def table_exists(self, table_name):

@@ -129,7 +129,7 @@ class WorkerStage02(Worker):
             print(f"Buggy line {self.buggy_lineno} is covered by test case {tc_script_name}")
 
         # 5. Save the version
-        self.save_version()
+        self.save_version(self.version_dir, "usable", self.experiment_name)
 
         # 6. Apply patch reverse
         self.apply_patch(self.target_code_file_path, self.buggy_code_file, patch_file, True)
@@ -137,15 +137,4 @@ class WorkerStage02(Worker):
         # 7. delete the coverage directory
         sp.check_call(["rm", "-rf", self.cov_dir])
     
-    def save_version(self):
-        print(f"Version {self.version_dir.name} is usable")
-        self.db.update(
-            "bug_info",
-            set_values={"usable": True},
-            conditions={
-                "subject": self.name,
-                "version": self.version_name,
-                "experiment_name": self.experiment_name,
-            }
-        )
 

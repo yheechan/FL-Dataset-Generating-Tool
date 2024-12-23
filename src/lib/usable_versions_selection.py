@@ -12,12 +12,6 @@ class UsableVersionSelection(Subject):
         super().__init__(subject_name, "stage02", verbose)
         self.experiment_name = experiment_name
 
-        self.initial_selected_dir = out_dir / self.name / f"initial_selected_buggy_versions"
-        self.initial_selected_dir.mkdir(exist_ok=True)
-
-        self.usable_versions_dir = out_dir / self.name / f"usable_buggy_versions"
-        self.usable_versions_dir.mkdir(exist_ok=True)
-
         self.fileManager = FileManager(self.name, self.work, self.verbose)
         self.num_to_check = self.experiment.experiment_config["number_of_versions_to_check_for_usability"]
 
@@ -48,8 +42,11 @@ class UsableVersionSelection(Subject):
         """
 
         # 1. Select initial buggy versions at random
+        # connect to db
+        self.connect_to_db()
+        self.codefile2type_list = []
         self.select_initial_buggy_versions()
-        self.versions_list = get_dirs_in_dir(self.initial_selected_dir)
+        self.versions_list = self.get_works(self.generated_mutants_dir, self.experiment_name, "AND initial IS TRUE AND usable IS NULL")
 
         # 4. Assign versions to machines
         self.versions_assignments = self.assign_works_to_machines(self.versions_list)
@@ -72,11 +69,11 @@ class UsableVersionSelection(Subject):
     
     def test_versions_remote(self):
         jobs = []
-        for machine_core, versions in self.versions_assignments.items():
+        for machine_core, work_infos in self.versions_assignments.items():
             machine, core, homedir = machine_core.split("::")
             job = multiprocessing.Process(
                 target=self.test_single_machine_core_remote,
-                args=(machine, core, homedir, versions)
+                args=(machine, core, homedir, work_infos)
             )
             jobs.append(job)
             job.start()
@@ -88,7 +85,7 @@ class UsableVersionSelection(Subject):
         print(f">> Finished testing all versions now retrieving usable versions")
         self.fileManager.collect_data_remote("crashed_buggy_mutants", self.crashed_buggy_mutants_dir, self.versions_assignments)
     
-    def test_single_machine_core_remote(self, machine, core, homedir, versions):
+    def test_single_machine_core_remote(self, machine, core, homedir, work_infos):
         print(f"Testing on {machine}::{core}")
         subject_name = self.name
         machine_name = machine
@@ -96,9 +93,9 @@ class UsableVersionSelection(Subject):
         need_configure = True
 
         last_cnt = 0
-        for version in versions:
+        for version, code_path in work_infos:
             last_cnt += 1
-            version_name = version.name
+            version_name = version
 
             optional_flag = ""
             if need_configure:
@@ -106,7 +103,7 @@ class UsableVersionSelection(Subject):
                 need_configure = False
             if self.verbose:
                 optional_flag += " --verbose"
-            if last_cnt == len(versions):
+            if last_cnt == len(work_infos):
                 optional_flag += " --last-version"
 
             cmd = [
@@ -119,7 +116,7 @@ class UsableVersionSelection(Subject):
             # write stdout and stderr to self.log
             log_file = self.log / f"{machine_name}-{core_name}.log"
             with log_file.open("a") as f:
-                f.write(f"\n+++++ results for {version.name} +++++\n")
+                f.write(f"\n+++++ results for {version_name} +++++\n")
                 f.write("+++++ STDOUT +++++\n")
                 f.write(res.stdout.decode())
                 f.write("\n+++++ STDERR +++++\n")
@@ -127,11 +124,11 @@ class UsableVersionSelection(Subject):
     
     def test_versions_local(self):
         jobs = []
-        for machine_core, versions in self.versions_assignments.items():
+        for machine_core, work_infos in self.versions_assignments.items():
             machine, core, homedir = machine_core.split("::")
             job = multiprocessing.Process(
                 target=self.test_single_machine_core_local,
-                args=(machine, core, homedir, versions)
+                args=(machine, core, homedir, work_infos)
             )
             jobs.append(job)
             job.start()
@@ -139,7 +136,7 @@ class UsableVersionSelection(Subject):
         for job in jobs:
             job.join()
 
-    def test_single_machine_core_local(self, machine, core, homedir, versions):
+    def test_single_machine_core_local(self, machine, core, homedir, work_infos):
         print(f"Testing on {machine}::{core}")
         subject_name = self.name
         machine_name = machine
@@ -147,9 +144,9 @@ class UsableVersionSelection(Subject):
         need_configure = True
 
         last_cnt = 0
-        for version in versions:
+        for version, code_path in work_infos:
             last_cnt += 1
-            version_name = version.name
+            version_name = version
             
             cmd = [
                 "python3", "test_version_usability_check.py",
@@ -161,7 +158,7 @@ class UsableVersionSelection(Subject):
                 need_configure = False
             if self.verbose:
                 cmd.append("--verbose")
-            if last_cnt == len(versions):
+            if last_cnt == len(work_infos):
                 cmd.append("--last-version")
             
             print_command(cmd, self.verbose)
@@ -170,7 +167,7 @@ class UsableVersionSelection(Subject):
             # write stdout and stderr to self.log
             log_file = self.log / f"{machine_name}-{core_name}.log"
             with log_file.open("a") as f:
-                f.write(f"\n+++++ results for {version.name} +++++\n")
+                f.write(f"\n+++++ results for {version_name} +++++\n")
                 f.write("+++++ STDOUT +++++\n")
                 f.write(res.stdout.decode())
                 f.write("\n+++++ STDERR +++++\n")
@@ -199,28 +196,6 @@ class UsableVersionSelection(Subject):
         self.fileManager.send_tools_remote(self.tools_dir, self.experiment.machineCores_dict)
         self.fileManager.send_experiment_configurations_remote(self.experiment.machineCores_dict)
     
-    def prepare_for_local(self):
-        self.working_env = self.fileManager.make_working_env_local()
-
-        for machine_core, versions in self.versions_assignments.items():
-            # versions is list of directory path to versions
-            machine, core, homedir = machine_core.split("::")
-            machine_core_dir = self.working_env / machine / core
-            assigned_dir = machine_core_dir / f"{self.stage_name}-assigned_works"
-            assigned_dir.mkdir(exist_ok=True, parents=True)
-
-            if self.redoing == False:
-                for version in versions:
-                    print_command(["cp", "-r", version, assigned_dir], self.verbose)
-                    sp.check_call(["cp", "-r", version, assigned_dir])
-            
-            core_repo_dir = machine_core_dir / f"{self.name}"
-            if not core_repo_dir.exists():
-                print_command(["cp", "-r", self.subject_repo, machine_core_dir], self.verbose)
-                sp.check_call(["cp", "-r", self.subject_repo, machine_core_dir])
-            
-            
-
 
     
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -228,9 +203,6 @@ class UsableVersionSelection(Subject):
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     def select_initial_buggy_versions(self):
-        # connect to db
-        self.connect_to_db()
-
         # Update by adding a initial column to bug_info table
         if not self.db.column_exists("bug_info", "initial"):
             self.db.add_column("bug_info", "initial BOOLEAN DEFAULT NULL")
@@ -245,7 +217,7 @@ class UsableVersionSelection(Subject):
         # Select buggy mutants at random
         buggy_mutants_list = self.db.read(
             "bug_info",
-            columns="version",
+            columns="version, initial, usable",
             conditions={
                 "subject": self.name,
                 "experiment_name": self.experiment_name,
@@ -271,39 +243,6 @@ class UsableVersionSelection(Subject):
                 }
             )
 
-            # 2. get bug info
-            data = self.db.read(
-                "bug_info",
-                columns="target_code_file, buggy_code_file",
-                conditions={
-                    "subject": self.name,
-                    "experiment_name": self.experiment_name,
-                    "version": buggy_mutant
-                }
-            )
-            assert len(data) == 1, "Data does not exist in bug_info table"
-            target_code_file, buggy_code_file = data[0]
-
-            # 3. copy buggy_code_file into initial_selected_buggy_versions directory
-            buggy_code_file_dir = self.initial_selected_dir / buggy_mutant / "buggy_code_file"
-            buggy_code_file_dir.mkdir(exist_ok=True, parents=True)
-
-
-            # Get target file mutant directory ex) libxml2/HTMLparser.c, HTMLparser.MUT123.c
-            target_file_mutant_dir_name = target_code_file.replace("/", "-")
-            target_file_mutant_dir = self.generated_mutants_dir / target_file_mutant_dir_name
-            assert target_file_mutant_dir.exists(), "Target file mutant directory does not exist"
-
-            # Get buggy_code_file
-            buggy_code_file = target_file_mutant_dir / buggy_code_file
-            assert buggy_code_file.exists(), "Buggy code file does not exist"
-
-            sp.check_call(["cp", buggy_code_file, buggy_code_file_dir])
-
-            buggy_code_file = buggy_code_file_dir / buggy_code_file.name
-            assert buggy_code_file.exists(), "Buggy code file does not exist in initial_selected_buggy_versions directory"
-
-    
 
     def include_real_world_buggy_versions(self):
         # 1. get real world buggy versions directory
@@ -322,19 +261,10 @@ class UsableVersionSelection(Subject):
                 }
             )
             if exists:
-                bug_dir = self.initial_selected_dir / buggy_version.name
-                assert bug_dir.exists(), "Real world buggy version does not exist in initial_selected_buggy_versions directory"
                 continue
 
             if not buggy_version.is_dir():
                 continue
-            
-            # 2. copy buggy_code_file_dir into initial_selected_buggy_versions directory
-            init_version_dir = self.initial_selected_dir / buggy_version.name
-            init_version_dir.mkdir(exist_ok=True)
-
-            buggy_code_file_dir = buggy_version / "buggy_code_file"
-            sp.check_call(["cp", "-r", buggy_code_file_dir, init_version_dir])
 
             # 3. write bug_info to bug_info table in db
             bug_info_csv = buggy_version / "bug_info.csv"

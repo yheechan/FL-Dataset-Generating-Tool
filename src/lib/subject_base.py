@@ -1,5 +1,6 @@
 import json
 import subprocess as sp
+import shutil
 
 from lib.utils import *
 from lib.experiment import Experiment
@@ -46,6 +47,39 @@ class Subject:
             password=self.password,
             database=self.database
         )
+    
+    def get_works(self, generated_mutants_dir, experiment_name, special=""):
+        res = self.db.read(
+            "bug_info",
+            columns="version, type, target_code_file, buggy_code_file",
+            conditions={
+                "subject": self.name,
+                "experiment_name": experiment_name,
+            },
+            special=special
+        )
+
+        work_list = []
+        for row in res:
+            version = row[0]
+            version_type = row[1]
+            target_code_file = row[2]
+            buggy_code_file = row[3]
+
+            target_file_mutant_dir_name = target_code_file.replace("/", "-")
+            target_file_mutant_dir = generated_mutants_dir / target_file_mutant_dir_name
+
+            if version_type == "real_world":
+                buggy_code_file_path = self.work / f"real_world_buggy_versions/{version}/buggy_code_file/{buggy_code_file}"
+            else:
+                assert target_file_mutant_dir.exists(), "Target file mutant directory does not exist"
+                buggy_code_file_path = target_file_mutant_dir / buggy_code_file
+            
+            assert buggy_code_file_path.exists(), "Buggy code file does not exist"
+
+            work_list.append((version, buggy_code_file_path))
+
+        return work_list
     
     def read_configs(self):
         configs = None
@@ -164,9 +198,9 @@ class Subject:
 
     def assign_works_to_machines(self, work_list):
         # returns a dict with format of
-        # {machine::core::homdir": [work_dir, ...]}
+        # {machine::core::homdir": [(version_name, code_path), ...]}
         work_assignments = {}
-        for idx, work_dir in enumerate(work_list):
+        for idx, work_info in enumerate(work_list):
             machine_core = self.experiment.machineCores_list[idx % len(self.experiment.machineCores_list)]
 
             machine_core_str = "::".join(machine_core)
@@ -174,5 +208,42 @@ class Subject:
             if machine_core_str not in work_assignments:
                 work_assignments[machine_core_str] = []
 
-            work_assignments[machine_core_str].append(work_dir)
+            work_assignments[machine_core_str].append(work_info)
         return work_assignments
+
+
+    def prepare_for_local(self, fileManager, versions_assignments):
+        self.working_env = fileManager.make_working_env_local()
+
+        for machine_core, work_infos in versions_assignments.items():
+            # versions is list of directory path to versions
+            machine, core, homedir = machine_core.split("::")
+            machine_core_dir = self.working_env / machine / core
+            assigned_dir = machine_core_dir / f"{self.stage_name}-assigned_works"
+            assigned_dir.mkdir(exist_ok=True, parents=True)
+
+            for version_name, code_path in work_infos:
+                version_dir = assigned_dir / version_name / "buggy_code_file"
+                print_command(["mkdir", "-p", version_dir], self.verbose)
+                version_dir.mkdir(exist_ok=True, parents=True)
+                # copy buggy code file to version_dir
+                print_command(["cp", code_path, version_dir], self.verbose)
+                sp.check_call(["cp", code_path, version_dir])
+            
+            core_repo_dir = machine_core_dir / f"{self.name}"
+            if core_repo_dir.exists():
+                shutil.rmtree(core_repo_dir)
+
+            print_command(["cp", "-r", self.subject_repo, machine_core_dir], self.verbose)
+            sp.check_call(["cp", "-r", self.subject_repo, machine_core_dir])
+
+    def prepare_for_remote(self, fileManager, versions_assignments):
+        fileManager.make_assigned_works_dir_remote(self.experiment.machineCores_list, self.stage_name)
+        fileManager.send_works_remote(versions_assignments, self.stage_name)
+        
+        fileManager.send_repo_remote(self.subject_repo, self.experiment.machineCores_list)
+
+        fileManager.send_configurations_remote(self.experiment.machineCores_dict)
+        fileManager.send_src_remote(self.experiment.machineCores_dict)
+        fileManager.send_tools_remote(self.tools_dir, self.experiment.machineCores_dict)
+        fileManager.send_experiment_configurations_remote(self.experiment.machineCores_dict)

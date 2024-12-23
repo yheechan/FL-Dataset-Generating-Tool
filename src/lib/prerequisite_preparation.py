@@ -9,23 +9,17 @@ from lib.file_manager import FileManager
 
 class PrerequisitePreparation(Subject):
     def __init__(
-            self, subject_name, target_set_name,
-            use_excluded_failing_tcs,
-            passing_tcs_perc=1.0, failing_tcs_perc=1.0, verbose=False
+            self, subject_name, experiment_name, verbose=False
         ):
         super().__init__(subject_name, "stage03", verbose)
-        self.prerequisite_data_dir = out_dir / self.name / f"prerequisite_data"
-        self.prerequisite_data_dir.mkdir(exist_ok=True)
-
-        self.use_excluded_failing_tcs = use_excluded_failing_tcs
-
-        self.passing_tcs_perc = passing_tcs_perc
-        self.failing_tcs_perc = failing_tcs_perc
+        self.experiment_name = experiment_name
 
         self.fileManager = FileManager(self.name, self.work, self.verbose)
+        self.generated_mutants_dir = out_dir / self.name / "generated_mutants"
+        assert self.generated_mutants_dir.exists(), "Generated mutants directory does not exist"
 
-        self.target_set_dir = out_dir / self.name / target_set_name
-        assert self.target_set_dir.exists(), "Origin set directory does not exist"
+        self.prerequisite_data_dir = out_dir / self.name / f"prerequisite_data"
+        self.prerequisite_data_dir.mkdir(exist_ok=True)
 
         self.allPassisCCTdir = out_dir / f"{self.name}" / "allPassisCCT"
         self.allPassisCCTdir.mkdir(exist_ok=True, parents=True)
@@ -34,8 +28,9 @@ class PrerequisitePreparation(Subject):
         # 1. Read configurations and initialize working directory: self.work
         self.initialize_working_directory()
 
-        # 2. get versions from target_set_dir
-        self.versions_list = get_dirs_in_dir(self.target_set_dir)
+        # 2. get versions from db
+        self.connect_to_db()
+        self.versions_list = self.get_usable_buggy_versions()
 
         # 4. Assign versions to machines
         self.versions_assignments = self.assign_works_to_machines(self.versions_list)
@@ -45,6 +40,17 @@ class PrerequisitePreparation(Subject):
 
         # 6. Test versions
         self.test_versions()
+    
+    def get_usable_buggy_versions(self):
+        if not self.db.column_exists("bug_info", "prerequisites"):
+            self.db.add_column("bug_info", "prerequisites BOOLEAN DEFAULT NULL")
+        
+        bug_list = self.get_works(
+            self.generated_mutants_dir,
+            self.experiment_name,
+            "AND initial IS TRUE AND usable IS TRUE AND prerequisites IS NULL"
+        )
+        return bug_list
 
     
     # +++++++++++++++++++++++++++
@@ -58,11 +64,11 @@ class PrerequisitePreparation(Subject):
     
     def test_versions_remote(self):
         jobs = []
-        for machine_core, versions in self.versions_assignments.items():
+        for machine_core, work_infos in self.versions_assignments.items():
             machine, core, homedir = machine_core.split("::")
             job = multiprocessing.Process(
                 target=self.test_single_machine_core_remote,
-                args=(machine, core, homedir, versions)
+                args=(machine, core, homedir, work_infos)
             )
             jobs.append(job)
             job.start()
@@ -75,7 +81,7 @@ class PrerequisitePreparation(Subject):
         self.fileManager.collect_data_remote("prerequisite_data", self.prerequisite_data_dir, self.versions_assignments)
         self.fileManager.collect_data_remote("allPassisCCT", self.allPassisCCTdir, self.versions_assignments)
     
-    def test_single_machine_core_remote(self, machine, core, homedir, versions):
+    def test_single_machine_core_remote(self, machine, core, homedir, work_infos):
         print(f"Testing on {machine}::{core}")
         subject_name = self.name
         machine_name = machine
@@ -83,28 +89,21 @@ class PrerequisitePreparation(Subject):
         need_configure = True
 
         last_cnt = 0
-        for version in versions:
+        for version_name, code_path in work_infos:
             last_cnt += 1
-            version_name = version.name
 
             optional_flag = ""
             if need_configure:
                 optional_flag = "--need-configure"
                 need_configure = False
-            if self.use_excluded_failing_tcs:
-                optional_flag += " --use-excluded-failing-tcs"
-            if self.passing_tcs_perc != 1.0:
-                optional_flag += f" --passing-tcs-perc {self.passing_tcs_perc}"
-            if self.failing_tcs_perc != 1.0:
-                optional_flag += f" --failing-tcs-perc {self.failing_tcs_perc}"
-            if last_cnt == len(versions):
+            if last_cnt == len(work_infos):
                 optional_flag += " --last-version"
             if self.verbose:
                 optional_flag += " --verbose"
 
             cmd = [
                 "ssh", f"{machine_name}",
-                f"cd {homedir}FL-dataset-generation-{subject_name}/src && python3 test_version_prerequisites.py --subject {subject_name} --machine {machine_name} --core {core_name} --version {version_name} {optional_flag}"
+                f"cd {homedir}FL-dataset-generation-{subject_name}/src && python3 test_version_prerequisites.py --subject {subject_name} --experiment-name {self.experiment_name} --machine {machine_name} --core {core_name} --version {version_name} {optional_flag}"
             ]
             print_command(cmd, self.verbose)
             res = sp.run(cmd, stdout=sp.PIPE, stderr=sp.PIPE)
@@ -112,7 +111,7 @@ class PrerequisitePreparation(Subject):
             # write stdout and stderr to self.log
             log_file = self.log / f"{machine_name}-{core_name}.log"
             with log_file.open("a") as f:
-                f.write(f"\n+++++ results for {version.name} +++++\n")
+                f.write(f"\n+++++ results for {version_name} +++++\n")
                 f.write("+++++ STDOUT +++++\n")
                 f.write(res.stdout.decode())
                 f.write("\n+++++ STDERR +++++\n")
@@ -120,11 +119,11 @@ class PrerequisitePreparation(Subject):
     
     def test_versions_local(self):
         jobs = []
-        for machine_core, versions in self.versions_assignments.items():
+        for machine_core, work_infos in self.versions_assignments.items():
             machine, core, homedir = machine_core.split("::")
             job = multiprocessing.Process(
                 target=self.test_single_machine_core_local,
-                args=(machine, core, homedir, versions)
+                args=(machine, core, homedir, work_infos)
             )
             jobs.append(job)
             job.start()
@@ -132,7 +131,7 @@ class PrerequisitePreparation(Subject):
         for job in jobs:
             job.join()
 
-    def test_single_machine_core_local(self, machine, core, homedir, versions):
+    def test_single_machine_core_local(self, machine, core, homedir, work_infos):
         print(f"Testing on {machine}::{core}")
         subject_name = self.name
         machine_name = machine
@@ -140,27 +139,19 @@ class PrerequisitePreparation(Subject):
         need_configure = True
 
         last_cnt = 0
-        for version in versions:
+        for version_name, code_path in work_infos:
             last_cnt += 1
-            version_name = version.name
             
             cmd = [
                 "python3", "test_version_prerequisites.py",
-                "--subject", subject_name, "--machine", machine_name, "--core", core_name,
+                "--subject", subject_name, "--experiment-name", self.experiment_name,
+                "--machine", machine_name, "--core", core_name,
                 "--version", version_name
             ]
             if need_configure:
                 cmd.append("--need-configure")
                 need_configure = False
-            if self.use_excluded_failing_tcs:
-                cmd.append("--use-excluded-failing-tcs")
-            if self.passing_tcs_perc != 1.0:
-                cmd.append("--passing-tcs-perc")
-                cmd.append(str(self.passing_tcs_perc))
-            if self.failing_tcs_perc != 1.0:
-                cmd.append("--failing-tcs-perc")
-                cmd.append(str(self.failing_tcs_perc))
-            if last_cnt == len(versions):
+            if last_cnt == len(work_infos):
                 cmd.append("--last-version")
             if self.verbose:
                 cmd.append("--verbose")
@@ -171,7 +162,7 @@ class PrerequisitePreparation(Subject):
             # write stdout and stderr to self.log
             log_file = self.log / f"{machine_name}-{core_name}.log"
             with log_file.open("a") as f:
-                f.write(f"\n+++++ results for {version.name} +++++\n")
+                f.write(f"\n+++++ results for {version_name} +++++\n")
                 f.write("+++++ STDOUT +++++\n")
                 f.write(res.stdout.decode())
                 f.write("\n+++++ STDERR +++++\n")
@@ -183,36 +174,7 @@ class PrerequisitePreparation(Subject):
     # +++++++++++++++++++++++++++++
     def prepare_for_testing_versions(self):
         if self.experiment.experiment_config["use_distributed_machines"]:
-            self.prepare_for_remote()
+            self.prepare_for_remote(self.fileManager, self.versions_assignments)
         else:
-            self.prepare_for_local()
+            self.prepare_for_local(self.fileManager, self.versions_assignments)
     
-    def prepare_for_remote(self):
-        self.fileManager.make_assigned_works_dir_remote(self.experiment.machineCores_list, self.stage_name)
-        self.fileManager.send_works_remote(self.versions_assignments, self.stage_name)
-        
-        self.fileManager.send_repo_remote(self.subject_repo, self.experiment.machineCores_list)
-
-        self.fileManager.send_configurations_remote(self.experiment.machineCores_dict)
-        self.fileManager.send_src_remote(self.experiment.machineCores_dict)
-        self.fileManager.send_tools_remote(self.tools_dir, self.experiment.machineCores_dict)
-        self.fileManager.send_experiment_configurations_remote(self.experiment.machineCores_dict)
-    
-    def prepare_for_local(self):
-        self.working_env = self.fileManager.make_working_env_local()
-
-        for machine_core, versions in self.versions_assignments.items():
-            # versions is list of directory path to versions
-            machine, core, homedir = machine_core.split("::")
-            machine_core_dir = self.working_env / machine / core
-            assigned_dir = machine_core_dir / f"{self.stage_name}-assigned_works"
-            assigned_dir.mkdir(exist_ok=True, parents=True)
-
-            for version in versions:
-                print_command(["cp", "-r", version, assigned_dir], self.verbose)
-                sp.check_call(["cp", "-r", version, assigned_dir])
-            
-            core_repo_dir = machine_core_dir / f"{self.name}"
-            if not core_repo_dir.exists():
-                print_command(["cp", "-r", self.subject_repo, machine_core_dir], self.verbose)
-                sp.check_call(["cp", "-r", self.subject_repo, machine_core_dir])

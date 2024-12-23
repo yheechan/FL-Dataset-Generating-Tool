@@ -266,36 +266,8 @@ class SBFLExtraction(Subject):
     # +++++++++++++++++++++++++++++
     def prepare_for_testing_versions(self):
         if self.experiment.experiment_config["use_distributed_machines"]:
-            self.prepare_for_remote()
+            self.prepare_for_remote(self.fileManager, self.versions_assignments)
         else:
-            self.prepare_for_local()
+            self.prepare_for_local(self.fileManager, self.versions_assignments)
     
-    def prepare_for_remote(self):
-        self.fileManager.make_assigned_works_dir_remote(self.experiment.machineCores_list, self.stage_name)
-        self.fileManager.send_works_remote(self.versions_assignments, self.stage_name)
-        
-        self.fileManager.send_repo_remote(self.subject_repo, self.experiment.machineCores_list)
-
-        self.fileManager.send_configurations_remote(self.experiment.machineCores_dict)
-        self.fileManager.send_src_remote(self.experiment.machineCores_dict)
-        self.fileManager.send_tools_remote(self.tools_dir, self.experiment.machineCores_dict)
-        self.fileManager.send_experiment_configurations_remote(self.experiment.machineCores_dict)
     
-    def prepare_for_local(self):
-        self.working_env = self.fileManager.make_working_env_local()
-
-        for machine_core, versions in self.versions_assignments.items():
-            # versions is list of directory path to versions
-            machine, core, homedir = machine_core.split("::")
-            machine_core_dir = self.working_env / machine / core
-            assigned_dir = machine_core_dir / f"{self.stage_name}-assigned_works"
-            assigned_dir.mkdir(exist_ok=True, parents=True)
-
-            for version in versions:
-                print_command(["cp", "-r", version, assigned_dir], self.verbose)
-                sp.check_call(["cp", "-r", version, assigned_dir])
-            
-            core_repo_dir = machine_core_dir / f"{self.name}"
-            if not core_repo_dir.exists():
-                print_command(["cp", "-r", self.subject_repo, machine_core_dir], self.verbose)
-                sp.check_call(["cp", "-r", self.subject_repo, machine_core_dir])

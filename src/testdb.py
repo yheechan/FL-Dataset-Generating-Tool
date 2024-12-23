@@ -27,19 +27,17 @@ db = CRUD(host, port, user, password, database)
 res = db.table_exists("test_table")
 
 
+special = "AND age in (%s)" % ",".join(["%d" % tc for tc in [30, 40]])
+
 db.update(
     "test_table",
-    set_values={"test": True},
-    conditions={"name": "Heechan"}
+    set_values={"test": False},
+    conditions={"test": True},
+    special=special
 )
 
 
-print(res)
-res = db.read(
-    "test_table",
-    columns="*",
-    conditions={"name": "Heechan", "test": True},
-)
+res = db.read("test_table")
 
 for row in res:
     print(row)
