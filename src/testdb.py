@@ -25,12 +25,20 @@ database = config["database"]["database"]
 
 db = CRUD(host, port, user, password, database)
 res = db.table_exists("test_table")
+
+
+db.update(
+    "test_table",
+    set_values={"test": True},
+    conditions={"name": "Heechan"}
+)
+
+
 print(res)
 res = db.read(
     "test_table",
     columns="*",
-    conditions={"name": "Heechan"},
-    special="AND test is NULL"
+    conditions={"name": "Heechan", "test": True},
 )
 
 for row in res:

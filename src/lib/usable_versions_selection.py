@@ -32,6 +32,7 @@ class UsableVersionSelection(Subject):
         self.initialize_working_directory()
         
         # THIS IS REMOVED WHILE CHANGING FROM FILE TO DB
+        self.redoing = False
         """
         self.versions_list = get_dirs_in_dir(self.initial_selected_dir)
         if len(self.versions_list) != 0:
@@ -49,7 +50,6 @@ class UsableVersionSelection(Subject):
         # 1. Select initial buggy versions at random
         self.select_initial_buggy_versions()
         self.versions_list = get_dirs_in_dir(self.initial_selected_dir)
-
 
         # 4. Assign versions to machines
         self.versions_assignments = self.assign_works_to_machines(self.versions_list)
@@ -86,7 +86,6 @@ class UsableVersionSelection(Subject):
             job.join()
         
         print(f">> Finished testing all versions now retrieving usable versions")
-        self.fileManager.collect_data_remote("usable_buggy_versions", self.usable_versions_dir, self.versions_assignments)
         self.fileManager.collect_data_remote("crashed_buggy_mutants", self.crashed_buggy_mutants_dir, self.versions_assignments)
     
     def test_single_machine_core_remote(self, machine, core, homedir, versions):
@@ -112,7 +111,7 @@ class UsableVersionSelection(Subject):
 
             cmd = [
                 "ssh", f"{machine_name}",
-                f"cd {homedir}FL-dataset-generation-{subject_name}/src && python3 test_version_usability_check.py --subject {subject_name} --machine {machine_name} --core {core_name} --version {version_name} {optional_flag}"
+                f"cd {homedir}FL-dataset-generation-{subject_name}/src && python3 test_version_usability_check.py --subject {subject_name} --experiment-name {self.experiment_name} --machine {machine_name} --core {core_name} --version {version_name} {optional_flag}"
             ]
             print_command(cmd, self.verbose)
             res = sp.run(cmd, stdout=sp.PIPE, stderr=sp.PIPE)
@@ -154,8 +153,8 @@ class UsableVersionSelection(Subject):
             
             cmd = [
                 "python3", "test_version_usability_check.py",
-                "--subject", subject_name, "--machine", machine_name, "--core", core_name,
-                "--version", version_name
+                "--subject", subject_name, "--experiment-name", self.experiment_name,
+                "--machine", machine_name, "--core", core_name, "--version", version_name
             ]
             if need_configure:
                 cmd.append("--need-configure")
@@ -264,8 +263,8 @@ class UsableVersionSelection(Subject):
             # 1. Update bug_info table in db
             self.db.update(
                 "bug_info",
-                {"initial": True},
-                {
+                set_values={"initial": True},
+                conditions={
                     "subject": self.name,
                     "experiment_name": self.experiment_name,
                     "version": buggy_mutant,
@@ -345,6 +344,9 @@ class UsableVersionSelection(Subject):
                 target_code_file = info[0]
                 buggy_code_file = info[1]
                 buggy_lineno = int(info[2])
+
+                target_code_file = "/".join(target_code_file.split("/")[1:])
+                target_code_file = f"{self.name}/{target_code_file}"
 
                 self.db.insert(
                     "bug_info",

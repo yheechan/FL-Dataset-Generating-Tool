@@ -205,12 +205,38 @@ class Worker:
     # ++++++++++++++++++++++++++
     # ++++++ Version Info ++++++
     # ++++++++++++++++++++++++++
-    def set_testcases(self, version_dir):
-        self.failing_tcs_list = get_tc_list(version_dir / "testsuite_info" / "failing_tcs.txt")
-        self.passing_tcs_list = get_tc_list(version_dir / "testsuite_info" / "passing_tcs.txt")
-        self.excluded_failing_tcs_list = get_tc_list(version_dir / "testsuite_info" / "excluded_failing_tcs.txt")
-        self.excluded_passing_tcs_list = get_tc_list(version_dir / "testsuite_info" / "excluded_passing_tcs.txt")
-        self.ccts_list = get_tc_list(version_dir / "testsuite_info" / "ccts.txt")
+    def set_testcases(self, version_name, experiment_name):
+        res = self.db.read(
+            "tc_info",
+            columns="tc_name, tc_result",
+            conditions={
+                "subject": self.name,
+                "experiment_name": experiment_name,
+                "version": version_name
+            }
+        )
+
+        self.failing_tcs_list = []
+        self.passing_tcs_list = []
+        self.crashed_tcs_list = []
+        self.excluded_failing_tcs_list = []
+        self.excluded_passing_tcs_list = []
+        self.ccts_list = []
+        for row in res:
+            tc_name = row[0]
+            tc_result = row[1]
+            if tc_result == "fail":
+                self.failing_tcs_list.append(tc_name)
+            elif tc_result == "pass":
+                self.passing_tcs_list.append(tc_name)
+            elif tc_result == "crash":
+                self.crashed_tcs.append(tc_name)
+            elif tc_result == "excluded_fail":
+                self.excluded_failing_tcs_list.append(tc_name)
+            elif tc_result == "excluded_pass":
+                self.excluded_passing_tcs_list.append(tc_name)
+            elif tc_result == "cct":
+                self.ccts_list.append(tc_name)
 
     def set_line2function_dict(self, version_dir):
         line2function_file = version_dir / "line2function_info" / "line2function.json"
@@ -466,17 +492,20 @@ class Worker:
     # +++++++++++++++++++++++++++
     # ++++++ Commons Info++++++++
     # +++++++++++++++++++++++++++
-    def get_bug_info(self, target_dir):
-        bug_info_csv = target_dir / "bug_info.csv"
-        assert bug_info_csv.exists(), f"Bug info csv does not exist: {bug_info_csv}"
-
-        with open(bug_info_csv, "r") as f:
-            lines = f.readlines()
-            target_code_file, mutant_code_file, buggy_lineno = lines[1].strip().split(",")
-
-        # 2024-09-18 changed to not return path
-        # target_code_file = self.core_dir / target_code_file
-        # assert target_code_file.exists(), f"Target code file does not exist: {target_code_file}"
+    def get_bug_info(self, version_name, experiment_name):
+        res = self.db.read(
+            "bug_info",
+            columns="target_code_file, buggy_code_file, pre_start_line",
+            conditions={
+                "subject": self.name,
+                "experiment_name": experiment_name,
+                "version": version_name
+            }
+        )
+        assert len(res) == 1, f"Bug info does not exist for {version_name}"
+        target_code_file = res[0][0]
+        mutant_code_file = res[0][1]
+        buggy_lineno = str(res[0][2])
         
         return target_code_file, mutant_code_file, buggy_lineno
 

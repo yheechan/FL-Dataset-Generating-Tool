@@ -4,20 +4,23 @@ from lib.utils import *
 from lib.worker_base import Worker
 
 class WorkerStage02(Worker):
-    def __init__(self, subject_name, machine, core, version_name, need_configure, last_version, verbose=False):
+    def __init__(self, subject_name, experiment_name, machine, core, version_name, need_configure, last_version, verbose=False):
         super().__init__(subject_name, "stage02", "selecting_usable_buggy_mutants", machine, core, verbose)
+        self.experiment_name = experiment_name
         
         self.assigned_works_dir = self.core_dir / f"stage02-assigned_works"
         self.need_configure = need_configure
         self.last_version = last_version
 
+        self.version_name = version_name
         self.version_dir = self.assigned_works_dir / version_name
 
-        self.target_code_file, self.buggy_code_filename, self.buggy_lineno = self.get_bug_info(self.version_dir)
+        self.connect_to_db()
+        self.target_code_file, self.buggy_code_filename, self.buggy_lineno = self.get_bug_info(self.version_name, self.experiment_name)
         self.target_code_file_path = self.core_dir / self.target_code_file
         assert version_name == self.buggy_code_filename, f"Version name {version_name} does not match with buggy code filename {self.buggy_code_filename}"
     
-        self.set_testcases(self.version_dir)
+        self.set_testcases(self.version_name, self.experiment_name)
 
         self.buggy_code_file = self.get_buggy_code_file(self.version_dir, self.buggy_code_filename)
 
@@ -29,9 +32,6 @@ class WorkerStage02(Worker):
 
         self.set_target_preprocessed_files()
         self.set_filtered_files_for_gcovr()
-
-        self.usable_buggy_versions_dir = out_dir / f"{self.name}" / "usable_buggy_versions"
-        self.usable_buggy_versions_dir.mkdir(exist_ok=True, parents=True)
 
         self.crashed_buggy_mutants_dir = out_dir / f"{self.name}" / "crashed_buggy_mutants"
         self.crashed_buggy_mutants_dir.mkdir(exist_ok=True, parents=True)
@@ -129,7 +129,23 @@ class WorkerStage02(Worker):
             print(f"Buggy line {self.buggy_lineno} is covered by test case {tc_script_name}")
 
         # 5. Save the version
-        self.save_version(self.version_dir, self.usable_buggy_versions_dir)
+        self.save_version()
 
         # 6. Apply patch reverse
         self.apply_patch(self.target_code_file_path, self.buggy_code_file, patch_file, True)
+
+        # 7. delete the coverage directory
+        sp.check_call(["rm", "-rf", self.cov_dir])
+    
+    def save_version(self):
+        print(f"Version {self.version_dir.name} is usable")
+        self.db.update(
+            "bug_info",
+            set_values={"usable": True},
+            conditions={
+                "subject": self.name,
+                "version": self.version_name,
+                "experiment_name": self.experiment_name,
+            }
+        )
+
