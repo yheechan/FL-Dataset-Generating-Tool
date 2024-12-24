@@ -26,6 +26,9 @@ class BuggyMutantCollection(Subject):
     def run(self):
         # 1. Read configurations and initialize working directory: self.work
         self.initialize_working_directory()
+        self.connect_to_db()
+        self.init_tables()
+        self.db.__del__()
         
         check = []
         self.redoing = False
@@ -81,32 +84,17 @@ class BuggyMutantCollection(Subject):
     def write_mut_op_to_bug_info_table(self):
         self.connect_to_db()
 
-        # add_column to bug_info table: mut_op
-        new_columns = [
-            "mut_op TEXT",
-            "pre_start_line INT",
-            "pre_start_col INT",
-            "pre_end_line INT",
-            "pre_end_col INT",
-            "pre_mut TEXT",
-            "post_start_line INT",
-            "post_start_col INT",
-            "post_end_line INT",
-            "post_end_col INT",
-            "post_mut TEXT"
-        ]
-        for column in new_columns:
-            col_name = column.split()[0]
-            if not self.db.column_exists("bug_info", col_name):
-                self.db.add_column("bug_info", column)
-
         # get mutation info
         mut_info = self.get_mutants_info()
 
         # get bug_info
         bug_info = self.db.read(
             "bug_info",
-            columns="subject, experiment_name, version, type, target_code_file, buggy_code_file"
+            columns="subject, experiment_name, version, type, target_code_file, buggy_code_file",
+            conditions={
+                "subject": self.name,
+                "experiment_name": self.experiment_name
+            }
         )
 
         # update bug_info
@@ -149,6 +137,53 @@ class BuggyMutantCollection(Subject):
                 conditions=this_conditions
             )
 
+    def init_tables(self):
+        # Create table if not exists: tc_info
+        if not self.db.table_exists("tc_info"):
+            self.db.create_table(
+                "tc_info",
+                "subject TEXT, experiment_name TEXT, version TEXT, tc_name TEXT, tc_result TEXT, tc_ret_code INT"
+            )
+
+            # Create a composite index on (subject, experiment_name, version)
+            self.db.create_index(
+                "tc_info",
+                "idx_tc_info_subject_experiment_version",
+                "subject, experiment_name, version"
+            )
+        
+        # Create table if not exists: bug_info
+        if not self.db.table_exists("bug_info"):
+            self.db.create_table(
+                "bug_info",
+                "subject TEXT, experiment_name TEXT, version TEXT, type TEXT, target_code_file TEXT, buggy_code_file TEXT"
+            )
+
+            # Create a composite index on (subject, experiment_name, version)
+            self.db.create_index(
+                "bug_info",
+                "idx_bug_info_subject_experiment_version",
+                "subject, experiment_name, version"
+            )
+
+            # Add mut info columns in bug info table
+            new_columns = [
+                "mut_op TEXT",
+                "pre_start_line INT",
+                "pre_start_col INT",
+                "pre_end_line INT",
+                "pre_end_col INT",
+                "pre_mut TEXT",
+                "post_start_line INT",
+                "post_start_col INT",
+                "post_end_line INT",
+                "post_end_col INT",
+                "post_mut TEXT"
+            ]
+            for column in new_columns:
+                col_name = column.split()[0]
+                if not self.db.column_exists("bug_info", col_name):
+                    self.db.add_column("bug_info", column)
 
     # +++++++++++++++++++++++++++
     # ++++++ Testing stage ++++++

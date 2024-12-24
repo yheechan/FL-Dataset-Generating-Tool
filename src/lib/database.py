@@ -48,6 +48,21 @@ class CRUD(Database):
         except Exception as e:
             print(f"Error creating table: {e}")
             self.db.rollback()
+    
+    def create_index(self, table_name, index_name, columns):
+        """
+        Create an index on a table with explicit locking to prevent deadlocks.
+        """
+        try:
+            query = f"CREATE INDEX IF NOT EXISTS {index_name} ON {table_name} ({columns})"
+            self.cursor.execute(query)
+            self.commit()
+        except psycopg2.errors.DeadlockDetected as e:
+            print(f"Deadlock detected while creating index '{index_name}' on table '{table_name}': {e}")
+            self.db.rollback()
+        except Exception as e:
+            print(f"Error creating index: {e}")
+            self.db.rollback()
 
     def drop_table(self, table_name):
         query = f"DROP TABLE IF EXISTS {table_name}"

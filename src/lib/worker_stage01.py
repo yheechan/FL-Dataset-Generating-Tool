@@ -111,13 +111,6 @@ class WorkerStage01(Worker):
     def save_mutant(self):
         self.connect_to_db()
 
-        # Create table if not exists: tc_info
-        if not self.db.table_exists("tc_info"):
-            self.db.create_table(
-                "tc_info",
-                "subject TEXT, experiment_name TEXT, version TEXT, tc_name TEXT, tc_result TEXT, tc_ret_code INT"
-            )
-        
         # Delete existing data for the version
         self.db.delete(
             "tc_info",
@@ -132,13 +125,6 @@ class WorkerStage01(Worker):
         self.write_tc_info(self.failing_tcs, "fail")
         self.write_tc_info(self.passing_tcs, "pass")
         self.write_tc_info(self.crashed_tcs, "crash")
-    
-        # Create table if not exists: bug_info
-        if not self.db.table_exists("bug_info"):
-            self.db.create_table(
-                "bug_info",
-                "subject TEXT, experiment_name TEXT, version TEXT, type TEXT, target_code_file TEXT, buggy_code_file TEXT"
-            )
         
         # Write bug info
         self.db.insert(

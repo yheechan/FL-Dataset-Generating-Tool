@@ -1,7 +1,6 @@
 import time
 import multiprocessing
 import subprocess as sp
-import random
 
 from lib.utils import *
 from lib.subject_base import Subject
@@ -9,9 +8,12 @@ from lib.file_manager import FileManager
 
 class SBFLExtraction(Subject):
     def __init__(
-            self, subject_name, target_set_name, verbose=False
+            self, subject_name, experiment_name, target_set_name, verbose=False
             ):
         super().__init__(subject_name, "stage05", verbose)
+
+        self.experiment_name = experiment_name
+
         self.sbfl_features_dir = out_dir / self.name / f"sbfl_features"
         self.sbfl_features_dir.mkdir(exist_ok=True)
 
@@ -266,8 +268,8 @@ class SBFLExtraction(Subject):
     # +++++++++++++++++++++++++++++
     def prepare_for_testing_versions(self):
         if self.experiment.experiment_config["use_distributed_machines"]:
-            self.prepare_for_remote(self.fileManager, self.versions_assignments)
+            self.prepare_for_remote(self.fileManager, self.versions_assignments, dir_form=True)
         else:
-            self.prepare_for_local(self.fileManager, self.versions_assignments)
+            self.prepare_for_local(self.fileManager, self.versions_assignments, dir_form=True)
     
     

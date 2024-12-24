@@ -179,9 +179,9 @@ class UsableVersionSelection(Subject):
     # +++++++++++++++++++++++++++++
     def prepare_for_testing_versions(self):
         if self.experiment.experiment_config["use_distributed_machines"]:
-            self.prepare_for_remote()
+            self.prepare_for_remote(self.fileManager, self.versions_assignments)
         else:
-            self.prepare_for_local()
+            self.prepare_for_local(self.fileManager, self.versions_assignments)
     
     def prepare_for_remote(self):
         self.fileManager.make_assigned_works_dir_remote(self.experiment.machineCores_list, self.stage_name)

@@ -5,6 +5,7 @@ import shutil
 from lib.utils import *
 from lib.experiment import Experiment
 from lib.database import CRUD
+from lib.file_manager import FileManager
 
 class Subject:
     def __init__(self, subject_name, stage_name, verbose=False):
@@ -212,7 +213,7 @@ class Subject:
         return work_assignments
 
 
-    def prepare_for_local(self, fileManager, versions_assignments):
+    def prepare_for_local(self, fileManager, versions_assignments, dir_form=False):
         self.working_env = fileManager.make_working_env_local()
 
         for machine_core, work_infos in versions_assignments.items():
@@ -222,14 +223,19 @@ class Subject:
             assigned_dir = machine_core_dir / f"{self.stage_name}-assigned_works"
             assigned_dir.mkdir(exist_ok=True, parents=True)
 
-            for version_name, code_path in work_infos:
-                version_dir = assigned_dir / version_name / "buggy_code_file"
-                print_command(["mkdir", "-p", version_dir], self.verbose)
-                version_dir.mkdir(exist_ok=True, parents=True)
-                # copy buggy code file to version_dir
-                print_command(["cp", code_path, version_dir], self.verbose)
-                sp.check_call(["cp", code_path, version_dir])
-            
+            if dir_form:
+                for version_dir in work_infos:
+                    print_command(["cp", "-r", version_dir, assigned_dir], self.verbose)
+                    sp.check_call(["cp", "-r", version_dir, assigned_dir])
+            else:
+                for version_name, code_path in work_infos:
+                    version_dir = assigned_dir / version_name / "buggy_code_file"
+                    print_command(["mkdir", "-p", version_dir], self.verbose)
+                    version_dir.mkdir(exist_ok=True, parents=True)
+                    # copy buggy code file to version_dir
+                    print_command(["cp", code_path, version_dir], self.verbose)
+                    sp.check_call(["cp", code_path, version_dir])
+                
             core_repo_dir = machine_core_dir / f"{self.name}"
             if core_repo_dir.exists():
                 shutil.rmtree(core_repo_dir)
@@ -237,9 +243,9 @@ class Subject:
             print_command(["cp", "-r", self.subject_repo, machine_core_dir], self.verbose)
             sp.check_call(["cp", "-r", self.subject_repo, machine_core_dir])
 
-    def prepare_for_remote(self, fileManager, versions_assignments):
+    def prepare_for_remote(self, fileManager:FileManager, versions_assignments, dir_form=False):
         fileManager.make_assigned_works_dir_remote(self.experiment.machineCores_list, self.stage_name)
-        fileManager.send_works_remote(versions_assignments, self.stage_name)
+        fileManager.send_works_remote(versions_assignments, self.stage_name, dir_form=dir_form)
         
         fileManager.send_repo_remote(self.subject_repo, self.experiment.machineCores_list)
 

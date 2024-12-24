@@ -30,6 +30,7 @@ class PrerequisitePreparation(Subject):
 
         # 2. get versions from db
         self.connect_to_db()
+        self.init_tables()
         self.versions_list = self.get_usable_buggy_versions()
 
         # 4. Assign versions to machines
@@ -51,6 +52,49 @@ class PrerequisitePreparation(Subject):
             "AND initial IS TRUE AND usable IS TRUE AND prerequisites IS NULL"
         )
         return bug_list
+
+    def init_tables(self,):
+        # Create table if not exists: line_info
+        if not self.db.table_exists("line_info"):
+            self.db.create_table(
+                "line_info",
+                "subject TEXT, experiment_name TEXT, version TEXT, buggy_file TEXT DEFAULT NULL, buggy_function TEXT DEFAULT NULL, buggy_line INT DEFAULT NULL, line_idx INT, is_buggy_line BOOLEAN DEFAULT NULL"
+            )
+
+            # Create a composite index on (subject, experiment_name, version)
+            self.db.create_index(
+                "line_info",
+                "idx_line_info_subject_experiment_name_version",
+                "subject, experiment_name, version",
+            )
+        
+        # Make coverage csv file
+        if not self.db.column_exists("tc_info", "cov_bit_seq"):
+            self.db.add_column("tc_info", "cov_bit_seq TEXT DEFAULT NULL")
+        
+        # Add buggy_line_key in bug info table
+        if not self.db.column_exists("bug_info", "buggy_file"):
+            self.db.add_column("bug_info", "buggy_file TEXT DEFAULT NULL")
+        if not self.db.column_exists("bug_info", "buggy_function"):
+            self.db.add_column("bug_info", "buggy_function TEXT DEFAULT NULL")
+        if not self.db.column_exists("bug_info", "buggy_line"):
+            self.db.add_column("bug_info", "buggy_line INT DEFAULT NULL")
+
+        # Add summary columns in bug info table
+        cov_summary = [
+            "num_failing_tcs INT",
+            "num_passing_tcs INT",
+            "num_ccts INT",
+            "num_total_tcs INT",
+            "num_lines_executed_by_failing_tcs INT",
+            "num_lines_executed_by_passing_tcs INT",
+            "num_lines_executed_by_ccts INT",
+            "num_total_lines_executed INT",
+            "num_total_lines INT"
+        ]
+        for col in cov_summary:
+            if not self.db.column_exists("bug_info", col):
+                self.db.add_column("bug_info", col)
 
     
     # +++++++++++++++++++++++++++

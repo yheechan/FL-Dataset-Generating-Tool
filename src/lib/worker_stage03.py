@@ -118,23 +118,6 @@ class WorkerStage03(Worker):
         self.buggy_line_key = self.make_key(self.target_code_file, self.buggy_lineno)
         print_command([">> buggy_line_key: ", self.buggy_line_key], self.verbose)
 
-        if not self.db.column_exists("bug_info", "buggy_line_key"):
-            self.db.add_column("bug_info", "buggy_line_key TEXT DEFAULT NULL")
-        self.db.update(
-            "bug_info",
-            set_values={"buggy_line_key": self.buggy_line_key},
-            conditions={
-                "subject": self.name,
-                "experiment_name": self.experiment_name,
-                "version": self.version_name
-            }
-        )
-
-        # Make coverage csv file
-        if not self.db.column_exists("tc_info", "cov_bit_seq"):
-            self.db.add_column("tc_info", "cov_bit_seq TEXT DEFAULT NULL")
-
-
         total_tc_list = self.failing_tcs_list + self.passing_tcs_list + self.ccts_list
         total_tc_list = sorted(total_tc_list, key=sort_testcase_script_name)
         print_command([">> total_tc_list length: ", len(total_tc_list)], self.verbose)
@@ -183,11 +166,17 @@ class WorkerStage03(Worker):
         self.write_buggy_line_key()
     
     def write_buggy_line_key(self):
-        if not self.db.column_exists("bug_info", "buggy_line_key"):
-            self.db.add_column("bug_info", "buggy_line_key TEXT DEFAULT NULL")
+        bug_info = self.buggy_line_key.split("#")
+        bug_file = bug_info[0]
+        bug_function = bug_info[1]
+        bug_line = int(bug_info[2])
         self.db.update(
             "bug_info",
-            set_values={"buggy_line_key": self.buggy_line_key},
+            set_values={
+                "buggy_file": bug_file,
+                "buggy_function": bug_function,
+                "buggy_line": bug_line
+            },
             conditions={
                 "subject": self.name,
                 "experiment_name": self.experiment_name,
@@ -196,11 +185,7 @@ class WorkerStage03(Worker):
         )
 
 
-    def write_summary(self):
-        for col in self.coverage_summary:
-            if not self.db.column_exists("bug_info", col):
-                self.db.add_column("bug_info", f"{col} INT DEFAULT NULL")
-        
+    def write_summary(self):       
         self.db.update(
             "bug_info",
             set_values=self.coverage_summary,
@@ -245,12 +230,6 @@ class WorkerStage03(Worker):
             )
     
     def write_lines(self, col_data):
-        if not self.db.table_exists("line_info"):
-            self.db.create_table(
-                "line_info",
-                "subject TEXT, experiment_name TEXT, version TEXT, line_key TEXT, line_id INT, is_buggy_line BOOLEAN DEFAULT NULL"
-            )
-        
         self.db.delete(
             "line_info",
             conditions={
@@ -261,8 +240,12 @@ class WorkerStage03(Worker):
         )
         
         for idx, key in enumerate(col_data):
-            cols = "subject, experiment_name, version, line_key, line_id"
-            vals = f"'{self.name}', '{self.experiment_name}', '{self.version_name}', '{key}', {idx}"
+            bug_info = key.split("#")
+            bug_file = bug_info[0]
+            bug_function = bug_info[1]
+            bug_line = int(bug_info[2])
+            cols = "subject, experiment_name, version, buggy_file, buggy_function, buggy_line, line_idx"
+            vals = f"'{self.name}', '{self.experiment_name}', '{self.version_name}', '{bug_file}', '{bug_function}', {bug_line}, {idx}"
 
             if key == self.buggy_line_key:
                 cols += ", is_buggy_line"
