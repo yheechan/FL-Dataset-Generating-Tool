@@ -84,6 +84,7 @@ class CRUD(Database):
             values = []
         if special != "":
             query += f" {special}"
+        print(query, values)
         return self.execute(query, values)
 
     def update(self, table_name, set_values={}, conditions={}, special=""):

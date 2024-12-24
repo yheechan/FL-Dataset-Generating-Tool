@@ -7,6 +7,16 @@ for b in a:
   print(b)
 """
 
+def foo(mydata):
+  mydata["hello world"] = [1, 2, 3]
+
+
+init_data = {}
+print(init_data)
+foo(init_data)
+print(init_data)
+exit()
+
 
 curr_file = Path(__file__).resolve()
 curr_dir = curr_file.parent

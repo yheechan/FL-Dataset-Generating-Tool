@@ -10,22 +10,22 @@ from lib.file_manager import FileManager
 
 class MBFLExtraction(Subject):
     def __init__(
-            self, subject_name, target_set_name, trial,
+            self, subject_name, experiment_name,
+            target_set_name, trial,
             verbose=False, past_trials=None, exclude_init_lines=False, # 2024-08-13 exclude lines executed on initialization
             parallel_cnt=0, dont_terminate_leftovers=False, # 2024-08-13 implement parallel mode
             remain_one_bug_per_line_flag=False # 2024-08-16 implement flag for remaining one bug per line
             ):
+        self.experiment_name = experiment_name
         self.trial = trial
         self.past_trials = past_trials
-        self.stage_name = f"stage04-{trial}"
+        self.stage_name = f"stage05-{trial}"
         self.generated_mutants_dirname = f"generated_mutants"
         self.exclude_init_lines = exclude_init_lines
         self.parallel_cnt = parallel_cnt
         self.dont_terminate_leftovers = dont_terminate_leftovers
         self.remain_one_bug_per_line_flag = remain_one_bug_per_line_flag
         super().__init__(subject_name, self.stage_name, verbose) # 2024-08-07 add-mbfl
-        self.mbfl_features_dir = out_dir / self.name / f"mbfl_features"
-        self.mbfl_features_dir.mkdir(exist_ok=True)
 
         self.fileManager = FileManager(self.name, self.work, self.verbose)
 
@@ -35,6 +35,9 @@ class MBFLExtraction(Subject):
     def run(self):
         # 1. Read configurations and initialize working directory: self.work
         self.initialize_working_directory()
+        self.connect_to_db()
+        self.init_tables()
+        self.db.__del__()
 
         # 2. get versions from set_dir
         self.versions_list = get_dirs_in_dir(self.target_set_dir)
@@ -56,6 +59,51 @@ class MBFLExtraction(Subject):
 
         # 6. Test versions
         self.test_versions()
+    
+    def init_tables(self,):
+        # Add for_sbfl_ranked_mbfl, for_random_mbfl column to line_info table
+        if not self.db.column_exists("line_info", "for_sbfl_ranked_mbfl_asc"):
+            self.db.add_column("line_info", "for_sbfl_ranked_mbfl_asc BOOLEAN DEFAULT NULL")
+        if not self.db.column_exists("line_info", "for_sbfl_ranked_mbfl_desc"):
+            self.db.add_column("line_info", "for_sbfl_ranked_mbfl_desc BOOLEAN DEFAULT NULL")
+        if not self.db.column_exists("line_info", "for_random_mbfl"):
+            self.db.add_column("line_info", "for_random_mbfl BOOLEAN DEFAULT NULL")
+        
+        if not self.db.table_exists("mutation_info"):
+            cols = [
+                "subject TEXT",
+                "experiment_name TEXT",
+                "version TEXT",
+                "is_for_test BOOLEAN DEFAULT NULL",
+                "build_result BOOLEAN DEFAULT NULL",
+                "parallel_name TEXT",
+                "targetting_file TEXT",
+                "mutation_dirname TEXT",
+                "mutant_filename TEXT",
+                "mutant_idx INT",
+                "line_idx INT",
+                "mut_op TEXT",
+                "f2p INT",
+                "p2f INT",
+                "f2f INT",
+                "p2p INT",
+                "p2f_cct INT",
+                "p2p_cct INT",
+            ]
+            col_str = ",".join(cols)
+            self.db.create_table(
+                "mutation_info",
+                columns=col_str
+            )
+            self.db.create_index(
+                "mutation_info",
+                index_name="idx_mutation_info_subject_experiment_name_version",
+                columns="subject, experiment_name, version"
+            )
+        
+        # Add mbfl column in bug_info table
+        if not self.db.column_exists("bug_info", "mbfl"):
+            self.db.add_column("bug_info", "mbfl BOOLEAN DEFAULT NULL")
     
     def remain_one_bug_per_line(self): # 2024-08-01
         included = 0
@@ -162,7 +210,7 @@ class MBFLExtraction(Subject):
             job.join()
         
         print(f">> Finished testing all versions now retrieving versions with its mbfl data")
-        self.fileManager.collect_data_remote("mbfl_features", self.mbfl_features_dir, self.versions_assignments)
+        # self.fileManager.collect_data_remote("mbfl_features", self.mbfl_features_dir, self.versions_assignments)
     
     def test_single_machine_remote(self, machine, machine_batch_dict):
         for batch_id, machine_core_dict in machine_batch_dict.items():
@@ -255,7 +303,7 @@ class MBFLExtraction(Subject):
 
         cmd = [
             "ssh", f"{machine_name}",
-            f"cd {homedir}FL-dataset-generation-{subject_name}/src && python3 test_version_mbfl_features.py --subject {subject_name} --machine {machine_name} --core {core_name} --version {version_name} --trial {self.trial} {optional_flag}"
+            f"cd {homedir}FL-dataset-generation-{subject_name}/src && python3 test_version_mbfl_features.py --subject {subject_name} --experiment-name {self.experiment_name} --machine {machine_name} --core {core_name} --version {version_name} --trial {self.trial} {optional_flag}"
         ] # 2024-08-07 add-mbfl
         print_command(cmd, self.verbose)
         res = sp.run(cmd, stdout=sp.PIPE, stderr=sp.PIPE)
@@ -354,7 +402,9 @@ class MBFLExtraction(Subject):
         
         cmd = [
             "python3", "test_version_mbfl_features.py",
-            "--subject", subject_name, "--machine", machine_name, "--core", core_name,
+            "--subject", subject_name,
+            "--experiment-name", self.experiment_name,
+            "--machine", machine_name, "--core", core_name,
             "--trial", self.trial, # 2024-08-07 add-mbfl
             "--version", version_name
         ]
@@ -388,6 +438,6 @@ class MBFLExtraction(Subject):
     # +++++++++++++++++++++++++++++
     def prepare_for_testing_versions(self):
         if self.experiment.experiment_config["use_distributed_machines"]:
-            self.prepare_for_remote(self.fileManager, self.versions_assignments)
+            self.prepare_for_remote(self.fileManager, self.versions_assignments, dir_form=True)
         else:
-            self.prepare_for_local(self.fileManager, self.versions_assignments)
+            self.prepare_for_local(self.fileManager, self.versions_assignments, dir_form=True)

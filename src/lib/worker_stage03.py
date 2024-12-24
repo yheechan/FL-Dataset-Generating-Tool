@@ -117,6 +117,7 @@ class WorkerStage03(Worker):
         # Make buggy line key and write to bug_info table
         self.buggy_line_key = self.make_key(self.target_code_file, self.buggy_lineno)
         print_command([">> buggy_line_key: ", self.buggy_line_key], self.verbose)
+        self.buggy_line_idx = -1
 
         total_tc_list = self.failing_tcs_list + self.passing_tcs_list + self.ccts_list
         total_tc_list = sorted(total_tc_list, key=sort_testcase_script_name)
@@ -175,7 +176,8 @@ class WorkerStage03(Worker):
             set_values={
                 "buggy_file": bug_file,
                 "buggy_function": bug_function,
-                "buggy_lineno": bug_line
+                "buggy_lineno": bug_line,
+                "buggy_line_idx": self.buggy_line_idx
             },
             conditions={
                 "subject": self.name,
@@ -283,6 +285,8 @@ class WorkerStage03(Worker):
                     assert key not in cov_data["col_data"], f"Key {key} already exists in the row data"
                     cov_data["col_data"].append(key)
                     self.coverage_summary["num_total_lines"] += 1
+                    if key == self.buggy_line_key:
+                        self.buggy_line_idx = cnt
                 else:
                     assert key == cov_data["col_data"][cnt], f"Key {key} does not match with the col data key {cov_data['col_data'][cnt]}"
 
@@ -314,6 +318,7 @@ class WorkerStage03(Worker):
 
                 # assert that failing line executes buggy line
                 if is_pass == False and key == self.buggy_line_key:
+                    assert self.buggy_line_idx != -1, f"Buggy line index is not set"
                     assert covered == "1", f"Failing test case {tc_script_name} does not execute buggy line {self.buggy_line_key}"
                     print(f"Failing test case {tc_script_name} executes buggy line {self.buggy_line_key}")
                 

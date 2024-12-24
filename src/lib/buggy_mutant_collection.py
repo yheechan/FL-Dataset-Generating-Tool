@@ -482,6 +482,7 @@ class BuggyMutantCollection(Subject):
                 # read with csv
                 csv_reader = csv.reader(fp, escapechar='\\', quotechar='"', delimiter=',')
                 next(csv_reader)
+                next(csv_reader)
                 for row in csv_reader:
                     mut_name = row[0]
                     op = row[1]

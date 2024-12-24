@@ -12,13 +12,15 @@ from lib.susp_score_formula import *
 
 class WorkerStage05(Worker):
     def __init__(
-            self, subject_name, machine, core, version_name, trial,
+            self, subject_name, experiment_name,
+            machine, core, version_name, trial,
             verbose=False, past_trials=None, exclude_init_lines=False, # 2024-08-13 exclude lines executed on initialization
             parallel_cnt=0, parallel_mode=False# 2024-08-13 implement parallel mode
         ):
+        self.experiment_name = experiment_name
         self.trial = trial
         self.past_trials = past_trials
-        self.stage_name = f"stage04-{trial}" # 2024-08-07 add-mbfl
+        self.stage_name = f"stage05-{trial}" # 2024-08-07 add-mbfl
         self.exclude_init_lines = exclude_init_lines
         self.parallel_cnt = parallel_cnt
         self.parallel_mode = parallel_mode
@@ -30,25 +32,28 @@ class WorkerStage05(Worker):
         self.version_dir = self.assigned_works_dir / version_name
 
         # Work Information >>
-        self.target_code_file, self.buggy_code_filename, self.buggy_lineno = self.get_bug_info(self.version_dir)
+        self.connect_to_db()
+        self.target_code_file, self.buggy_code_filename, self.buggy_lineno = self.get_bug_info(self.version_name, self.experiment_name)
         self.target_code_file_path = self.core_dir / self.target_code_file
         assert version_name == self.buggy_code_filename, f"Version name {version_name} does not match with buggy code filename {self.buggy_code_filename}"
     
-        self.set_testcases(self.version_dir)
+        self.set_testcases(self.version_name, self.experiment_name)
         self.set_lines_executed_by_failing_tc(self.version_dir, self.target_code_file, self.buggy_lineno)
         self.set_line2function_dict(self.version_dir)
         self.set_filtered_files_for_gcovr()
         self.set_target_preprocessed_files()
+        self.set_line_idx_map(self.version_name, self.experiment_name)
 
         self.buggy_code_file = self.get_buggy_code_file(self.version_dir, self.buggy_code_filename)
-        self.buggy_line_key = self.get_buggy_line_key(self.version_dir)
+        self.buggy_line_key, self.buggy_line_idx = self.get_buggy_line_key(self.experiment_name, self.version_name, with_buggy_line_idx=True)
+        buggy_line_info = self.buggy_line_key.split("#")
+        self.buggy_file = buggy_line_info[0]
+        self.buggy_function = buggy_line_info[1]
+        self.buggy_lineno = int(buggy_line_info[2])
 
         self.musicup_exe = self.tools_dir / "music"
 
         self.core_repo_dir = self.core_dir / self.name
-
-        self.mbfl_features_dir = out_dir / f"{self.name}" / "mbfl_features"
-        self.mbfl_features_dir.mkdir(exist_ok=True, parents=True)
 
         self.mbfl_generated_mutants_dir = out_dir / f"{self.name}" / f"generated_mutants-mbfl-{self.trial}"
         self.mbfl_generated_mutants_dir.mkdir(exist_ok=True, parents=True)
@@ -56,35 +61,22 @@ class WorkerStage05(Worker):
         self.version_mutant_zip = self.mbfl_generated_mutants_dir / f"{self.version_name}.zip"
         self.version_mutant_dir = self.mbfl_generated_mutants_dir / self.version_name
 
-        self.postprocessed_cov_file = self.version_dir / "coverage_info" / "postprocessed_coverage.csv"
-        assert self.postprocessed_cov_file.exists(), f"Postprocessed coverage file {self.postprocessed_cov_file} does not exist"
-
-        self.postprocessed_cov_file_noCCTs = self.version_dir / "coverage_info" / "postprocessed_coverage_noCCTs.csv"
-        assert self.postprocessed_cov_file_noCCTs.exists(), f"Postprocessed coverage file {self.postprocessed_cov_file_noCCTs} does not exist"
-
+        # TODO: THIS CAN MAYBE BE DELETED
         self.mutant2tcs_results_dir = self.version_dir / f"mutant2tcs_results-{self.trial}"
         self.mutant2tcs_results_dir.mkdir(exist_ok=True, parents=True)
-
-        self.selected_mutant_filename = f"selected_mutants-{self.trial}.csv"
-        self.mutation_testing_results_filename = f"mutation_testing_results-{self.trial}.csv"
-        self.mbfl_features_filename = f"mbfl_features-{self.trial}.csv" # 2024-08-07 add-mbfl
-        self.mutation_testing_results_noCCTs_filename = f"mutation_testing_results_noCCTs-{self.trial}.csv" # 2024-09-17
-        self.mbfl_features_noCCTs_filename = f"mbfl_features_noCCTs-{self.trial}.csv" # 2024-09-17
 
     def run(self):
         print(f"Testing version {self.version_dir.name} on {self.machine}::{self.core}")
 
-        self.selected_mutants_file = self.version_dir / self.selected_mutant_filename
-        # if number_of_lines_to_mutation_test is -1, then it means we are not going to reduce target lines
-        if self.number_of_lines_to_mutation_test > 0 and not self.selected_mutants_file.exists() and self.past_trials == None:
-            self.lines_executed_by_failing_tcs = self.reduced_lines_executed_by_failing_tcs()
-        # self.print_lines_executed_by_failing_tcs()
-        elif self.past_trials != None: # 2024-08-07 add-mbfl
-            self.past_selected_mutants = self.get_past_selected_mutants()
-            # print(json.dumps(self.past_selected_mutants, indent=2))
-            self.print_lines_executed_by_failing_tcs()
-            self.lines_executed_by_failing_tcs = self.reduced_lines_executed_by_failing_tcs_based_on_past_trial()
-            self.print_lines_executed_by_failing_tcs()
+        # 1. Select lines to mutation test
+        # based on self.sbfl_rank_based_perc (ex. 0.30) and self.sbfl_rank_based_formula (ex. gp13)
+        # based on self.number_of_lines_to_mutation_test
+        self.selected_lines_executed_by_failing_tcs, \
+            self.selected_lines_sbfl_rank_desc, \
+            self.selected_lines_sbfl_rank_asc, \
+            self.file2lineno_selected = self.select_lines_to_mutation_test()
+
+        
 
         # 1. Generate mutants
         if not self.version_mutant_zip.exists() and not self.version_mutant_dir.exists():
@@ -92,25 +84,37 @@ class WorkerStage05(Worker):
             if res != 0:
                 print(f"Failed to generate mutants on {self.version_dir.name}")
                 return
+            
+            # 2. Save mutation info
+            self.write_mutation_info()
+            # 3. Select mutants
+            # {line_idx: [(target_file_path, target_mutant_file_path, mutant_idx), ...], ...}
+            self.selected_mutations = self.select_mutants()
         elif self.version_mutant_zip.exists() and not self.version_mutant_dir.exists():
             self.unzip_mutants(self.version_mutant_zip, self.mbfl_generated_mutants_dir, self.version_mutant_dir)
         elif not self.version_mutant_zip.exists() and self.version_mutant_dir.exists():
             print(f"Mutants are already generated on {self.version_dir.name}")
         self.targetfile_and_mutantdir = self.initialize_mutants_dir()
 
-        # unzip past mutation files
-        if self.past_trials != None: # 2024-08-07 add-mbfl
-            for past_trial_name in self.past_trials:
-                past_mbfl_generated_mutants_dir = out_dir / f"{self.name}" / f"generated_mutants-mbfl-{past_trial_name}"
-                assert past_mbfl_generated_mutants_dir.exists(), f"{past_mbfl_generated_mutants_dir} doesn't exists"
+        # get selected_mutaions by parallel_name
+        if self.parallel_mode == True:
+            self.selected_mutations = self.get_selected_mutations_by_parallel_name()
 
-                past_version_mutant_zip = past_mbfl_generated_mutants_dir / f"{self.version_name}.zip"
-                past_version_mutant_dir = past_mbfl_generated_mutants_dir / self.version_name
-                if past_version_mutant_zip.exists() and not past_version_mutant_dir.exists():
-                    self.unzip_mutants(past_version_mutant_zip, past_mbfl_generated_mutants_dir, past_version_mutant_dir)
-                elif not past_version_mutant_zip.exists() and past_version_mutant_dir.exists():
-                    print(f"Mutants are already generated on {past_version_mutant_dir.name}")
+
+        # # unzip past mutation files
+        # if self.past_trials != None: # 2024-08-07 add-mbfl
+        #     for past_trial_name in self.past_trials:
+        #         past_mbfl_generated_mutants_dir = out_dir / f"{self.name}" / f"generated_mutants-mbfl-{past_trial_name}"
+        #         assert past_mbfl_generated_mutants_dir.exists(), f"{past_mbfl_generated_mutants_dir} doesn't exists"
+
+        #         past_version_mutant_zip = past_mbfl_generated_mutants_dir / f"{self.version_name}.zip"
+        #         past_version_mutant_dir = past_mbfl_generated_mutants_dir / self.version_name
+        #         if past_version_mutant_zip.exists() and not past_version_mutant_dir.exists():
+        #             self.unzip_mutants(past_version_mutant_zip, past_mbfl_generated_mutants_dir, past_version_mutant_dir)
+        #         elif not past_version_mutant_zip.exists() and past_version_mutant_dir.exists():
+        #             print(f"Mutants are already generated on {past_version_mutant_dir.name}")
         
+
         # 2. Reset subject repo
         self.clean_build()
         self.configure_no_cov()
@@ -119,34 +123,6 @@ class WorkerStage05(Worker):
 
         self.print_generated_mutants_stats()
 
-        # 2. Select mutants
-        # format of selected_fileline2mutants: {filename: {lineno: [[TC1.sh, TC2.sh, ...], [mutant_line_info1, mutant_line_info2, ...]]}}
-        if not self.selected_mutants_file.exists() and self.past_trials == None: # 2024-08-07 add-mbfl
-            self.selected_fileline2mutants = self.select_mutants()
-            self.print_selected_mutants_stats()
-
-            # !!!!!!!==============> THIS PART IS REMOVED BECUASE WE REDUCED LINES AT THE BEGINNING
-            # if self.number_of_lines_to_mutation_test > 0:
-            #     self.selected_fileline2mutants = self.reduced_selected_mutants()
-            #     self.print_selected_mutants_stats()
-            
-            # 3. Save selected mutants information
-            self.save_selected_mutants_info()
-        elif not self.selected_mutants_file.exists() and self.past_trials != None: # 2024-08-07 add-mbfl
-            self.selected_fileline2mutants = self.select_mutants_comparing_to_past_trials()
-            self.print_selected_mutants_stats()
-
-            # !!!!!!!==============> THIS PART IS REMOVED BECUASE WE REDUCED LINES AT THE BEGINNING
-            # if self.number_of_lines_to_mutation_test > 0:
-            #     self.selected_fileline2mutants = self.reduced_selected_mutants()
-            #     self.print_selected_mutants_stats()
-            
-            # 3. Save selected mutants information
-            self.save_selected_mutants_info()
-
-        # 4. Get selected mutants
-        self.selected_mutants = self.get_selected_mutants()
-        self.print_selected_mutants_info()
 
         # 4. Conduct mutation testing
         if self.parallel_cnt == 0: # 2024-08-13 implement parallel mode
@@ -155,12 +131,12 @@ class WorkerStage05(Worker):
             self.begin_mbfl_parallel_process()
 
         if self.parallel_mode == False:
-            # 5. Measure MBFL features
-            self.mbfl_features, self.mbfl_features_noCCTs = self.measure_mbfl_features()
+            # # 5. Measure MBFL features
+            # self.mbfl_features, self.mbfl_features_noCCTs = self.measure_mbfl_features()
 
-            # 6. process to csv
-            self.process2csv(self.mbfl_features, self.mbfl_features_filename, "mbfl_features.csv")
-            self.process2csv(self.mbfl_features_noCCTs, self.mbfl_features_noCCTs_filename, "mbfl_features_noCCTs.csv")
+            # # 6. process to csv
+            # self.process2csv(self.mbfl_features, self.mbfl_features_filename, "mbfl_features.csv")
+            # self.process2csv(self.mbfl_features_noCCTs, self.mbfl_features_noCCTs_filename, "mbfl_features_noCCTs.csv")
 
             # # 8. Zip mutant dir
             self.zip_mutants(self.version_mutant_zip, self.mbfl_generated_mutants_dir, self.version_mutant_dir)
@@ -175,98 +151,131 @@ class WorkerStage05(Worker):
                     self.zip_mutants(past_version_mutant_zip, past_mbfl_generated_mutants_dir, past_version_mutant_dir)
 
             # 7. Save version
-            self.save_version(self.version_dir, self.mbfl_features_dir)
-
-    def reduced_lines_executed_by_failing_tcs_based_on_past_trial(self): # 2024-08-07 add-mbfl
-        reduced_dict = {}
-        for filename, fileline2tcs in self.lines_executed_by_failing_tcs.items():
-            # filename_last = filename.split("/")[-1] # FILENAME STRUCTURE! 20240925
-            filename_last = filename
-
-            # file is in past selected file
-            if filename_last in self.past_selected_mutants.keys():
-                if filename not in reduced_dict:
-                    reduced_dict[filename] = {}
-                
-                for line, tcs in fileline2tcs.items():
-                    # lineno is in past selected line
-                    if line in self.past_selected_mutants[filename_last].keys():
-                        if line not in reduced_dict[filename]:
-                            reduced_dict[filename][line] = tcs
-        for filename in self.lines_executed_by_failing_tcs.keys():
-            if filename not in reduced_dict:
-                reduced_dict[filename] = {}
-        return reduced_dict
+            self.save_version(self.version_dir, "mbfl", self.experiment_name)
+        
+        print(f"Finished testing version {self.version_dir.name} on {self.machine}::{self.core}")
     
-    def reduced_lines_executed_by_failing_tcs(self):
-        buggy_code_filename = self.target_code_file
-        # This was include because in case of libxml2
-        # gcovr makes target files as <target-file>.c
-        # instead of libxml2/<target-file>.c 2024-12-18
-        model_key =  list(self.lines_executed_by_failing_tcs.keys())[0].split("#")[0]
-        if len(model_key.split("/")) == 1:
-            buggy_code_filename = self.target_code_file.split("/")[-1]
-        else:
-            buggy_code_filename = self.target_code_file
-        reduced_dict = {}
-        total_selected_lines = 0
-
-        init_filenm2lineno = {}
-        if self.exclude_init_lines == True: # 2024-08-13 exclude lines executed on initialization
-            init_filenm2lineno = get_linse_exected_on_initialization_as_filenm2lineno(self.version_dir)
-
-        if buggy_code_filename in self.lines_executed_by_failing_tcs:
-            if self.buggy_lineno in self.lines_executed_by_failing_tcs[buggy_code_filename]:
-                reduced_dict[buggy_code_filename] = {
-                    self.buggy_lineno: self.lines_executed_by_failing_tcs[buggy_code_filename][self.buggy_lineno]
+    def select_lines_to_mutation_test(self):
+        # Select buggy line for mutation test
+        # Randomly select lines for mutation test
+        failing_tcs_executed_lines = []
+        for failing_tc in self.failing_tcs_list:
+            res = self.db.read(
+                "tc_info",
+                columns="cov_bit_seq",
+                conditions={
+                    "subject": self.name,
+                    "experiment_name": self.experiment_name,
+                    "version": self.version_name,
+                    "tc_name": failing_tc
                 }
-                total_selected_lines += 1
-            else:
-                print(f">> Buggy line {self.buggy_lineno} does not have any mutants")
+            )
+            cov_bit_seq = res[0][0]
+            for line_idx, cov_bit in enumerate(cov_bit_seq):
+                if cov_bit == "1" and line_idx not in failing_tcs_executed_lines:
+                    failing_tcs_executed_lines.append(line_idx)
+                    if self.buggy_line_idx == line_idx:
+                        print(f"Found buggy line {line_idx} in failing tcs, {failing_tc} executed lines")
+                        failing_tcs_executed_lines.remove(line_idx)
 
-        list_of_lines = []
-        for filename, fileline2tcs in self.lines_executed_by_failing_tcs.items():
-            for line, tcs in fileline2tcs.items():
-                if filename == buggy_code_filename and line == self.buggy_lineno:
-                    continue
-                list_of_lines.append((filename, line, tcs))
-
-        random.shuffle(list_of_lines)
-        print(f">>> candidate lines: {len(list_of_lines)}")
-
-        idx = 0
-        for filename, line, tcs in list_of_lines:
-            idx += 1
-            if total_selected_lines >= self.number_of_lines_to_mutation_test:
-                break
-            if self.exclude_init_lines == False: # 2024-08-13 exclude lines executed on initialization
-                if filename not in reduced_dict:
-                    reduced_dict[filename] = {}
-                reduced_dict[filename][line] = tcs
-                total_selected_lines += 1
-            else:
-                if filename in init_filenm2lineno:
-                    if line in init_filenm2lineno[filename]:
-                        print(f">>>[{idx}] candidate not-included: {filename}:{line}")
-                        continue
-                if filename not in reduced_dict:
-                    reduced_dict[filename] = {}
-                print(f">>> [{idx}]candidate included: {filename}:{line}")
-                reduced_dict[filename][line] = tcs
-                total_selected_lines += 1
-        
-        if total_selected_lines == self.number_of_lines_to_mutation_test: # 2024-08-13 exclude lines executed on initialization
-            print(f">>> Selected maximum available lines {total_selected_lines}/{self.number_of_lines_to_mutation_test}")
+        self.selected_lines_executed_by_failing_tcs = [self.buggy_line_idx]
+        if len(failing_tcs_executed_lines) > self.number_of_lines_to_mutation_test-1:
+            random.shuffle(failing_tcs_executed_lines)
+            self.selected_lines_executed_by_failing_tcs += failing_tcs_executed_lines[:self.number_of_lines_to_mutation_test-1]
         else:
-            print(f">>> Selected below maximum available lines {total_selected_lines}/{self.number_of_lines_to_mutation_test}")
+            self.selected_lines_executed_by_failing_tcs += failing_tcs_executed_lines
         
-        # add empty dict for files that are not selected
-        for filename in self.lines_executed_by_failing_tcs.keys():
-            if filename not in reduced_dict:
-                reduced_dict[filename] = {}
+        # Update line_info table
+        special_str = f"AND line_idx in ({','.join([str(line_idx) for line_idx in self.selected_lines_executed_by_failing_tcs])})"
+        self.db.update(
+            "line_info",
+            set_values={"for_random_mbfl": True},
+            conditions={
+                "subject": self.name,
+                "experiment_name": self.experiment_name,
+                "version": self.version_name,
+            },
+            special=special_str
+        )
+
+        # Select self.sbfl_rank_based_perc (ex. 0.30) of all lines in asc and desc order
+        res = self.db.read(
+            "line_info",
+            columns="line_idx, gp13",
+            conditions={
+                "subject": self.name,
+                "experiment_name": self.experiment_name,
+                "version": self.version_name,
+            },
+            special=f"ORDER BY {self.sbfl_rank_based_formula} DESC"
+        )
+        all_line_idx_list = [row[0] for row in res]
+        num_of_line2select = int(len(all_line_idx_list) * self.sbfl_rank_based_perc) - 1
+
+        self.selected_lines_sbfl_rank_desc = all_line_idx_list[:num_of_line2select]
+        self.selected_lines_sbfl_rank_desc.append(self.buggy_line_idx)
+        self.selected_lines_sbfl_rank_asc = all_line_idx_list[-num_of_line2select:]
+        self.selected_lines_sbfl_rank_asc.append(self.buggy_line_idx)
+
+        # Update line_info table
+        special_str = f"AND line_idx in ({','.join([str(line_idx) for line_idx in self.selected_lines_sbfl_rank_desc])})"
+        self.db.update(
+            "line_info",
+            set_values={"for_sbfl_ranked_mbfl_desc": True},
+            conditions={
+                "subject": self.name,
+                "experiment_name": self.experiment_name,
+                "version": self.version_name,
+            },
+            special=special_str
+        )
+
+        special_str = f"AND line_idx in ({','.join([str(line_idx) for line_idx in self.selected_lines_sbfl_rank_asc])})"
+        self.db.update(
+            "line_info",
+            set_values={"for_sbfl_ranked_mbfl_asc": True},
+            conditions={
+                "subject": self.name,
+                "experiment_name": self.experiment_name,
+                "version": self.version_name,
+            },
+            special=special_str
+        )
+
+        # Make union set of selected lines
+        self.selected_lines = set()
+        self.selected_lines.update(self.selected_lines_executed_by_failing_tcs)
+        self.selected_lines.update(self.selected_lines_sbfl_rank_desc)
+        self.selected_lines.update(self.selected_lines_sbfl_rank_asc)
+
+        print(f">>> TOTAL Selected lines: {len(self.selected_lines)}")
+        print(f"\t >>> Selected lines executed by failing tcs: {len(self.selected_lines_executed_by_failing_tcs)}")
+        print(f"\t >>> Selected lines based on SBFL rank (desc): {len(self.selected_lines_sbfl_rank_desc)}")
+        print(f"\t >>> Selected lines based on SBFL rank (asc): {len(self.selected_lines_sbfl_rank_asc)}")
+
+        special_str = f"AND line_idx in ({','.join([str(line_idx) for line_idx in self.selected_lines])})"
+        res = self.db.read(
+            "line_info",
+            columns="file, lineno",
+            conditions={
+                "subject": self.name,
+                "experiment_name": self.experiment_name,
+                "version": self.version_name,
+            },
+            special=special_str
+        )
+
+        self.file2lineno_selected = {}
+        for row in res:
+            filename = row[0]
+            lineno = row[1]
+            if filename not in self.file2lineno_selected:
+                self.file2lineno_selected[filename] = []
+            self.file2lineno_selected[filename].append((line_idx, lineno))
         
-        return reduced_dict
-        
+        return self.selected_lines_executed_by_failing_tcs, self.selected_lines_sbfl_rank_desc, self.selected_lines_sbfl_rank_asc, self.file2lineno_selected
+
+
     
     def zip_mutants(self, version_mutant_zip, mbfl_generated_mutants_dir, version_mutant_dir):
         if version_mutant_zip.exists():
@@ -315,44 +324,6 @@ class WorkerStage05(Worker):
                 })
 
         return selected_mutants
-    
-    def get_past_selected_mutants(self): # 2024-08-07 add-mbfl
-        cnt = 0
-        selected_mutants = {}
-        for past_trial_name in self.past_trials:
-            past_selected_mutants_file = self.version_dir / f"selected_mutants-{past_trial_name}.csv"
-            assert past_selected_mutants_file.exists(), f"{past_selected_mutants_file} doesn't exist"
-
-            with open(past_selected_mutants_file, "r") as f:
-                lines = f.readlines()
-                mutants = lines[2:]
-                for mutant_line in mutants:
-                    mutant_line = mutant_line.strip()
-                    info = mutant_line.split(",")
-
-                    target_filename = info[0]
-                    mutant_id = info[1]
-                    lineno = info[2]
-                    failing_tcs_at_line = info[3]
-                    mutant_name = info[4]
-
-                    if target_filename not in selected_mutants:
-                        selected_mutants[target_filename] = {}
-                    
-                    if lineno not in selected_mutants[target_filename]:
-                        cnt += 1
-                        selected_mutants[target_filename][lineno] = []
-                    
-                    selected_mutants[target_filename][lineno].append({
-                        'mutant_id': mutant_id,
-                        '#_failing_tcs_@line': failing_tcs_at_line,
-                        'mutant_name': mutant_name,
-                        "trial_name": past_trial_name
-                    })
-        print(f"total line from past {cnt}")
-        return selected_mutants
-
-
 
     def measure_mbfl_features(self):
         self.total_num_of_failing_tcs = len(self.failing_tcs_list)
@@ -529,34 +500,40 @@ class WorkerStage05(Worker):
     
     def begin_mbfl_process(self):
         self.utilized_testcases = {
-            "failing": self.failing_tcs_list,
-            "passing": self.passing_tcs_list + self.ccts_list
+            "fail": self.failing_tcs_list,
+            "pass": self.passing_tcs_list,
+            "cct": self.ccts_list
         }
         for type, tcs in self.utilized_testcases.items():
             print(f">> # of {type} test cases: {len(tcs)}")
         
-        # 1. Initiate version results csv file
-        self.mutation_testing_results = self.version_dir / self.mutation_testing_results_filename
-        self.mutation_testing_results_fp = self.mutation_testing_results.open("w")
-        self.mutation_testing_results_fp.write("target_file,mutant_id,lineno,#_failing_tcs_@line,Mutant Filename,build_result,p2f,p2p,f2p,f2f,p2f_tcs,p2p_tcs,f2p_tcs,f2f_tcs\n")
-
-        self.mutation_testing_results_noCCTs = self.version_dir / self.mutation_testing_results_noCCTs_filename
-        self.mutation_testing_results_noCCTs_fp = self.mutation_testing_results_noCCTs.open("w")
-        self.mutation_testing_results_noCCTs_fp.write("target_file,mutant_id,lineno,#_failing_tcs_@line,Mutant Filename,build_result,p2f,p2p,f2p,f2f,p2f_tcs,p2p_tcs,f2p_tcs,f2f_tcs\n")
-
         # 2. Apply version patch
         patch_file = self.make_patch_file(self.target_code_file_path, self.buggy_code_file, "version.patch")
         self.apply_patch(self.target_code_file_path, self.buggy_code_file, patch_file, False)
 
         # 3. Conduct mutation testing
-        self.conduct_mutation_testing()
+        mbfl_features = self.conduct_mutation_testing()
 
         # 4. Apply patch reverse
         self.apply_patch(self.target_code_file_path, self.buggy_code_file, patch_file, True)
 
-        # 5. Close result csv file
-        self.mutation_testing_results_fp.close()
-        self.mutation_testing_results_noCCTs_fp.close()
+        # 5. Write mbfl features to mutation info table
+        self.write_mbfl_features_to_db(mbfl_features)
+    
+    def write_mbfl_features_to_db(self, mbfl_features):
+        # format: {mutant_idx: {build_result: BOOLEAN, p2f: 0, p2p: 0, f2p: 0, f2f: 0, p2f_cct: 0, p2p_cct: 0}, ...}
+        for mutant_idx, result_data in mbfl_features.items():
+            self.db.update(
+                "mutation_info",
+                set_values=result_data,
+                conditions={
+                    "subject": self.name,
+                    "experiment_name": self.experiment_name,
+                    "version": self.version_name,
+                    "mutant_idx": mutant_idx
+                }
+            )
+
     
     def begin_mbfl_parallel_process(self): # 2024-08-13 implement parallel mode
         # 1. copy current core<n> directory as core<n>-p<n>
@@ -578,9 +555,9 @@ class WorkerStage05(Worker):
             core_repo_dir = self.core_dir / self.name
             shutil.copytree(core_repo_dir, parall_repo_dir)
 
-        # 2. divide the selected mutants
-        selected_mutants_file = self.version_dir / self.selected_mutant_filename
-        selected_mutants_csv_row = get_list_of_selected_mutants_csv_row(selected_mutants_file)
+        # 2. divide the selected mutants: self.selected_mutations
+        # (line_idx, target_file_path, mutant_file_path, mutant_idx)
+        selected_mutants_csv_row = self.get_selected_as_list()
         parted_selected_mutants_csv_row = divide_list(selected_mutants_csv_row, self.parallel_cnt)
         assert len(parted_selected_mutants_csv_row) == self.parallel_cnt, f"the length of parted doesn't equal parallel_cnt {self.parallel_cnt}"
         
@@ -596,12 +573,9 @@ class WorkerStage05(Worker):
             parall_version_dir = parall_assigned_works_dir / self.version_name
             assert parall_version_dir.exists(), f"{parall_version_dir.name} doesn't exist!"
 
-            parall_selected_mutant_file = parall_version_dir / self.selected_mutant_filename
-            assert parall_selected_mutant_file.exists(), f"{parall_selected_mutant_file.name} doesn't exist!"
-
             parall_selected_mutants_csv_row = parted_selected_mutants_csv_row[idx]
 
-            self.update_parall_selected_mutants_csv(parall_selected_mutant_file, parall_selected_mutants_csv_row)
+            self.update_parall_selected_mutants(f"p{idx}", parall_selected_mutants_csv_row)
 
         # 4. execute mbfl extraction on core<n>-p<n>
         jobs = []
@@ -625,37 +599,6 @@ class WorkerStage05(Worker):
             finished_jobs.append(job)
             # jobs.remove(job)
 
-        # 5. combine core<n>-p<n>/stage04-trial1-assigned_works/<version-name>/mutation_testing_results-<trial-cnt>.csv from all core<n>-p<n>
-        total_mutation_testing_results_csv_row = []
-        total_mutation_testing_results_noCCTs_csv_row = []
-        for idx in range(self.parallel_cnt):
-            parall_core_name = f"{self.core_dir.name}-p{idx}"
-            parall_core_dir = self.core_dir.parent / parall_core_name
-            assert parall_core_dir.exists(), f"{parall_core_dir.name} doesn't exist!"
-
-            parall_assigned_works_dir = parall_core_dir / f"{self.stage_name}-assigned_works"
-            assert parall_assigned_works_dir.exists(), f"{parall_assigned_works_dir.name} doesn't exist!"
-            
-            parall_version_dir = parall_assigned_works_dir / self.version_name
-            assert parall_version_dir.exists(), f"{parall_version_dir.name} doesn't exist!"
-
-            parall_mutation_testing_results_csv = parall_version_dir / self.mutation_testing_results_filename
-            assert parall_mutation_testing_results_csv.exists(), f"{parall_mutation_testing_results_csv.name} doesn't exist!"
-            
-            mutation_testing_results_csv_row = get_mutation_testing_results_csv_row(parall_mutation_testing_results_csv)
-            total_mutation_testing_results_csv_row.extend(mutation_testing_results_csv_row)
-
-            parall_mutation_testing_results_noCCTs_csv = parall_version_dir / self.mutation_testing_results_noCCTs_filename
-            assert parall_mutation_testing_results_noCCTs_csv.exists(), f"{parall_mutation_testing_results_noCCTs_csv.name} doesn't exist!"
-
-            mutation_testing_results_noCCTs_csv_row = get_mutation_testing_results_csv_row(parall_mutation_testing_results_noCCTs_csv)
-            total_mutation_testing_results_noCCTs_csv_row.extend(mutation_testing_results_noCCTs_csv_row)
-            
-        dest_mutation_testing_results_csv = self.version_dir / self.mutation_testing_results_filename
-        self.fill_mutation_testing_results_as_final(dest_mutation_testing_results_csv, total_mutation_testing_results_csv_row)
-
-        dest_mutation_testing_results_noCCTs_csv = self.version_dir / self.mutation_testing_results_noCCTs_filename
-        self.fill_mutation_testing_results_as_final(dest_mutation_testing_results_noCCTs_csv, total_mutation_testing_results_noCCTs_csv_row)
 
         # 6. copy files in  mutant2tcs_results-<trial-cnt> directory
         total_mutant2tc_result_files = []
@@ -676,6 +619,7 @@ class WorkerStage05(Worker):
             for mut2tc_file in parall_mutant2tcs_results_dir.iterdir():
                 print_command(["cp", "-r", mut2tc_file, self.mutant2tcs_results_dir], self.verbose)
                 sp.check_call(["cp", mut2tc_file, self.mutant2tcs_results_dir])
+        
         # 7. delete core<n>-p<n> and exits
         for idx in range(self.parallel_cnt):
             parall_core_name = f"{self.core_dir.name}-p{idx}"
@@ -693,7 +637,8 @@ class WorkerStage05(Worker):
 
         cmd = [
             "python3", "test_version_mbfl_features.py",
-            "--subject", subject_name, "--machine", machine_name, "--core", core_name,
+            "--subject", subject_name, "--experiment-name", self.experiment_name,
+            "--machine", machine_name, "--core", core_name,
             "--trial", self.trial,
             "--version", version_name
         ]
@@ -718,53 +663,51 @@ class WorkerStage05(Worker):
             f.write(res.stderr.decode())
     
     def conduct_mutation_testing(self):
-        for target_file, lineno_mutants in self.selected_mutants.items():
-            # target_file_path = self.get_target_file_path(target_file) # FILENAME STRUCTURE! 20240925
-            target_file_path = self.core_dir / target_file
-            assert target_file_path.exists(), f"Target file {target_file_path} does not exist"
+        """
+        Conduct mutation testing on selected mutants
+        format: {mutant_idx: {build_result: BOOLEAN, p2f: 0, p2p: 0, f2p: 0, f2f: 0, p2f_cct: 0, p2p_cct: 0}, ...}
+        """
+        mutation_results = {}
+        # Format of selected_mutations: {line_idx: [(target_file_path, mutant_file_path, mutant_idx), ...], ...}
+        for line_idx, mut_infos in self.selected_mutations.items():
+            for info in mut_infos:
+                target_file_path = info[0]
+                mutant_file_path = info[1]
+                mutant_idx = info[2]
 
-            for lineno, mutants in lineno_mutants.items():
+                if mutant_idx not in mutation_results:
+                    mutation_results[mutant_idx] = {}
 
-                for mutant in mutants:
-                    mutant_id = mutant["mutant_id"]
-                    mutant_name = mutant["mutant_name"]
-                    num_failing_tcs = mutant["#_failing_tcs_@line"]
+                self.start_test_on_mutant(target_file_path, mutant_file_path, mutant_idx, mutation_results[mutant_idx])
+        return mutation_results
 
-                    mutant_file = self.version_mutant_dir / f"{self.name}-{target_file_path.name}" / mutant_name
-                    assert mutant_file.exists(), f"Mutant file {mutant_file} does not exist"
-
-                    self.start_test_on_mutant(
-                        target_file_path, lineno, num_failing_tcs, mutant_id, mutant_name, mutant_file
-                    )
     
-    def start_test_on_mutant(self, target_file_path, lineno, num_failing_tcs, mutant_id, mutant_name, mutant_file):
-        print(f">> Testing mutant {mutant_id}:{mutant_name} on {self.version_dir.name}")
-        tc_outcome = {'p2f': -1, 'p2p': -1, 'f2p': -1, 'f2f': -1}
-        tc_outcome_detailed = {'p2f': [], 'p2p': [], 'f2p': [], 'f2f': []}
-        tc_outcome_noCCTs = {'p2f': -1, 'p2p': -1, 'f2p': -1, 'f2f': -1} # 2024-09-18 to make mbfl results without CCTs at the same time
-        tc_outcome_detailed_noCCTs = {'p2f': [], 'p2p': [], 'f2p': [], 'f2f': []}
-        build_result = False
+    def start_test_on_mutant(self, target_file_path, mutant_file_path, mutant_idx, result_dict):
+        print(f">> Testing mutant {mutant_idx}:{mutant_file_path.name} on {self.version_dir.name}")
+        tc_outcome = {"p2f": -1, "p2p": -1, "f2p": -1, "f2f": -1, "p2f_cct": -1, "p2p_cct": -1}
+        tc_outcome_detailed = {"p2f": [], "p2p": [], "f2p": [], "f2f": [], "p2f_cct": [], "p2p_cct": []}
 
         # 1. Make patch file
-        patch_file = self.make_patch_file(target_file_path, mutant_file, "mutant.patch")
+        patch_file = self.make_patch_file(target_file_path, mutant_file_path, "mutant.patch")
 
         # 2. Apply patch
-        self.apply_patch(target_file_path, mutant_file, patch_file, False)
+        self.apply_patch(target_file_path, mutant_file_path, patch_file, False)
 
         # 3. Build subject
         res = self.build()
         if res != 0:
-            print(f"Failed to build on {mutant_id}:{mutant_name} of {self.version_dir.name}")
-            self.apply_patch(target_file_path, mutant_file, patch_file, True)
-            self.write_result(self.mutation_testing_results_fp, target_file_path, mutant_id, lineno, num_failing_tcs, mutant_name, build_result, tc_outcome, tc_outcome_detailed)
-            self.write_result(self.mutation_testing_results_noCCTs_fp, target_file_path, mutant_id, lineno, num_failing_tcs, mutant_name, build_result, tc_outcome_noCCTs, tc_outcome_detailed_noCCTs)
+            print(f"Failed to build on {mutant_idx}:{mutant_file_path.name} of {self.version_dir.name}")
+            self.apply_patch(target_file_path, mutant_file_path, patch_file, True)
+            result_dict["build_result"] = False
+            for tc_outcome_key in tc_outcome:
+                result_dict[tc_outcome_key] = -1
             return
         
-        build_result = True
-        tc_outcome = {'p2f': 0, 'p2p': 0, 'f2p': 0, 'f2f': 0}
-        tc_outcome_noCCTs = {'p2f': 0, 'p2p': 0, 'f2p': 0, 'f2f': 0} # 2024-09-18 to make mbfl results without CCTs at the same time
+        result_dict["build_result"] = True
+        tc_outcome = {"p2f": 0, "p2p": 0, "f2p": 0, "f2f": 0, "p2f_cct": 0, "p2p_cct": 0}
 
-        mutant2tcs_results_file = self.mutant2tcs_results_dir / f"{mutant_id}.csv"  # 2024-08-05 time for each test on each mutant
+
+        mutant2tcs_results_file = self.mutant2tcs_results_dir / f"mutant_{mutant_idx}.csv"  # 2024-08-05 time for each test on each mutant
         mutant2tcs_results_fp = open(mutant2tcs_results_file, "w")
         mutant2tcs_results_fp.write("tc_name,outcome,return_code,return_code_str,time_taken\n")
         # 4. Run test cases
@@ -772,34 +715,27 @@ class WorkerStage05(Worker):
             for tc_script_name in tcs:
                 tc_start_time = time.time()
                 outcome = ""
-                
-                tc_name = tc_script_name.split(".")[0]
                 res = self.run_test_case(tc_script_name)
-                isCCTs = False # 2024-09-18 to make mbfl results without CCTs at the same time
-                if tc_script_name in self.ccts_list:
-                    isCCTs = True
                 if res == 0:
-                    if type == "failing":
+                    if type == "fail":
                         outcome = "f2p"
-                        self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_name)
-                        if isCCTs == False:
-                            self.update_tc_outcome(outcome, tc_outcome_noCCTs, tc_outcome_detailed_noCCTs, tc_name)
-                    elif type == "passing":
+                        self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_script_name)
+                    elif type == "pass":
                         outcome = "p2p"
-                        self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_name)
-                        if isCCTs == False:
-                            self.update_tc_outcome(outcome, tc_outcome_noCCTs, tc_outcome_detailed_noCCTs, tc_name)
+                        self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_script_name)
+                    elif type == "cct":
+                        outcome = "p2p_cct"
+                        self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_script_name)
                 else:
-                    if type == "failing":
+                    if type == "fail":
                         outcome = "f2f"
-                        self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_name)
-                        if isCCTs == False:
-                            self.update_tc_outcome(outcome, tc_outcome_noCCTs, tc_outcome_detailed_noCCTs, tc_name)
-                    elif type == "passing":
+                        self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_script_name)
+                    elif type == "pass":
                         outcome = "p2f"
-                        self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_name)
-                        if isCCTs == False:
-                            self.update_tc_outcome(outcome, tc_outcome_noCCTs, tc_outcome_detailed_noCCTs, tc_name)
+                        self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_script_name)
+                    elif type == "cct":
+                        outcome = "p2f_cct"
+                        self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_script_name)
                 
                 tc_time_duration = time.time() - tc_start_time
                 
@@ -815,15 +751,16 @@ class WorkerStage05(Worker):
         mutant2tcs_results_fp.close()
         
         # 5. Apply patch reverse
-        self.apply_patch(target_file_path, mutant_file, patch_file, True)
+        self.apply_patch(target_file_path, mutant_file_path, patch_file, True)
 
-        # 6. Write result to csv
-        self.write_result(self.mutation_testing_results_fp, target_file_path, mutant_id, lineno, num_failing_tcs, mutant_name, build_result, tc_outcome, tc_outcome_detailed)
-        self.write_result(self.mutation_testing_results_noCCTs_fp, target_file_path, mutant_id, lineno, num_failing_tcs, mutant_name, build_result, tc_outcome_noCCTs, tc_outcome_detailed_noCCTs)
+        # 6. Write result
+        for tc_outcome_key in tc_outcome:
+            result_dict[tc_outcome_key] = tc_outcome[tc_outcome_key]
+
     
-    def update_tc_outcome(self, type, outcome_num, outcome_detailed, tc_name):
-        outcome_num[type] += 1
-        outcome_detailed[type].append(tc_name)
+    def update_tc_outcome(self, outcome, tc_outcome, tc_outcome_detailed, tc_name):
+        tc_outcome[outcome] += 1
+        tc_outcome_detailed[outcome].append(tc_name)
     
     def write_result(self, fp, target_file_path, mutant_id, lineno, num_failing_tcs, mutant_name, build_result, tc_outcome, tc_outcome_detailed):
         build_str = "PASS" if build_result else "FAIL"
@@ -841,141 +778,83 @@ class WorkerStage05(Worker):
             if file.split("/")[-1] == target_file:
                 return self.core_dir / file
     
-    def save_selected_mutants_info(self):
-        self.selected_mutants_file = self.version_dir / self.selected_mutant_filename
-        mutant_idx = 1
-        with open(self.selected_mutants_file, "w") as f:
-            f.write(",,,,,,Before Mutation,,,,,After Mutation\n")
-            f.write("target filename,mutant_id,lineno,#_failing_tcs_@line,Mutant Filename,Mutation Operator,Start Line#,Start Col#,End Line#,End Col#,Target Token,Start Line#,Start Col#,End Line#,End Col#,Mutated Token,Extra Info\n")
-            
-            for filename, fileline2mutants in self.selected_fileline2mutants.items():
-                for lineno, tc_mutant_info in fileline2mutants.items():
-                    tcs = tc_mutant_info[0]
-
-                    for mutant_line in tc_mutant_info[1]:
-                        mutant_id = f"mutant_{mutant_idx}"
-                        f.write(f"{filename},{mutant_id},{lineno},{len(tcs)},{mutant_line}\n")
-                        mutant_idx += 1
-
-                        mutant_info = mutant_line.split(",")
-                        mutant_filename = mutant_info[0]
-    
-    def update_parall_selected_mutants_csv(self, csv_file, mutant_rows): # 2024-08-13 implement parallel mode
-        with open(csv_file, "w") as fp:
-            fp.write(",,,,,,Before Mutation,,,,,After Mutation\n")
-            fp.write("target filename,mutant_id,lineno,#_failing_tcs_@line,Mutant Filename,Mutation Operator,Start Line#,Start Col#,End Line#,End Col#,Target Token,Start Line#,Start Col#,End Line#,End Col#,Mutated Token,Extra Info\n")
-            content = "\n".join(mutant_rows)
-            fp.write(content)
+    def update_parall_selected_mutants(self, p_idx, mutant_rows):
+        # (line_idx, target_file_path, mutant_file_path, mutant_idx)
+        changing_ids = [row[3] for row in mutant_rows]
+        special_str = f"AND mutant_idx IN ({','.join([str(idx) for idx in changing_ids])})"
+        self.db.update(
+            "mutation_info",
+            set_values={"parallel_name": p_idx},
+            conditions={
+                "subject": self.name,
+                "experiment_name": self.experiment_name,
+                "version": self.version_name,
+            },
+            special=special_str
+        )
+        
     
     def fill_mutation_testing_results_as_final(self, csv_file, mutant_results_rows): # 2024-08-13 implement parallel mode
         with open(csv_file, "w") as fp:
             fp.write("target_file,mutant_id,lineno,#_failing_tcs_@line,Mutant Filename,build_result,p2f,p2p,f2p,f2f,p2f_tcs,p2p_tcs,f2p_tcs,f2f_tcs\n")
             content = "\n".join(mutant_results_rows)
             fp.write(content)
-    
-    def reduced_selected_mutants(self):
-        buggy_code_filename = self.target_code_file_path.name
-        # reduce selected mutants to only 500 lineno in total across all files
-        # make sure buggy_lineno from self.buggy_code_filename is included in the selected mutants
-        # but beware, that buggy_lineno might have 0 mutants
-        # in that case we need to select mutants from other lines
-        reduce_selected_file2mutants = {}
-        total_selected_lines = 0
-
-        # add buggy_lineno to selected mutants
-        if buggy_code_filename in self.selected_fileline2mutants:
-            if self.buggy_lineno in self.selected_fileline2mutants[buggy_code_filename]:
-                reduce_selected_file2mutants[buggy_code_filename] = {self.buggy_lineno: self.selected_fileline2mutants[buggy_code_filename][self.buggy_lineno]}
-                total_selected_lines += 1
-            else:
-                print(f">> Buggy line {self.buggy_lineno} does not have any mutants")
-        
-        # randomly select lineno from random files until total_selected_lines == number_of_lines_to_mutation_test
-        list_of_lines = []
-        for filename, fileline2mutants in self.selected_fileline2mutants.items():
-            for line, tc_mutant_info in fileline2mutants.items():
-                if line != self.buggy_lineno:
-                    list_of_lines.append((filename, line, tc_mutant_info))
-        
-        random.shuffle(list_of_lines)
-
-        for filename, line, tc_mutant_info in list_of_lines:
-            if total_selected_lines >= self.number_of_lines_to_mutation_test:
-                break
-            if len(tc_mutant_info[1]) > 0:
-                if filename not in reduce_selected_file2mutants:
-                    reduce_selected_file2mutants[filename] = {}
-                reduce_selected_file2mutants[filename][line] = tc_mutant_info
-                total_selected_lines += 1
-
-        return reduce_selected_file2mutants
 
     def select_mutants(self):
-        files2mutants = {}
-        tot_mutant_cnt = 0
+        """
+        returns selected mutants in the following format:
+        {line_idx: [(target_file_path, target_mutant_file_path, mutant_idx), ...], ...}
+        """
+        selected_mutations = {}
 
-        for target_file, fileline2tcs in self.lines_executed_by_failing_tcs.items():
-            file_tot_mutant_cnt = 0
+        res = self.db.read(
+            "mutation_info",
+            columns="line_idx, targetting_file, mutation_dirname, mutant_filename, mutant_idx",
+            conditions={
+                "subject": self.name,
+                "experiment_name": self.experiment_name,
+                "version": self.version_name
+            },
+            special="ORDER BY RANDOM()"
+        )
 
-            # filename = target_file.split("/")[-1] # FILENAME STRUCTURE! 20240925
-            filename = target_file
-            # initiate dictionary for selected mutants on file-line basis
-            # {filename: {lineno: [[TC1.sh, TC2.sh, ...], [mutant_line_info1, mutant_line_info2, ...]]}}
-            files2mutants[filename] = {}
-            for lineno, tcs in fileline2tcs.items():
-                files2mutants[filename][lineno] = [tcs, []]
+        for row in res:
+            line_idx = row[0]
+            target_file = row[1]
+            mutant_dirname = row[2]
+            mutant_filename = row[3]
+            mutant_idx = row[4]
+
+            if line_idx not in selected_mutations:
+                selected_mutations[line_idx] = []
             
-            # get mutants for each line
-            onlyfilename = filename.split("/")[-1] # FILENAME STRUCTURE! 20240925
-            file_mutants_dir = self.version_mutant_dir / f"{self.name}-{onlyfilename}"
-            assert file_mutants_dir.exists(), f"File mutants directory {file_mutants_dir} does not exist"
-            
-            code_name = ".".join(onlyfilename.split(".")[:-1]) # FILENAME STRUCTURE! 20240925
-            mut_db_csv_name = f"{code_name}_mut_db.csv"
-            mut_db_csv = file_mutants_dir / mut_db_csv_name
-            # this is when failing tcs doesn't execute any line in the target file
-            if not mut_db_csv.exists():
-                print(f">> Mutants database csv {mut_db_csv.name} does not exist (no mutants)")
+            if len(selected_mutations[line_idx]) > self.max_mutants:
                 continue
+            
+            target_file_path = self.core_dir / target_file
+            target_mutant_file_path = self.version_mutant_dir / mutant_dirname / mutant_filename
+            selected_mutations[line_idx].append((target_file_path, target_mutant_file_path, mutant_idx))
+        
+        selected_mutant_idx = []
+        for line_idx, mutants in selected_mutations.items():
+            for mutant in mutants:
+                selected_mutant_idx.append(mutant[2])
 
-            # print(f">> Reading mutants from {mut_db_csv.name}")
-            with mut_db_csv.open() as f:
-                lines = f.readlines()
-                mutants = lines[2:]
-                random.shuffle(mutants)
-                # print(f"Total mutants: {len(mutants)}")
-                for mutant_line in mutants:
-                    mutant_line = mutant_line.strip()
+        # update is_for_test col in mutation_info table
+        special_str = f"AND mutant_idx IN ({','.join([str(idx) for idx in selected_mutant_idx])})"
+        self.db.update(
+            "mutation_info",
+            set_values={"is_for_test": True},
+            conditions={
+                "subject": self.name,
+                "experiment_name": self.experiment_name,
+                "version": self.version_name,
+            },
+            special=special_str
+        )
 
-                    # 0 Mutant Filename
-                    # 1 Mutation Operator
-                    # 2 Start Line#
-                    # 3 Start Col#
-                    # 4 End Line#
-                    # 5 End Col#
-                    # 6 Target Token
-                    # 7 Start Line#
-                    # 8 Start Col#
-                    # 9 End Line#
-                    # 10 End Col#
-                    # 11 Mutated Token
-                    # 12 Extra Info
-                    info = mutant_line.split(',')
-                    mutant_filename = info[0]
-                    mutant_lineno = info[2]
+        return selected_mutations
 
-                    # do not select mutants for lines that are not executed by failing test cases
-                    if mutant_lineno not in files2mutants[filename]:
-                        print(f"Mutant line {mutant_lineno} is not executed by failing test cases")
-                        continue
-
-                    # select mutant
-                    if len(files2mutants[filename][mutant_lineno][1]) < self.max_mutants:
-                        files2mutants[filename][mutant_lineno][1].append(mutant_line)
-                        file_tot_mutant_cnt += 1
-                        tot_mutant_cnt += 1
-
-        return files2mutants
     
     def select_mutants_comparing_to_past_trials(self): # 2024-08-07 add-mbfl
         files2mutants = {}
@@ -1093,9 +972,11 @@ class WorkerStage05(Worker):
 
         # 5. Generate mutants
         for target_file, mutant_dir, target_file_str in self.targetfile_and_mutantdir:
-            filename = target_file.name
-            filename = target_file_str # FILENAME STRUCTURE! 20240925
-            lines = list(self.lines_executed_by_failing_tcs[filename].keys())
+            filename = target_file_str
+            if "libxml2" in self.name:
+                filename = target_file.name
+            # STRUCTURE: self.file2lineno_selected[filename].append((line_idx, lineno))
+            lines = [str(line[1]) for line in self.file2lineno_selected[filename]]
             if len(lines) == 0:
                 print(f">> No failing test case executed lines on {filename}")
                 continue
@@ -1127,7 +1008,7 @@ class WorkerStage05(Worker):
             str(target_file),
             "-o", str(mutant_dir),
             "-ll", str(ll), # limit on line
-            "-l", str(n), # limie on mutatin operator
+            "-l", str(n), # limit on mutatin operator
             "-d", unused_ops,
             "-i", executed_lines,
             "-p", str(compile_command)
@@ -1147,7 +1028,7 @@ class WorkerStage05(Worker):
             target_file_path = self.core_dir / target_file
             assert target_file_path.exists(), f"Target file {target_file_path} does not exist"
 
-            target_file_name = target_file.split("/")[-1]
+            target_file_name = target_file.replace("/", "--")
             # single_file_mutant_dir = self.version_mutant_dir / target_file_name
             single_file_mutant_dir = self.version_mutant_dir / f"{self.name}-{target_file_name}"
             print_command(["mkdir", "-p", single_file_mutant_dir], self.verbose)
@@ -1191,36 +1072,23 @@ class WorkerStage05(Worker):
         total_num_selected_mutants = 0
         total_num_lines = 0
         selected_mutant_cnt_per_file = {}
-        for filename, fileline2mutants in self.selected_fileline2mutants.items():
-            for lineno, tc_mutant_info in fileline2mutants.items():
-                total_num_lines += 1
-                total_num_selected_mutants += len(tc_mutant_info[1])
-                if filename not in selected_mutant_cnt_per_file:
-                    selected_mutant_cnt_per_file[filename] = 0
-                selected_mutant_cnt_per_file[filename] += len(tc_mutant_info[1])
+        for line_idx, mut_infos in self.selected_mutations.items():
+            total_num_lines += 1
+            total_num_selected_mutants += len(mut_infos)
+            for info in mut_infos:
+                target_file_path = str(info[0])
+                mutant_file_path = info[1]
+                mutant_idx = info[2]
+
+                if target_file_path not in selected_mutant_cnt_per_file:
+                    selected_mutant_cnt_per_file[target_file_path] = 0
+                selected_mutant_cnt_per_file[target_file_path] += 1
+
         print(f">> Total number of selected mutants: {total_num_selected_mutants}")
         print(f">> Total number of lines: {total_num_lines}")
         print(f">> Selected mutants per file:")
         for filename, num_mutants in selected_mutant_cnt_per_file.items():
             print(f"\t >> {filename}: {num_mutants} mutants")
-
-    def print_selected_mutants_info(self):
-        total_num_selected_mutants = 0
-        total_line = 0
-        selected_mutants_info = {}
-        for filename, lineno_mutants in self.selected_mutants.items():
-            mutant_cnt = 0
-            for lineno, mutants in lineno_mutants.items():
-                total_line += 1
-                mutant_cnt += len(mutants)
-            total_num_selected_mutants += mutant_cnt
-            selected_mutants_info[filename] = mutant_cnt
-
-        print(f">> Total number of selected mutants: {total_num_selected_mutants}")
-        print(f">> Selected mutants per file (after saving selected mutants):")
-        for filename, num_mutants in selected_mutants_info.items():
-            print(f"\t >> {filename}: {num_mutants} mutants")
-        print(f">>> total line: {total_line}")
     
     def print_lines_executed_by_failing_tcs(self):
         print(f">> Lines executed by failing test cases:")
@@ -1229,3 +1097,93 @@ class WorkerStage05(Worker):
             print(f"\t >> {filename}: {len(fileline2tcs)} lines")
             total_cnt += len(fileline2tcs)
         print(f">>> total {total_cnt}")
+
+
+    
+    def write_mutation_info(self):
+        mutant_idx = 0
+        for target_file_path, mutant_dir, target_file_str in self.targetfile_and_mutantdir:
+            target_file_identity = target_file_str
+            if "libxml2" in self.name:
+                target_file_identity = target_file_str.split("/")[-1]
+
+            target_file_name = target_file_str.split("/")[-1]
+            code_name = ".".join(target_file_name.split(".")[:-1])
+            mut_db_csv_name = f"{code_name}_mut_db.csv"
+            mut_db_csv = mutant_dir / mut_db_csv_name
+            if not mut_db_csv.exists():
+                print(f">> Mutants database csv {mut_db_csv.name} does not exist (no mutants)")
+                continue
+            
+            mut_data = {}
+            with open(mut_db_csv, "r") as f:
+                csv_reader = csv.reader(f, escapechar='\\', quotechar='"', delimiter=',')
+                next(csv_reader)
+                next(csv_reader)
+                for row in csv_reader:
+                    mut_name = row[0]
+                    op = row[1]
+                    pre_start_line = int(row[2])
+                    mut_data[mut_name] = (op, pre_start_line)
+                
+            # mutant_files is a list of files that do not end with .csv
+            for mutant_file in mutant_dir.iterdir():
+                if mutant_file.name.endswith(".csv"): continue
+
+                col_str = "subject, experiment_name, version, targetting_file, mutation_dirname, mutant_filename, mutant_idx, line_idx, mut_op"
+                mut_lineno = mut_data[mutant_file.name][1]
+                mut_op = mut_data[mutant_file.name][0]
+                line_idx = self.line_idx_map[target_file_identity][mut_lineno]
+                val_str = f"'{self.name}', '{self.experiment_name}', '{self.version_name}', '{target_file_str}', '{mutant_dir.name}', '{mutant_file.name}', {mutant_idx}, {line_idx}, '{mut_op}'"
+
+                self.db.insert(
+                    "mutation_info",
+                    columns=col_str,
+                    values=val_str
+                )
+
+                mutant_idx += 1
+
+
+    def get_selected_as_list(self):
+        selected_mutants_csv_row = []
+        for line_idx, mut_infos in self.selected_mutations.items():
+            for info in mut_infos:
+                target_file_path = str(info[0])
+                mutant_file_path = info[1]
+                mutant_idx = info[2]
+
+                selected_mutants_csv_row.append((line_idx, target_file_path, mutant_file_path, mutant_idx))
+        return selected_mutants_csv_row
+
+    def get_selected_mutations_by_parallel_name(self,):
+        # {line_idx: [(target_file_path, target_mutant_file_path, mutant_idx), ...], ...}
+        parallel_name = self.core.split("-")[-1]
+        res = self.db.read(
+            "mutation_info",
+            columns="line_idx, targetting_file, mutation_dirname, mutant_filename, mutant_idx",
+            conditions={
+                "subject": self.name,
+                "experiment_name": self.experiment_name,
+                "version": self.version_name,
+                "parallel_name": parallel_name
+            },
+            special="AND is_for_test is TRUE"
+        )
+
+        selected_mutations = {}
+        for row in res:
+            line_idx = row[0]
+            target_file = row[1]
+            mutant_dirname = row[2]
+            mutant_filename = row[3]
+            mutant_idx = row[4]
+
+            if line_idx not in selected_mutations:
+                selected_mutations[line_idx] = []
+            
+            target_file_path = self.core_dir / target_file
+            target_mutant_file_path = self.version_mutant_dir / mutant_dirname / mutant_filename
+            selected_mutations[line_idx].append((target_file_path, target_mutant_file_path, mutant_idx))
+
+        return selected_mutations

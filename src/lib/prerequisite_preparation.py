@@ -79,6 +79,8 @@ class PrerequisitePreparation(Subject):
             self.db.add_column("bug_info", "buggy_function TEXT DEFAULT NULL")
         if not self.db.column_exists("bug_info", "buggy_lineno"):
             self.db.add_column("bug_info", "buggy_lineno INT DEFAULT NULL")
+        if not self.db.column_exists("bug_info", "buggy_line_idx"):
+            self.db.add_column("bug_info", "buggy_line_idx INT DEFAULT NULL")
 
         # Add summary columns in bug info table
         cov_summary = [

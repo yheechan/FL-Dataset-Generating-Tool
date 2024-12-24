@@ -278,14 +278,6 @@ def divide_list(lst, n):
     k, m = divmod(len(lst), n)
     return [lst[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(n)]
 
-def get_list_of_selected_mutants_csv_row(csv_file):
-    mutant_list = []
-    with open(csv_file, "r") as fp:
-        lines = fp.readlines()
-        for line in lines[2:]:
-            line = line.strip()
-            mutant_list.append(line)
-    return mutant_list
 
 def get_mutation_testing_results_csv_row(csv_file):
     mutant_list = []

@@ -37,10 +37,10 @@ res = db.table_exists("test_table")
 # )
 
 
-res = db.read("test_table", columns="*", special="ORDER BY age")
+res = db.read("test_table", columns="age")
 
 for row in res:
-    print(row)
+    print(row[0])
 print()
 
 """

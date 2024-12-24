@@ -71,3 +71,6 @@ time python3 prepare_prerequisites.py --subject jsoncpp_test --experiment-name t
 # ===============================
 
 time python3 extract_sbfl_features.py --subject jsoncpp_test --experiment-name test1 --target-set-name prerequisite_data
+
+
+time extract_mbfl_features.py --subject jsoncpp_test --experiment-name test1 --target-set-name prerequisite_data --trial trial1 --parallel-cnt 2

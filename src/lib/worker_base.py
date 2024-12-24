@@ -46,6 +46,8 @@ class Worker:
         self.experiment = Experiment()
         self.max_mutants = self.experiment.experiment_config["max_mutants"]
         self.number_of_lines_to_mutation_test = self.experiment.experiment_config["number_of_lines_to_mutation_test"]
+        self.sbfl_rank_based_perc = self.experiment.experiment_config["sbfl_rank_based_perc"]
+        self.sbfl_rank_based_formula = self.experiment.experiment_config["sbfl_rank_based_formula"]
 
         self.gcovr_exec = Path(self.experiment.experiment_config["abs_path_to_gcovr_executable"]).expanduser()
 
@@ -237,6 +239,22 @@ class Worker:
                 self.excluded_passing_tcs_list.append(tc_name)
             elif tc_result == "cct":
                 self.ccts_list.append(tc_name)
+    
+    def set_line_idx_map(self, version_name, experiment_name):
+        res = self.db.read(
+            "line_info",
+            columns="file, lineno, line_idx",
+            conditions={
+                "subject": self.name,
+                "experiment_name": experiment_name,
+                "version": version_name
+            }
+        )
+        self.line_idx_map = {}
+        for file, lineno, line_idx in res:
+            if file not in self.line_idx_map:
+                self.line_idx_map[file] = {}
+            self.line_idx_map[file][lineno] = line_idx
 
     def set_line2function_dict(self, version_dir):
         line2function_file = version_dir / "line2function_info" / "line2function.json"
@@ -490,10 +508,14 @@ class Worker:
         assert buggy_code_file.exists(), f"Buggy code file does not exist: {buggy_code_file}"
         return buggy_code_file
     
-    def get_buggy_line_key(self, experiment_name, version_name):
+    def get_buggy_line_key(self, experiment_name, version_name, with_buggy_line_idx=False):
+        col = "buggy_file, buggy_function, buggy_lineno"
+        if with_buggy_line_idx:
+            col += ", buggy_line_idx"
+
         res = self.db.read(
             "bug_info",
-            columns="buggy_file, buggy_function, buggy_lineno",
+            columns=col,
             conditions={
                 "subject": self.name,
                 "experiment_name": experiment_name,
@@ -505,6 +527,8 @@ class Worker:
         buggy_function = res[0][1]
         buggy_lineno = res[0][2]
         buggy_line_key = f"{buggy_file}#{buggy_function}#{buggy_lineno}"
+        if with_buggy_line_idx:
+            return buggy_line_key, res[0][3]
         return buggy_line_key
 
     def save_version(self, version_dir, col_key, experiment_name):
