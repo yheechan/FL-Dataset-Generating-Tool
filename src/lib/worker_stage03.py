@@ -175,7 +175,7 @@ class WorkerStage03(Worker):
             set_values={
                 "buggy_file": bug_file,
                 "buggy_function": bug_function,
-                "buggy_line": bug_line
+                "buggy_lineno": bug_line
             },
             conditions={
                 "subject": self.name,
@@ -244,7 +244,7 @@ class WorkerStage03(Worker):
             bug_file = bug_info[0]
             bug_function = bug_info[1]
             bug_line = int(bug_info[2])
-            cols = "subject, experiment_name, version, buggy_file, buggy_function, buggy_line, line_idx"
+            cols = "subject, experiment_name, version, file, function, lineno, line_idx"
             vals = f"'{self.name}', '{self.experiment_name}', '{self.version_name}', '{bug_file}', '{bug_function}', {bug_line}, {idx}"
 
             if key == self.buggy_line_key:
@@ -313,9 +313,9 @@ class WorkerStage03(Worker):
                         self.lines_execed_by_failing_tc[key].append(tc_script_name)
 
                 # assert that failing line executes buggy line
-                # if is_pass == False and key == self.buggy_line_key:
-                    # assert covered == "1", f"Failing test case {tc_script_name} does not execute buggy line {self.buggy_line_key}"
-                    # print(f"Failing test case {tc_script_name} executes buggy line {self.buggy_line_key}")
+                if is_pass == False and key == self.buggy_line_key:
+                    assert covered == "1", f"Failing test case {tc_script_name} does not execute buggy line {self.buggy_line_key}"
+                    print(f"Failing test case {tc_script_name} executes buggy line {self.buggy_line_key}")
                 
                 cnt += 1
 

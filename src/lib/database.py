@@ -107,8 +107,6 @@ class CRUD(Database):
         if special != "":
             query += f" {special}"
         
-        print(query, values)
-        
         self.cursor.execute(query, values)
         self.commit()
 

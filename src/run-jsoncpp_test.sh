@@ -63,5 +63,11 @@ time python3 prepare_prerequisites.py --subject jsoncpp_test --experiment-name t
 # 1148 valid prerequisites
 
 
-time python3 validator.py --subject jsoncpp --set-name prerequisite_data --validate-prerequisite-data
+# time python3 validator.py --subject jsoncpp --set-name prerequisite_data --validate-prerequisite-data
 # time python3 analyzer.py --subject jsoncpp --set-name prerequisite_data --output-csv prerequisite_data-tc-stats --prerequisite-data --removed-initialization-coverage
+
+
+
+# ===============================
+
+time python3 extract_sbfl_features.py --subject jsoncpp_test --experiment-name test1 --target-set-name prerequisite_data

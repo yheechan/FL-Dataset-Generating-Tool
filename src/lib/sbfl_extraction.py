@@ -10,12 +10,9 @@ class SBFLExtraction(Subject):
     def __init__(
             self, subject_name, experiment_name, target_set_name, verbose=False
             ):
-        super().__init__(subject_name, "stage05", verbose)
+        super().__init__(subject_name, "stage04", verbose)
 
         self.experiment_name = experiment_name
-
-        self.sbfl_features_dir = out_dir / self.name / f"sbfl_features"
-        self.sbfl_features_dir.mkdir(exist_ok=True)
 
         self.fileManager = FileManager(self.name, self.work, self.verbose)
 
@@ -25,6 +22,9 @@ class SBFLExtraction(Subject):
     def run(self):
         # 1. Read configurations and initialize working directory: self.work
         self.initialize_working_directory()
+        self.connect_to_db()
+        self.init_tables()
+        self.db.__del__()
 
         # 2. get versions from set_dir
         self.versions_list = get_dirs_in_dir(self.target_set_dir)
@@ -37,6 +37,37 @@ class SBFLExtraction(Subject):
 
         # 6. Test versions
         self.test_versions()
+    
+    def init_tables(self):
+        # Add SBFL data column in line_info table
+        new_cols = [
+            "ep INT DEFAULT NULL",
+            "np INT DEFAULT NULL",
+            "ef INT DEFAULT NULL",
+            "nf INT DEFAULT NULL",
+            "cct_ep INT DEFAULT NULL",
+            "cct_np INT DEFAULT NULL"
+        ]
+        sbfl_list = [
+            "GP13 FLOAT4 DEFAULT NULL",
+            "Jaccard FLOAT4 DEFAULT NULL",
+            "Naish1 FLOAT4 DEFAULT NULL",
+            "Naish2 FLOAT4 DEFAULT NULL",
+            "Ochiai FLOAT4 DEFAULT NULL",
+            "GP13_cct FLOAT4 DEFAULT NULL",
+            "Jaccard_cct FLOAT4 DEFAULT NULL",
+            "Naish1_cct FLOAT4 DEFAULT NULL",
+            "Naish2_cct FLOAT4 DEFAULT NULL",
+            "Ochiai_cct FLOAT4 DEFAULT NULL"
+        ]
+        for col in new_cols + sbfl_list:
+            col_name = col.split(" ")[0].lower()
+            if not self.db.column_exists("line_info", col_name):
+                self.db.add_column("line_info", col)
+        
+        # Add sbfl column in bug_info table
+        if not self.db.column_exists("bug_info", "sbfl"):
+            self.db.add_column("bug_info", "sbfl BOOLEAN DEFAULT NULL")
 
     
     # +++++++++++++++++++++++++++
@@ -80,7 +111,6 @@ class SBFLExtraction(Subject):
             job.join()
         
         print(f">> Finished testing all versions now retrieving versions with its sbfl data")
-        self.fileManager.collect_data_remote("sbfl_features", self.sbfl_features_dir, self.versions_assignments)
     
     def test_single_machine_remote(self, machine, machine_batch_dict):
         for batch_id, machine_core_dict in machine_batch_dict.items():
@@ -155,7 +185,7 @@ class SBFLExtraction(Subject):
 
         cmd = [
             "ssh", f"{machine_name}",
-            f"cd {homedir}FL-dataset-generation-{subject_name}/src && python3 test_version_sbfl_features.py --subject {subject_name} --machine {machine_name} --core {core_name} --version {version_name} {optional_flag}"
+            f"cd {homedir}FL-dataset-generation-{subject_name}/src && python3 test_version_sbfl_features.py --subject {subject_name} --experiment-name {self.experiment_name} --machine {machine_name} --core {core_name} --version {version_name} {optional_flag}"
         ]
         print_command(cmd, self.verbose)
         res = sp.run(cmd, stdout=sp.PIPE, stderr=sp.PIPE)
@@ -243,7 +273,8 @@ class SBFLExtraction(Subject):
         
         cmd = [
             "python3", "test_version_sbfl_features.py",
-            "--subject", subject_name, "--machine", machine_name, "--core", core_name,
+            "--subject", subject_name, "--experiment-name", self.experiment_name,
+            "--machine", machine_name, "--core", core_name,
             "--version", version_name
         ]
 

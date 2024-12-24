@@ -58,7 +58,7 @@ class PrerequisitePreparation(Subject):
         if not self.db.table_exists("line_info"):
             self.db.create_table(
                 "line_info",
-                "subject TEXT, experiment_name TEXT, version TEXT, buggy_file TEXT DEFAULT NULL, buggy_function TEXT DEFAULT NULL, buggy_line INT DEFAULT NULL, line_idx INT, is_buggy_line BOOLEAN DEFAULT NULL"
+                "subject TEXT, experiment_name TEXT, version TEXT, file TEXT DEFAULT NULL, function TEXT DEFAULT NULL, lineno INT DEFAULT NULL, line_idx INT, is_buggy_line BOOLEAN DEFAULT NULL"
             )
 
             # Create a composite index on (subject, experiment_name, version)
@@ -77,8 +77,8 @@ class PrerequisitePreparation(Subject):
             self.db.add_column("bug_info", "buggy_file TEXT DEFAULT NULL")
         if not self.db.column_exists("bug_info", "buggy_function"):
             self.db.add_column("bug_info", "buggy_function TEXT DEFAULT NULL")
-        if not self.db.column_exists("bug_info", "buggy_line"):
-            self.db.add_column("bug_info", "buggy_line INT DEFAULT NULL")
+        if not self.db.column_exists("bug_info", "buggy_lineno"):
+            self.db.add_column("bug_info", "buggy_lineno INT DEFAULT NULL")
 
         # Add summary columns in bug info table
         cov_summary = [
@@ -93,7 +93,8 @@ class PrerequisitePreparation(Subject):
             "num_total_lines INT"
         ]
         for col in cov_summary:
-            if not self.db.column_exists("bug_info", col):
+            col_name = col.split(" ")[0]
+            if not self.db.column_exists("bug_info", col_name):
                 self.db.add_column("bug_info", col)
 
     

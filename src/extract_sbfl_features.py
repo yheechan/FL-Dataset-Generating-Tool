@@ -1,6 +1,8 @@
 import argparse
 
 from lib.sbfl_extraction import SBFLExtraction
+from lib.slack import Slack
+import time
 
 # This script it to executes mutation testing on target versions
 # then retrieves sbfl features
@@ -8,8 +10,19 @@ def main():
     parser = make_parser()
     args = parser.parse_args()
 
-    subject = SBFLExtraction(args.subject, args.target_set_name, args.verbose)
+    slack = Slack(channel_name="C0837SKQLK0", bot_name="sbfl-feature-extractor-bot")
+    subject = SBFLExtraction(args.subject, args.experiment_name, args.target_set_name, args.verbose)
+
+    start_time = time.time()
+    slack.send_message(f"Worker started at {start_time}")
     subject.run()
+    end_time = time.time()
+
+    sec = end_time - start_time
+    minute = sec / 60
+    hour = minute / 60
+
+    slack.send_message(f"Worker finished in:\n\tsec: {sec}\n\tmin: {minute}\n\thour: {hour}")
 
 def make_parser():
     parser = argparse.ArgumentParser(description="Copy subject to working directory")

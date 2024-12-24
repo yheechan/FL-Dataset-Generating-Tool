@@ -464,33 +464,6 @@ class Worker:
                 lines_list.append(row[0])
         return lines_list
     
-    def get_lines_from_pp_cov_as_dict(self, pp_cov_file, noCCTs=False):
-        tc_list = self.failing_tcs_list + self.passing_tcs_list + self.ccts_list
-        if noCCTs:
-            tc_list = self.failing_tcs_list + self.passing_tcs_list
-
-        cov_per_line = []
-        check_tc_col = True
-        buggy_line_exists = False
-        with open(pp_cov_file, "r") as f:
-            csv_reader = csv.DictReader(f)
-            for row in csv_reader:
-                line_key = row["key"]
-
-                if line_key == self.buggy_line_key:
-                    buggy_line_exists = True
-
-                cov_per_line.append(row)
-
-                # VALIDATE: pp cov data has all tcs
-                if check_tc_col:
-                    for tc in tc_list:
-                        tc_name = tc.split(".")[0]
-                        if tc_name not in row:
-                            raise Exception(f"Test case {tc_name} is not in coverage data")
-                    check_tc_col = False
-        assert buggy_line_exists, f"Buggy line {self.buggy_line_key} does not exist in postprocessed coverage data"
-        return cov_per_line
 
     # +++++++++++++++++++++++++++
     # ++++++ Commons Info++++++++
@@ -517,11 +490,21 @@ class Worker:
         assert buggy_code_file.exists(), f"Buggy code file does not exist: {buggy_code_file}"
         return buggy_code_file
     
-    def get_buggy_line_key(self, target_dir):
-        buggy_line_key_txt = target_dir / "buggy_line_key.txt"
-        assert buggy_line_key_txt.exists(), f"Buggy line key txt does not exist: {buggy_line_key_txt}"
-        with open(buggy_line_key_txt, "r") as f:
-            buggy_line_key = f.read().strip()
+    def get_buggy_line_key(self, experiment_name, version_name):
+        res = self.db.read(
+            "bug_info",
+            columns="buggy_file, buggy_function, buggy_lineno",
+            conditions={
+                "subject": self.name,
+                "experiment_name": experiment_name,
+                "version": version_name
+            }
+        )
+        assert len(res) == 1, f"Bug info does not exist for {version_name}"
+        buggy_file = res[0][0]
+        buggy_function = res[0][1]
+        buggy_lineno = res[0][2]
+        buggy_line_key = f"{buggy_file}#{buggy_function}#{buggy_lineno}"
         return buggy_line_key
 
     def save_version(self, version_dir, col_key, experiment_name):
