@@ -64,7 +64,6 @@ class BuggyMutantCollection(Subject):
 
         # 6. Assign mutants to cores
         # mutant_assignments format: {machine_core: [(target_file, mutant)]}
-        self.mutants_list = self.mutants_list[:8]
         self.mutant_assignments = self.assign_works_to_machines(self.mutants_list)
         # self.print_mutant_assignments()
 
