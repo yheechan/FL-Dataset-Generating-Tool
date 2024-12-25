@@ -23,9 +23,9 @@ class FileManager():
                 tasks.append((machine, homedir, data, dest))
 
         limit = 100
-        print(f"Number of tasks (collect): {len(tasks)}")
         with multiprocessing.Pool(processes=limit) as pool:
             pool.map(self.single_collect_data_remote, tasks)
+        print(f"Number of tasks (collect): {len(tasks)}")
 
     def single_collect_data_remote(self, task):
         machine, homedir, data, dest = task
@@ -44,9 +44,9 @@ class FileManager():
             tasks.append((machine, homedir))
 
         limit = 100
-        print(f"Number of tasks (src): {len(tasks)}")
         with multiprocessing.Pool(processes=limit) as pool:
             pool.map(self.single_send_src_remote, tasks)
+        print(f"Number of tasks (src): {len(tasks)}")
     
     def single_send_src_remote(self, task):
         machine, homedir = task
@@ -63,9 +63,9 @@ class FileManager():
             tasks.append((machine, core, homedir, stage))
 
         limit = 100
-        print(f"Number of tasks (assigned_works): {len(tasks)}")
         with multiprocessing.Pool(processes=limit) as pool:
             pool.map(self.single_assigned_works_dir_remote, tasks)
+        print(f"Number of tasks (assigned_works): {len(tasks)}")
 
     def single_assigned_works_dir_remote(self, task):
         machine, core, homedir, stage = task
@@ -88,9 +88,9 @@ class FileManager():
                 tasks.append((machine, core, homedir, stage, work_info, dir_form))
         
         limit = 100
-        print(f"Number of tasks (works): {len(tasks)}")
         with multiprocessing.Pool(processes=limit) as pool:
             pool.map(self.single_send_work_remote, tasks)
+        print(f"Number of tasks (works): {len(tasks)}")
     
     def single_send_work_remote(self, task):
         machine, core, homedir, stage, work_info, dir_form = task
@@ -132,9 +132,9 @@ class FileManager():
             tasks.append((machine, core, homedir, repo))
 
         limit = 50
-        print(f"Number of tasks (repo): {len(tasks)}")
         with multiprocessing.Pool(processes=limit) as pool:
             pool.map(self.single_send_repo_remote, tasks)
+        print(f"Number of tasks (repo): {len(tasks)}")
 
     def single_send_repo_remote(self, task):
         machine, core, homedir, repo = task
@@ -153,9 +153,9 @@ class FileManager():
             tasks.append((machine, homedir))
 
         limit = 100
-        print(f"Number of tasks (configurations): {len(tasks)}")
         with multiprocessing.Pool(processes=limit) as pool:
             pool.map(self.single_send_configurations_remote, tasks)
+        print(f"Number of tasks (configurations): {len(tasks)}")
     
     def single_send_configurations_remote(self, task):
         machine, homedir = task
@@ -175,9 +175,9 @@ class FileManager():
             tasks.append((machine, homedir))
 
         limit = 100
-        print(f"Number of tasks (configurations): {len(tasks)}")
         with multiprocessing.Pool(processes=limit) as pool:
             pool.map(self.single_send_experiment_configurations_remote, tasks)
+        print(f"Number of tasks (configurations): {len(tasks)}")
     
     def single_send_experiment_configurations_remote(self, task):
         machine, homedir = task
@@ -208,9 +208,9 @@ class FileManager():
             tasks.append((machine, homedir, tools_dir))
 
         limit = 100
-        print(f"Number of tasks (tools): {len(tasks)}")
         with multiprocessing.Pool(processes=limit) as pool:
             pool.map(self.single_send_tools_remote, tasks)
+        print(f"Number of tasks (tools): {len(tasks)}")
     
     def single_send_tools_remote(self, task):
         machine, homedir, tools_dir = task
@@ -246,10 +246,10 @@ class FileManager():
                     machine_targetDir[machieCore].append(target_dir)
                     tasks.append((machine, core, homedir, "stage01-assigned_works", target_dir))
 
-        limit = 50
-        print(f"Number of tasks (assigned-stage01): {len(tasks)}")
+        limit = 100
         with multiprocessing.Pool(processes=limit) as pool:
             pool.map(self.single_assigned_dir_stage01, tasks)
+        print(f"Number of tasks (assigned-stage01): {len(tasks)}")
     
     def single_assigned_dir_stage01(self, task):
         machine, core, homedir, stage, target_dir = task
@@ -274,9 +274,9 @@ class FileManager():
                 tasks.append((machine, core, homedir, "stage01-assigned_works", target_dir, mutant))
         
         limit = 100
-        print(f"Number of tasks (mutants-stage01): {len(tasks)}")
         with multiprocessing.Pool(processes=limit) as pool:
             pool.map(self.single_send_mutant_stage01, tasks)
+        print(f"Number of tasks (mutants-stage01): {len(tasks)}")
     
     def single_send_mutant_stage01(self, task):
         machine, core, homedir, stage, target_dir, mutant = task

@@ -71,9 +71,7 @@ class MBFLExtraction(Subject):
         
         if not self.db.table_exists("mutation_info"):
             cols = [
-                "subject TEXT",
-                "experiment_name TEXT",
-                "version TEXT",
+                "bug_idx INT NOT NULL", # -- Foreign key to bug_info(bug_idx)
                 "is_for_test BOOLEAN DEFAULT NULL",
                 "build_result BOOLEAN DEFAULT NULL",
                 "parallel_name TEXT",
@@ -89,21 +87,28 @@ class MBFLExtraction(Subject):
                 "p2p INT",
                 "p2f_cct INT",
                 "p2p_cct INT",
+                "build_time_duration FLOAT",
+                "tc_execution_time_duration FLOAT",
+                "ccts_execution_time_duration FLOAT",
+                "FOREIGN KEY (bug_idx) REFERENCES bug_info(bug_idx) ON DELETE CASCADE ON UPDATE CASCADE" # -- Automatically delete tc_info rows when bug_info is deleted, Update changes in bug_info to tc_info
             ]
             col_str = ",".join(cols)
             self.db.create_table(
                 "mutation_info",
                 columns=col_str
             )
+            # Create a composite index on (subject, experiment_name, version)
             self.db.create_index(
                 "mutation_info",
-                index_name="idx_mutation_info_subject_experiment_name_version",
-                columns="subject, experiment_name, version"
+                "idx_mutation_info_bug_idx",
+                "bug_idx"
             )
         
         # Add mbfl column in bug_info table
         if not self.db.column_exists("bug_info", "mbfl"):
             self.db.add_column("bug_info", "mbfl BOOLEAN DEFAULT NULL")
+        if not self.db.column_exists("bug_info", "mbfl_wall_clock_time"):
+            self.db.add_column("bug_info", "mbfl_wall_clock_time FLOAT")
     
     def remain_one_bug_per_line(self): # 2024-08-01
         included = 0

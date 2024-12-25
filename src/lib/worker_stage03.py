@@ -26,11 +26,12 @@ class WorkerStage03(Worker):
 
         # Work Information >>
         self.connect_to_db()
-        self.target_code_file, self.buggy_code_filename, self.buggy_lineno = self.get_bug_info(self.version_name, self.experiment_name)
+        self.bug_idx = self.get_bug_idx(self.name, self.experiment_name, version_name)
+        self.target_code_file, self.buggy_code_filename, self.buggy_lineno = self.get_bug_info(self.bug_idx)
         self.target_code_file_path = self.core_dir / self.target_code_file
         assert version_name == self.buggy_code_filename, f"Version name {version_name} does not match with buggy code filename {self.buggy_code_filename}"
     
-        self.set_testcases(self.version_name, self.experiment_name)
+        self.set_testcases(self.bug_idx)
 
         self.buggy_code_file = self.get_buggy_code_file(self.version_dir, self.buggy_code_filename)
 
@@ -92,7 +93,7 @@ class WorkerStage03(Worker):
         self.postprocess_coverage()
 
         # 4. Save the version to self.prerequisite_data_dir
-        self.save_version(self.version_dir, "prerequisites", self.experiment_name)
+        self.save_version(self.bug_idx, "prerequisites")
         print_command(["cp", "-r", self.version_dir, self.prerequisite_data_dir], self.verbose)
         sp.check_call(["cp", "-r", self.version_dir, self.prerequisite_data_dir])
 
@@ -100,7 +101,7 @@ class WorkerStage03(Worker):
         sp.check_call(["rm", "-rf", self.cov_dir])
     
     def postprocess_coverage(self):
-        self.set_testcases(self.version_name, self.experiment_name)
+        self.set_testcases(self.bug_idx)
         self.total_tcs = self.failing_tcs_list + self.passing_tcs_list + self.excluded_failing_tcs_list + self.excluded_passing_tcs_list + self.ccts_list
         self.coverage_summary = {
             "num_failing_tcs": len(self.failing_tcs_list),
@@ -179,11 +180,7 @@ class WorkerStage03(Worker):
                 "buggy_lineno": bug_line,
                 "buggy_line_idx": self.buggy_line_idx
             },
-            conditions={
-                "subject": self.name,
-                "experiment_name": self.experiment_name,
-                "version": self.version_name
-            }
+            conditions={"bug_idx": self.bug_idx}
         )
 
 
@@ -191,11 +188,7 @@ class WorkerStage03(Worker):
         self.db.update(
             "bug_info",
             set_values=self.coverage_summary,
-            conditions={
-                "subject": self.name,
-                "experiment_name": self.experiment_name,
-                "version": self.version_name
-            }
+            conditions={"bug_idx": self.bug_idx}
         )
 
 
@@ -224,30 +217,21 @@ class WorkerStage03(Worker):
                 "tc_info",
                 set_values={"cov_bit_seq": cov_bit_seq},
                 conditions={
-                    "subject": self.name,
-                    "experiment_name": self.experiment_name,
-                    "version": self.version_name,
+                    "bug_idx": self.bug_idx,
                     "tc_name": tc_script_name
                 }
             )
     
     def write_lines(self, col_data):
-        self.db.delete(
-            "line_info",
-            conditions={
-                "subject": self.name,
-                "experiment_name": self.experiment_name,
-                "version": self.version_name
-            }
-        )
+        self.db.delete("line_info", conditions={"bug_idx": self.bug_idx})
         
         for idx, key in enumerate(col_data):
             bug_info = key.split("#")
             bug_file = bug_info[0]
             bug_function = bug_info[1]
             bug_line = int(bug_info[2])
-            cols = "subject, experiment_name, version, file, function, lineno, line_idx"
-            vals = f"'{self.name}', '{self.experiment_name}', '{self.version_name}', '{bug_file}', '{bug_function}', {bug_line}, {idx}"
+            cols = "bug_idx, file, function, lineno, line_idx"
+            vals = f"{self.bug_idx}, '{bug_file}', '{bug_function}', {bug_line}, {idx}"
 
             if key == self.buggy_line_key:
                 cols += ", is_buggy_line"
@@ -467,9 +451,7 @@ class WorkerStage03(Worker):
             "tc_info",
             set_values={"tc_result": "cct"},
             conditions={
-                "subject": self.name,
-                "experiment_name": self.experiment_name,
-                "version": self.version_name,
+                "bug_idx": self.bug_idx,
                 "tc_result": "pass"
             },
             special=special

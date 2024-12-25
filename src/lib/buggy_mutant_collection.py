@@ -26,9 +26,6 @@ class BuggyMutantCollection(Subject):
     def run(self):
         # 1. Read configurations and initialize working directory: self.work
         self.initialize_working_directory()
-        self.connect_to_db()
-        self.init_tables()
-        self.db.__del__()
         
         check = []
         self.redoing = False
@@ -90,7 +87,7 @@ class BuggyMutantCollection(Subject):
         # get bug_info
         bug_info = self.db.read(
             "bug_info",
-            columns="subject, experiment_name, version, type, target_code_file, buggy_code_file",
+            columns="bug_idx, version, target_code_file",
             conditions={
                 "subject": self.name,
                 "experiment_name": self.experiment_name
@@ -99,15 +96,11 @@ class BuggyMutantCollection(Subject):
 
         # update bug_info
         for bug in bug_info:
-            subject = bug[0]
-            experiment_name = bug[1]
-            version = bug[2]
-            version_type = bug[3]
-            target_code_file = bug[4]
-            mutant_code_file = bug[5]
+            bug_idx, version, target_code_file = bug
 
-            assert version in mut_info, f"{version} not in mut_info"
-            mut_data = mut_info[version]
+            assert target_code_file in mut_info, f"{version} not in mut_info"
+            assert version in mut_info[target_code_file], f"{version} not in mut_info[{target_code_file}]"
+            mut_data = mut_info[target_code_file][version]
             this_values = {
                 "mut_op": mut_data["mut_op"],
                 "pre_start_line": mut_data["pre_start_line"],
@@ -123,12 +116,9 @@ class BuggyMutantCollection(Subject):
             }
 
             this_conditions = {
-                "subject": subject,
-                "experiment_name": experiment_name,
+                "bug_idx": bug_idx,
                 "version": version,
-                "type": version_type,
                 "target_code_file": target_code_file,
-                "buggy_code_file": mutant_code_file
             }
 
             self.db.update(
@@ -138,36 +128,18 @@ class BuggyMutantCollection(Subject):
             )
 
     def init_tables(self):
-        # Create table if not exists: tc_info
-        if not self.db.table_exists("tc_info"):
-            self.db.create_table(
-                "tc_info",
-                "subject TEXT, experiment_name TEXT, version TEXT, tc_name TEXT, tc_result TEXT, tc_ret_code INT"
-            )
-
-            # Create a composite index on (subject, experiment_name, version)
-            self.db.create_index(
-                "tc_info",
-                "idx_tc_info_subject_experiment_version",
-                "subject, experiment_name, version"
-            )
-        
         # Create table if not exists: bug_info
         if not self.db.table_exists("bug_info"):
-            self.db.create_table(
-                "bug_info",
-                "subject TEXT, experiment_name TEXT, version TEXT, type TEXT, target_code_file TEXT, buggy_code_file TEXT"
-            )
-
-            # Create a composite index on (subject, experiment_name, version)
-            self.db.create_index(
-                "bug_info",
-                "idx_bug_info_subject_experiment_version",
-                "subject, experiment_name, version"
-            )
-
-            # Add mut info columns in bug info table
-            new_columns = [
+            columns = [
+                "bug_idx SERIAL PRIMARY KEY", # -- Surrogate key
+                "subject TEXT",
+                "experiment_name TEXT",
+                "version TEXT",
+                "type TEXT",
+                "target_code_file TEXT",
+                "buggy_code_file TEXT",
+                "UNIQUE (subject, experiment_name, version)", # -- Ensure uniqueness
+                
                 "mut_op TEXT",
                 "pre_start_line INT",
                 "pre_start_col INT",
@@ -180,10 +152,28 @@ class BuggyMutantCollection(Subject):
                 "post_end_col INT",
                 "post_mut TEXT"
             ]
-            for column in new_columns:
-                col_name = column.split()[0]
-                if not self.db.column_exists("bug_info", col_name):
-                    self.db.add_column("bug_info", column)
+            col_str = ", ".join(columns)
+            self.db.create_table("bug_info",col_str)
+
+
+        # Create table if not exists: tc_info
+        if not self.db.table_exists("tc_info"):
+            columns = [
+                "bug_idx INT NOT NULL", # -- Foreign key to bug_info(bug_idx)
+                "tc_name TEXT",
+                "tc_result TEXT",
+                "tc_ret_code INT",
+                "FOREIGN KEY (bug_idx) REFERENCES bug_info(bug_idx) ON DELETE CASCADE ON UPDATE CASCADE" # -- Automatically delete tc_info rows when bug_info is deleted, Update changes in bug_info to tc_info
+            ]
+            col_str = ", ".join(columns)
+            self.db.create_table("tc_info", col_str)
+            # Create a composite index on (subject, experiment_name, version)
+            self.db.create_index(
+                "tc_info",
+                "idx_tc_info_bug_idx",
+                "bug_idx"
+            )
+        
 
     # +++++++++++++++++++++++++++
     # ++++++ Testing stage ++++++
@@ -324,6 +314,10 @@ class BuggyMutantCollection(Subject):
                 f.write(res.stderr.decode())
     
     def prepare_for_mutation_testing(self):
+        self.connect_to_db()
+        self.init_tables()
+        self.db.__del__()
+
         if self.experiment.experiment_config["use_distributed_machines"]:
             self.prepare_for_remote()
         else:
@@ -474,9 +468,12 @@ class BuggyMutantCollection(Subject):
         mut_info = {}
         for target_mutants_dir in self.mutants_dir.iterdir():
             target_file = target_mutants_dir.name.replace('-', '/')
-            target_file_source_filename = target_file.split('/')[-1].split(".")[0]
+            target_file_source_filename = ".".join(target_file.split('/')[-1].split(".")[:-1])
             mut_db_file = target_mutants_dir / f"{target_file_source_filename}_mut_db.csv"
             assert mut_db_file.exists(), f"{mut_db_file} doesn't exists"
+
+            if target_file not in mut_info:
+                mut_info[target_file] = {}
 
             with open(mut_db_file, "r") as fp:
                 # read with csv
@@ -497,7 +494,7 @@ class BuggyMutantCollection(Subject):
                     post_end_col = row[10]
                     post_mut = row[11]
 
-                    mut_info[mut_name] = {
+                    mut_info[target_file][mut_name] = {
                         "mut_op": op,
                         "pre_start_line": pre_start_line,
                         "pre_start_col": pre_start_col,

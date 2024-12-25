@@ -111,21 +111,6 @@ class WorkerStage01(Worker):
     def save_mutant(self):
         self.connect_to_db()
 
-        # Delete existing data for the version
-        self.db.delete(
-            "tc_info",
-            conditions={
-                "subject": self.name,
-                "experiment_name": self.experiment_name,
-                "version": self.mutant_name
-            }
-        )
-
-        # Write test case info
-        self.write_tc_info(self.failing_tcs, "fail")
-        self.write_tc_info(self.passing_tcs, "pass")
-        self.write_tc_info(self.crashed_tcs, "crash")
-        
         # Write bug info
         self.db.insert(
             "bug_info",
@@ -133,18 +118,29 @@ class WorkerStage01(Worker):
             f"'{self.name}', '{self.experiment_name}', '{self.mutant_name}', 'mutant', '{self.target_file_path}', '{self.assigned_mutant_code_file.name}'"
         )
 
+        # Get bug index
+        self.bug_idx = self.get_bug_idx(self.name, self.experiment_name, self.mutant_name)
+
+        # Delete existing data for the version
+        self.db.delete("tc_info", conditions={"bug_idx": self.bug_idx})
+
+        # Write test case info
+        self.write_tc_info(self.bug_idx, self.failing_tcs, "fail")
+        self.write_tc_info(self.bug_idx, self.passing_tcs, "pass")
+        self.write_tc_info(self.bug_idx, self.crashed_tcs, "crash")
+
         print(f">> Saved buggy mutant {self.assigned_mutant_code_file.name}")
         print(f"\t - Failing test cases: {len(self.failing_tcs)}")
         print(f"\t - Passing test cases: {len(self.passing_tcs)}")
         print(f"\t - Crashing test cases: {len(self.crashed_tcs)}")
 
 
-    def write_tc_info(self, tc_list, result):
+    def write_tc_info(self, bug_idx, tc_list, result):
         for tc in tc_list:
             self.db.insert(
                 "tc_info",
-                "subject, experiment_name, version, tc_name, tc_result, tc_ret_code",
-                f"'{self.name}', '{self.experiment_name}', '{self.mutant_name}', '{tc[0]}', '{result}', {tc[1]}"
+                "bug_idx, tc_name, tc_result, tc_ret_code",
+                f"'{bug_idx}', '{tc[0]}', '{result}', {tc[1]}"
             )
 
     def run_test_suite(self):

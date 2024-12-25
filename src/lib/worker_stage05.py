@@ -33,19 +33,20 @@ class WorkerStage05(Worker):
 
         # Work Information >>
         self.connect_to_db()
-        self.target_code_file, self.buggy_code_filename, self.buggy_lineno = self.get_bug_info(self.version_name, self.experiment_name)
+        self.bug_idx = self.get_bug_idx(self.name, self.experiment_name, version_name)
+        self.target_code_file, self.buggy_code_filename, self.buggy_lineno = self.get_bug_info(self.bug_idx)
         self.target_code_file_path = self.core_dir / self.target_code_file
         assert version_name == self.buggy_code_filename, f"Version name {version_name} does not match with buggy code filename {self.buggy_code_filename}"
     
-        self.set_testcases(self.version_name, self.experiment_name)
+        self.set_testcases(self.bug_idx)
         self.set_lines_executed_by_failing_tc(self.version_dir, self.target_code_file, self.buggy_lineno)
         self.set_line2function_dict(self.version_dir)
         self.set_filtered_files_for_gcovr()
         self.set_target_preprocessed_files()
-        self.set_line_idx_map(self.version_name, self.experiment_name)
+        self.set_line_idx_map(self.bug_idx)
 
         self.buggy_code_file = self.get_buggy_code_file(self.version_dir, self.buggy_code_filename)
-        self.buggy_line_key, self.buggy_line_idx = self.get_buggy_line_key(self.experiment_name, self.version_name, with_buggy_line_idx=True)
+        self.buggy_line_key, self.buggy_line_idx = self.get_buggy_line_key(self.bug_idx, with_buggy_line_idx=True)
         buggy_line_info = self.buggy_line_key.split("#")
         self.buggy_file = buggy_line_info[0]
         self.buggy_function = buggy_line_info[1]
@@ -125,10 +126,12 @@ class WorkerStage05(Worker):
 
 
         # 4. Conduct mutation testing
+        mbfl_wall_clock_time_start = time.time()
         if self.parallel_cnt == 0: # 2024-08-13 implement parallel mode
             self.begin_mbfl_process()
         else:
             self.begin_mbfl_parallel_process()
+        mbfl_wall_clock_time = time.time() - mbfl_wall_clock_time_start
 
         if self.parallel_mode == False:
             # # 5. Measure MBFL features
@@ -151,7 +154,14 @@ class WorkerStage05(Worker):
                     self.zip_mutants(past_version_mutant_zip, past_mbfl_generated_mutants_dir, past_version_mutant_dir)
 
             # 7. Save version
-            self.save_version(self.version_dir, "mbfl", self.experiment_name)
+            self.save_version(self.bug_idx, "mbfl")
+
+            # 8. Write mbfl_wall_clock_time to bug_info table
+            self.db.update(
+                "bug_info",
+                set_values={"mbfl_wall_clock_time": mbfl_wall_clock_time},
+                conditions={"bug_idx": self.bug_idx}
+            )
         
         print(f"Finished testing version {self.version_dir.name} on {self.machine}::{self.core}")
     
@@ -164,9 +174,7 @@ class WorkerStage05(Worker):
                 "tc_info",
                 columns="cov_bit_seq",
                 conditions={
-                    "subject": self.name,
-                    "experiment_name": self.experiment_name,
-                    "version": self.version_name,
+                    "bug_idx": self.bug_idx,
                     "tc_name": failing_tc
                 }
             )
@@ -190,11 +198,7 @@ class WorkerStage05(Worker):
         self.db.update(
             "line_info",
             set_values={"for_random_mbfl": True},
-            conditions={
-                "subject": self.name,
-                "experiment_name": self.experiment_name,
-                "version": self.version_name,
-            },
+            conditions={"bug_idx": self.bug_idx},
             special=special_str
         )
 
@@ -202,11 +206,7 @@ class WorkerStage05(Worker):
         res = self.db.read(
             "line_info",
             columns="line_idx, gp13",
-            conditions={
-                "subject": self.name,
-                "experiment_name": self.experiment_name,
-                "version": self.version_name,
-            },
+            conditions={"bug_idx": self.bug_idx},
             special=f"ORDER BY {self.sbfl_rank_based_formula} DESC"
         )
         all_line_idx_list = [row[0] for row in res]
@@ -222,11 +222,7 @@ class WorkerStage05(Worker):
         self.db.update(
             "line_info",
             set_values={"for_sbfl_ranked_mbfl_desc": True},
-            conditions={
-                "subject": self.name,
-                "experiment_name": self.experiment_name,
-                "version": self.version_name,
-            },
+            conditions={"bug_idx": self.bug_idx},
             special=special_str
         )
 
@@ -234,11 +230,7 @@ class WorkerStage05(Worker):
         self.db.update(
             "line_info",
             set_values={"for_sbfl_ranked_mbfl_asc": True},
-            conditions={
-                "subject": self.name,
-                "experiment_name": self.experiment_name,
-                "version": self.version_name,
-            },
+            conditions={"bug_idx": self.bug_idx},
             special=special_str
         )
 
@@ -257,11 +249,7 @@ class WorkerStage05(Worker):
         res = self.db.read(
             "line_info",
             columns="file, lineno",
-            conditions={
-                "subject": self.name,
-                "experiment_name": self.experiment_name,
-                "version": self.version_name,
-            },
+            conditions={"bug_idx": self.bug_idx},
             special=special_str
         )
 
@@ -527,9 +515,7 @@ class WorkerStage05(Worker):
                 "mutation_info",
                 set_values=result_data,
                 conditions={
-                    "subject": self.name,
-                    "experiment_name": self.experiment_name,
-                    "version": self.version_name,
+                    "bug_idx": self.bug_idx,
                     "mutant_idx": mutant_idx
                 }
             )
@@ -694,17 +680,24 @@ class WorkerStage05(Worker):
         self.apply_patch(target_file_path, mutant_file_path, patch_file, False)
 
         # 3. Build subject
+        build_start_time = time.time()
         res = self.build()
+        build_time_duration = time.time() - build_start_time
+        result_dict["build_result"] = False
+        result_dict["build_time_duration"] = build_time_duration
+        result_dict["tc_execution_time_duration"] = 0.0
+        result_dict["ccts_execution_time_duration"] = 0.0
         if res != 0:
             print(f"Failed to build on {mutant_idx}:{mutant_file_path.name} of {self.version_dir.name}")
             self.apply_patch(target_file_path, mutant_file_path, patch_file, True)
-            result_dict["build_result"] = False
             for tc_outcome_key in tc_outcome:
                 result_dict[tc_outcome_key] = -1
             return
         
         result_dict["build_result"] = True
         tc_outcome = {"p2f": 0, "p2p": 0, "f2p": 0, "f2f": 0, "p2f_cct": 0, "p2p_cct": 0}
+        tc_execution_time_duration = 0.0
+        ccts_execution_time_duration = 0.0
 
 
         mutant2tcs_results_file = self.mutant2tcs_results_dir / f"mutant_{mutant_idx}.csv"  # 2024-08-05 time for each test on each mutant
@@ -713,8 +706,8 @@ class WorkerStage05(Worker):
         # 4. Run test cases
         for type, tcs in self.utilized_testcases.items():
             for tc_script_name in tcs:
-                tc_start_time = time.time()
                 outcome = ""
+                tc_start_time = time.time()
                 res = self.run_test_case(tc_script_name)
                 if res == 0:
                     if type == "fail":
@@ -738,6 +731,10 @@ class WorkerStage05(Worker):
                         self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_script_name)
                 
                 tc_time_duration = time.time() - tc_start_time
+                if type == "fail" or type == "pass":
+                    tc_execution_time_duration += tc_time_duration
+                else:
+                    ccts_execution_time_duration += tc_time_duration
                 
                 error_str = "code-not-found-in-listed-crash-codes"
                 if res in crash_codes_dict:
@@ -749,6 +746,9 @@ class WorkerStage05(Worker):
                 content = f"{tc_script_name},{outcome},{res},{error_str},{tc_time_duration}\n"
                 mutant2tcs_results_fp.write(content)
         mutant2tcs_results_fp.close()
+
+        result_dict["tc_execution_time_duration"] = tc_execution_time_duration
+        result_dict["ccts_execution_time_duration"] = ccts_execution_time_duration
         
         # 5. Apply patch reverse
         self.apply_patch(target_file_path, mutant_file_path, patch_file, True)
@@ -785,11 +785,7 @@ class WorkerStage05(Worker):
         self.db.update(
             "mutation_info",
             set_values={"parallel_name": p_idx},
-            conditions={
-                "subject": self.name,
-                "experiment_name": self.experiment_name,
-                "version": self.version_name,
-            },
+            conditions={"bug_idx": self.bug_idx},
             special=special_str
         )
         
@@ -810,11 +806,7 @@ class WorkerStage05(Worker):
         res = self.db.read(
             "mutation_info",
             columns="line_idx, targetting_file, mutation_dirname, mutant_filename, mutant_idx",
-            conditions={
-                "subject": self.name,
-                "experiment_name": self.experiment_name,
-                "version": self.version_name
-            },
+            conditions={"bug_idx": self.bug_idx},
             special="ORDER BY RANDOM()"
         )
 
@@ -845,11 +837,7 @@ class WorkerStage05(Worker):
         self.db.update(
             "mutation_info",
             set_values={"is_for_test": True},
-            conditions={
-                "subject": self.name,
-                "experiment_name": self.experiment_name,
-                "version": self.version_name,
-            },
+            conditions={"bug_idx": self.bug_idx},
             special=special_str
         )
 
@@ -976,6 +964,9 @@ class WorkerStage05(Worker):
             if "libxml2" in self.name:
                 filename = target_file.name
             # STRUCTURE: self.file2lineno_selected[filename].append((line_idx, lineno))
+            if filename not in self.file2lineno_selected:
+                print(f">> No failing test case executed lines on {filename}")
+                continue
             lines = [str(line[1]) for line in self.file2lineno_selected[filename]]
             if len(lines) == 0:
                 print(f">> No failing test case executed lines on {filename}")
@@ -1130,11 +1121,11 @@ class WorkerStage05(Worker):
             for mutant_file in mutant_dir.iterdir():
                 if mutant_file.name.endswith(".csv"): continue
 
-                col_str = "subject, experiment_name, version, targetting_file, mutation_dirname, mutant_filename, mutant_idx, line_idx, mut_op"
+                col_str = "bug_idx, targetting_file, mutation_dirname, mutant_filename, mutant_idx, line_idx, mut_op"
                 mut_lineno = mut_data[mutant_file.name][1]
                 mut_op = mut_data[mutant_file.name][0]
                 line_idx = self.line_idx_map[target_file_identity][mut_lineno]
-                val_str = f"'{self.name}', '{self.experiment_name}', '{self.version_name}', '{target_file_str}', '{mutant_dir.name}', '{mutant_file.name}', {mutant_idx}, {line_idx}, '{mut_op}'"
+                val_str = f"{self.bug_idx}, '{target_file_str}', '{mutant_dir.name}', '{mutant_file.name}', {mutant_idx}, {line_idx}, '{mut_op}'"
 
                 self.db.insert(
                     "mutation_info",
@@ -1163,9 +1154,7 @@ class WorkerStage05(Worker):
             "mutation_info",
             columns="line_idx, targetting_file, mutation_dirname, mutant_filename, mutant_idx",
             conditions={
-                "subject": self.name,
-                "experiment_name": self.experiment_name,
-                "version": self.version_name,
+                "bug_idx": self.bug_idx,
                 "parallel_name": parallel_name
             },
             special="AND is_for_test is TRUE"

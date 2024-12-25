@@ -44,7 +44,6 @@ class UsableVersionSelection(Subject):
         # 1. Select initial buggy versions at random
         # connect to db
         self.connect_to_db()
-        self.codefile2type_list = []
         self.select_initial_buggy_versions()
         self.versions_list = self.get_works(self.generated_mutants_dir, self.experiment_name, "AND initial IS TRUE AND usable IS NULL")
 
@@ -179,7 +178,7 @@ class UsableVersionSelection(Subject):
     # +++++++++++++++++++++++++++++
     def prepare_for_testing_versions(self):
         if self.experiment.experiment_config["use_distributed_machines"]:
-            self.prepare_for_remote(self.fileManager, self.versions_assignments)
+            self.prepare_for_remote()
         else:
             self.prepare_for_local(self.fileManager, self.versions_assignments)
     
@@ -215,32 +214,28 @@ class UsableVersionSelection(Subject):
             self.include_real_world_buggy_versions()
 
         # Select buggy mutants at random
-        buggy_mutants_list = self.db.read(
+        bug_idx_list = self.db.read(
             "bug_info",
-            columns="version, initial, usable",
+            columns="bug_idx",
             conditions={
                 "subject": self.name,
                 "experiment_name": self.experiment_name,
             },
-            special="AND initial IS NULL"
+            special="AND initial IS NULL AND usable IS NULL"
         )
-        buggy_mutants_list = [row[0] for row in buggy_mutants_list]
+        bug_idx_list = [row[0] for row in bug_idx_list]
 
         # Select N amount of buggy mutants to check for usability
-        if len(buggy_mutants_list) > self.num_to_check:
-            buggy_mutants_list = random.sample(buggy_mutants_list, self.num_to_check)
-        print(f"Selected {len(buggy_mutants_list)} buggy mutants to check for usability at random")
+        if len(bug_idx_list) > self.num_to_check:
+            bug_idx_list = random.sample(bug_idx_list, self.num_to_check)
+        print(f"Selected {len(bug_idx_list)} buggy mutants to check for usability at random")
 
-        for buggy_mutant in buggy_mutants_list:
+        for bug_idx in bug_idx_list:
             # 1. Update bug_info table in db
             self.db.update(
                 "bug_info",
                 set_values={"initial": True},
-                conditions={
-                    "subject": self.name,
-                    "experiment_name": self.experiment_name,
-                    "version": buggy_mutant,
-                }
+                conditions={"bug_idx": bug_idx}
             )
 
 
@@ -284,15 +279,10 @@ class UsableVersionSelection(Subject):
                     f"'{self.name}', '{self.experiment_name}', '{buggy_version.name}', 'real_world', '{target_code_file}', '{buggy_code_file}', {buggy_lineno}, TRUE"
                 )
             
+            bug_idx = self.get_bug_idx(self.name, self.experiment_name, buggy_version.name)
+            
             # 4. write test case info to tc_info table in db
-            self.db.delete(
-                "tc_info",
-                conditions={
-                    "subject": self.name,
-                    "experiment_name": self.experiment_name,
-                    "version": buggy_version.name
-                }
-            )
+            self.db.delete("tc_info", conditions={"bug_idx": bug_idx})
 
             failing_tcs_txt = buggy_version / "testsuite_info/failing_tcs.txt"
             with open(failing_tcs_txt, "r") as f:
@@ -303,8 +293,8 @@ class UsableVersionSelection(Subject):
                     tc_ret_code = 1
                     self.db.insert(
                         "tc_info",
-                        "subject, experiment_name, version, tc_name, tc_result, tc_ret_code",
-                        f"'{self.name}', '{self.experiment_name}', '{buggy_version.name}', '{tc_name}', '{tc_result}', {tc_ret_code}"
+                        "bug_idx, tc_name, tc_result, tc_ret_code",
+                        f"{bug_idx}, '{tc_name}', '{tc_result}', {tc_ret_code}"
                     )
             passing_tcs_txt = buggy_version / "testsuite_info/passing_tcs.txt"
             with open(passing_tcs_txt, "r") as f:
@@ -315,8 +305,8 @@ class UsableVersionSelection(Subject):
                     tc_ret_code = 0
                     self.db.insert(
                         "tc_info",
-                        "subject, experiment_name, version, tc_name, tc_result, tc_ret_code",
-                        f"'{self.name}', '{self.experiment_name}', '{buggy_version.name}', '{tc_name}', '{tc_result}', {tc_ret_code}"
+                        "bug_idx, tc_name, tc_result, tc_ret_code",
+                        f"{bug_idx}, '{tc_name}', '{tc_result}', {tc_ret_code}"
                     )
 
             self.num_to_check -= 1

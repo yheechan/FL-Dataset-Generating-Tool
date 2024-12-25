@@ -207,15 +207,11 @@ class Worker:
     # ++++++++++++++++++++++++++
     # ++++++ Version Info ++++++
     # ++++++++++++++++++++++++++
-    def set_testcases(self, version_name, experiment_name):
+    def set_testcases(self, bug_idx):
         res = self.db.read(
             "tc_info",
             columns="tc_name, tc_result",
-            conditions={
-                "subject": self.name,
-                "experiment_name": experiment_name,
-                "version": version_name
-            }
+            conditions={"bug_idx": bug_idx}
         )
 
         self.failing_tcs_list = []
@@ -232,7 +228,7 @@ class Worker:
             elif tc_result == "pass":
                 self.passing_tcs_list.append(tc_name)
             elif tc_result == "crash":
-                self.crashed_tcs.append(tc_name)
+                self.crashed_tcs_list.append(tc_name)
             elif tc_result == "excluded_fail":
                 self.excluded_failing_tcs_list.append(tc_name)
             elif tc_result == "excluded_pass":
@@ -240,15 +236,11 @@ class Worker:
             elif tc_result == "cct":
                 self.ccts_list.append(tc_name)
     
-    def set_line_idx_map(self, version_name, experiment_name):
+    def set_line_idx_map(self, bug_idx):
         res = self.db.read(
             "line_info",
             columns="file, lineno, line_idx",
-            conditions={
-                "subject": self.name,
-                "experiment_name": experiment_name,
-                "version": version_name
-            }
+            conditions={"bug_idx": bug_idx}
         )
         self.line_idx_map = {}
         for file, lineno, line_idx in res:
@@ -486,17 +478,13 @@ class Worker:
     # +++++++++++++++++++++++++++
     # ++++++ Commons Info++++++++
     # +++++++++++++++++++++++++++
-    def get_bug_info(self, version_name, experiment_name):
+    def get_bug_info(self, bug_idx):
         res = self.db.read(
             "bug_info",
             columns="target_code_file, buggy_code_file, pre_start_line",
-            conditions={
-                "subject": self.name,
-                "experiment_name": experiment_name,
-                "version": version_name
-            }
+            conditions={"bug_idx": bug_idx}
         )
-        assert len(res) == 1, f"Bug info does not exist for {version_name}"
+        assert len(res) == 1, f"Bug info does not exist for {bug_idx}"
         target_code_file = res[0][0]
         mutant_code_file = res[0][1]
         buggy_lineno = str(res[0][2])
@@ -508,7 +496,7 @@ class Worker:
         assert buggy_code_file.exists(), f"Buggy code file does not exist: {buggy_code_file}"
         return buggy_code_file
     
-    def get_buggy_line_key(self, experiment_name, version_name, with_buggy_line_idx=False):
+    def get_buggy_line_key(self, bug_idx, with_buggy_line_idx=False):
         col = "buggy_file, buggy_function, buggy_lineno"
         if with_buggy_line_idx:
             col += ", buggy_line_idx"
@@ -516,13 +504,9 @@ class Worker:
         res = self.db.read(
             "bug_info",
             columns=col,
-            conditions={
-                "subject": self.name,
-                "experiment_name": experiment_name,
-                "version": version_name
-            }
+            conditions={"bug_idx": bug_idx}
         )
-        assert len(res) == 1, f"Bug info does not exist for {version_name}"
+        assert len(res) == 1, f"Bug info does not exist for {bug_idx}"
         buggy_file = res[0][0]
         buggy_function = res[0][1]
         buggy_lineno = res[0][2]
@@ -531,15 +515,24 @@ class Worker:
             return buggy_line_key, res[0][3]
         return buggy_line_key
 
-    def save_version(self, version_dir, col_key, experiment_name):
+    def get_bug_idx(self, subject_name, experiment_name, version_name):
+        res = self.db.read(
+            "bug_info",
+            columns="bug_idx",
+            conditions={
+                "subject": subject_name,
+                "experiment_name": experiment_name,
+                "version": version_name
+            }
+        )
+        assert len(res) == 1, f"Bug info does not exist for {version_name}"
+        return res[0][0]
+
+    def save_version(self, bug_idx, col_key):
         print(f">> Saving version {self.version_dir.name} to database")
         self.db.update(
             "bug_info",
             set_values={col_key: True},
-            conditions={
-                "subject": self.name,
-                "version": version_dir.name,
-                "experiment_name": experiment_name
-            }
+            conditions={"bug_idx": bug_idx}
         )
 

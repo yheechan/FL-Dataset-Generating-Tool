@@ -21,17 +21,18 @@ class WorkerStage04(Worker):
 
         # Work Information >>
         self.connect_to_db()
-        self.target_code_file, self.buggy_code_filename, self.buggy_lineno = self.get_bug_info(self.version_name, self.experiment_name)
+        self.bug_idx = self.get_bug_idx(self.name, self.experiment_name, version_name)
+        self.target_code_file, self.buggy_code_filename, self.buggy_lineno = self.get_bug_info(self.bug_idx)
         self.target_code_file_path = self.core_dir / self.target_code_file
         assert version_name == self.buggy_code_filename, f"Version name {version_name} does not match with buggy code filename {self.buggy_code_filename}"
     
-        self.set_testcases(self.version_name, self.experiment_name)
+        self.set_testcases(self.bug_idx)
         self.set_lines_executed_by_failing_tc(self.version_dir, self.target_code_file, self.buggy_lineno)
         self.set_line2function_dict(self.version_dir)
 
         self.buggy_code_file = self.get_buggy_code_file(self.version_dir, self.buggy_code_filename)
         
-        self.buggy_line_key = self.get_buggy_line_key(self.experiment_name, self.version_name)
+        self.buggy_line_key = self.get_buggy_line_key(self.bug_idx)
 
         self.core_repo_dir = self.core_dir / self.name
 
@@ -42,11 +43,7 @@ class WorkerStage04(Worker):
         res = self.db.read(
             "line_info",
             columns="line_idx, file, function, lineno",
-            conditions={
-                "subject": self.name,
-                "experiment_name": self.experiment_name,
-                "version": self.version_name
-            },
+            conditions={"bug_idx": self.bug_idx},
             special="ORDER BY line_idx"
         )
         line_data = []
@@ -73,11 +70,7 @@ class WorkerStage04(Worker):
         res = self.db.read(
             "tc_info",
             columns="tc_name, tc_result, cov_bit_seq",
-            conditions={
-                "subject": self.name,
-                "experiment_name": self.experiment_name,
-                "version": self.version_name
-            }
+            conditions={"bug_idx": self.bug_idx}
         )
         cov_per_tc_data = {"pass": [], "fail": [], "cct": []}
         for row in res:
@@ -106,7 +99,7 @@ class WorkerStage04(Worker):
         self.write_sbfl_features()
 
         # 4. save the version directory to self.sbfl_features_dir
-        self.save_version(self.version_dir, "sbfl", self.experiment_name)
+        self.save_version(self.bug_idx, "sbfl")
     
     def init_spectrum_per_line(self):
         for key, cov_per_tc in self.cov_per_tc_data.items():
@@ -160,9 +153,7 @@ class WorkerStage04(Worker):
                 "line_info",
                 set_values=line_info["sbfl_data"],
                 conditions={
-                    "subject": self.name,
-                    "experiment_name": self.experiment_name,
-                    "version": self.version_name,
+                    "bug_idx": self.bug_idx,
                     "line_idx": line_idx
                 }
             )

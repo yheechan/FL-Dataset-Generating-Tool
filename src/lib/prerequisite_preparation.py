@@ -56,17 +56,27 @@ class PrerequisitePreparation(Subject):
     def init_tables(self,):
         # Create table if not exists: line_info
         if not self.db.table_exists("line_info"):
-            self.db.create_table(
-                "line_info",
-                "subject TEXT, experiment_name TEXT, version TEXT, file TEXT DEFAULT NULL, function TEXT DEFAULT NULL, lineno INT DEFAULT NULL, line_idx INT, is_buggy_line BOOLEAN DEFAULT NULL"
-            )
+            columns = [
+                "bug_idx INT NOT NULL", # -- Foreign key to bug_info(bug_idx)
+                "file TEXT DEFAULT NULL",
+                "function TEXT DEFAULT NULL",
+                "lineno INT DEFAULT NULL",
+                "line_idx INT",
+                "is_buggy_line BOOLEAN DEFAULT NULL",
+                "FOREIGN KEY (bug_idx) REFERENCES bug_info(bug_idx) ON DELETE CASCADE ON UPDATE CASCADE" # -- Automatically delete tc_info rows when bug_info is deleted, Update changes in bug_info to tc_info
+            ]
+            col_str = ", ".join(columns)
+            self.db.create_table("line_info", col_str)
 
             # Create a composite index on (subject, experiment_name, version)
             self.db.create_index(
                 "line_info",
-                "idx_line_info_subject_experiment_name_version",
-                "subject, experiment_name, version",
+                "idx_line_info_bug_idx",
+                "bug_idx"
             )
+        
+
+
         
         # Make coverage csv file
         if not self.db.column_exists("tc_info", "cov_bit_seq"):

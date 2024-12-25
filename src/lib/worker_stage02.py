@@ -16,11 +16,12 @@ class WorkerStage02(Worker):
         self.version_dir = self.assigned_works_dir / version_name
 
         self.connect_to_db()
-        self.target_code_file, self.buggy_code_filename, self.buggy_lineno = self.get_bug_info(self.version_name, self.experiment_name)
+        self.bug_idx = self.get_bug_idx(self.name, self.experiment_name, version_name)
+        self.target_code_file, self.buggy_code_filename, self.buggy_lineno = self.get_bug_info(self.bug_idx)
         self.target_code_file_path = self.core_dir / self.target_code_file
         assert version_name == self.buggy_code_filename, f"Version name {version_name} does not match with buggy code filename {self.buggy_code_filename}"
     
-        self.set_testcases(self.version_name, self.experiment_name)
+        self.set_testcases(self.bug_idx)
 
         self.buggy_code_file = self.get_buggy_code_file(self.version_dir, self.buggy_code_filename)
 
@@ -129,7 +130,7 @@ class WorkerStage02(Worker):
             print(f"Buggy line {self.buggy_lineno} is covered by test case {tc_script_name}")
 
         # 5. Save the version
-        self.save_version(self.version_dir, "usable", self.experiment_name)
+        self.save_version(self.bug_idx, "usable")
 
         # 6. Apply patch reverse
         self.apply_patch(self.target_code_file_path, self.buggy_code_file, patch_file, True)

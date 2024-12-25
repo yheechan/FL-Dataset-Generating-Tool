@@ -24,7 +24,14 @@ database = config["database"]["database"]
 
 
 db = CRUD(host, port, user, password, database)
-res = db.table_exists("test_table")
+
+if not db.table_exists("test_table"):
+    print("Creating test_table")
+    db.create_table("test_table", "name TEXT, age INT")
+
+if not db.table_exists("test_table2"):
+    print("Creating test_table2")
+    db.create_table("test_table2", "idx TEXT, transaction INT")
 
 
 # special = "AND age in (%s)" % ",".join(["%d" % tc for tc in [30, 40]])

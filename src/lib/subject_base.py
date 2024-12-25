@@ -60,6 +60,7 @@ class Subject:
             special=special
         )
 
+        # work_list = [(version, buggy_code_file_path), ...]
         work_list = []
         for row in res:
             version = row[0]
@@ -253,3 +254,16 @@ class Subject:
         fileManager.send_src_remote(self.experiment.machineCores_dict)
         fileManager.send_tools_remote(self.tools_dir, self.experiment.machineCores_dict)
         fileManager.send_experiment_configurations_remote(self.experiment.machineCores_dict)
+
+    def get_bug_idx(self, subject_name, experiment_name, version_name):
+        res = self.db.read(
+            "bug_info",
+            columns="bug_idx",
+            conditions={
+                "subject": subject_name,
+                "experiment_name": experiment_name,
+                "version": version_name
+            }
+        )
+        assert len(res) == 1, f"Bug info does not exist for {version_name}"
+        return res[0][0]
