@@ -981,7 +981,7 @@ class WorkerStage05(Worker):
         return 0
    
     def generate_mutants(self, compile_command, target_file, mutant_dir, lines):
-        print(f">> Generating mutants on {self.version_dir.name}")
+        print(f">> Generating mutants on {self.version_dir.name} of {target_file.name}")
         unused_ops = ",".join(not_using_operators_in_mbfl)
         executed_lines = ",".join(lines)
 

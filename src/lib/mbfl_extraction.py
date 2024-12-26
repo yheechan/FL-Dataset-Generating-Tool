@@ -42,13 +42,10 @@ class MBFLExtraction(Subject):
         # 2. get versions from set_dir
         self.versions_list = get_dirs_in_dir(self.target_set_dir)
 
-        # TODO: ~
-        # 2024-08-01: only remain 1 bug per line
-        # generated_mutants_dir = out_dir / self.name / self.generated_mutants_dirname
-        # if generated_mutants_dir.exists(): # I DONT THINK THIS IS NEEDED!
+        # 3. filter versions
         if self.remain_one_bug_per_line_flag == True: # 2024-08-16 implement flag for remaining one bug per line
             self.versions_list = self.remain_one_bug_per_line()
-        
+
         print(f">> MBFL extraction on {len(self.versions_list)} of buggy versions <<")
 
         # 4. Assign versions to machines
@@ -105,70 +102,55 @@ class MBFLExtraction(Subject):
             )
         
         # Add mbfl column in bug_info table
+        if not self.db.column_exists("bug_info", "selected_for_mbfl"):
+            self.db.add_column("bug_info", "selected_for_mbfl BOOLEAN DEFAULT NULL")
         if not self.db.column_exists("bug_info", "mbfl"):
             self.db.add_column("bug_info", "mbfl BOOLEAN DEFAULT NULL")
         if not self.db.column_exists("bug_info", "mbfl_wall_clock_time"):
             self.db.add_column("bug_info", "mbfl_wall_clock_time FLOAT")
     
-    def remain_one_bug_per_line(self): # 2024-08-01
-        included = 0
-        excluded = 0
+    def remain_one_bug_per_line(self):
+        self.connect_to_db()
 
-        generated_mutants_dir = out_dir / self.name / self.generated_mutants_dirname
-        # version name: line number
-        new_version_list = []
-        new_version_dict = {}
+        included_line_idx = []
+        included_bug_idx = []
+        included_versions = []
+        per_file_cnt = {}
 
-        # check every version
+        # shuffle self.versions_list
+        random.shuffle(self.versions_list)
+
         for version in self.versions_list:
-            mutant_name = version.name
-            filename = ".".join(mutant_name.split(".")[:-2])
-            extension = mutant_name.split(".")[-1]
-            file_name = filename + "." + extension
+            bug_idx = self.get_bug_idx(self.name, self.experiment_name, version.name)
+            res = self.db.read("bug_info", columns="buggy_line_idx, buggy_file", conditions={"bug_idx": bug_idx})
+            assert len(res) == 1, f"Error: {len(res)} rows are returned for {version.name}"
+            line_idx, buggy_file = res[0]
 
-            # retrieve mutant dir for mutant
-            target_mutant_dir = None
-            for mutant_dir in generated_mutants_dir.iterdir():
-                mutant_dir_name = mutant_dir.name.split("-")[-1]
-                if file_name == mutant_dir_name:
-                    target_mutant_dir = mutant_dir
-                    break
-            assert target_mutant_dir != None, f"target mutant dir is not found for {file_name}"
-
-            # retrieve mut db csv file for mutant
-            db_name = filename + "_mut_db.csv"
-            db_csv = target_mutant_dir / db_name
-            assert db_csv.exists(), f"{db_csv.name} does not exist for {mutant_name}"
-
-            # retrieve line_no for mutant
-            line_no = None
-            with open(db_csv, "r") as fp:
-                lines = fp.readlines()
-                for line in lines[2:]:
-                    info = line.strip().split(",")
-                    mut_name = info[0]
-
-                    if mutant_name == mut_name:
-                        line_no = int(info[2])
-            
-            assert line_no != None, f"line_no is None for {mutant_name}"
-
-            # remain single bug in single line of target file
-            if file_name not in new_version_dict:
-                new_version_dict[file_name] = []
-            
-            if line_no not in new_version_dict[file_name]:
-                new_version_dict[file_name].append(line_no)
-                new_version_list.append(version)
-                included += 1
-            else:
-                excluded += 1
+            if line_idx not in included_line_idx:
+                included_line_idx.append(line_idx)
+                included_bug_idx.append(bug_idx)
+                included_versions.append(version)
+                if buggy_file not in per_file_cnt:
+                    per_file_cnt[buggy_file] = 1
+                else:
+                    per_file_cnt[buggy_file] += 1
         
-        print(f"# of version remaining versions after leaving only one bug in each line: {included}")
-        print(f"# of version excluded versions after leaving only one bug in each line: {excluded}")
-        # print(json.dumps(new_version_dict, indent=2))
-    
-        return new_version_list
+        special_str = f"WHERE bug_idx IN ({','.join([str(bug_idx) for bug_idx in included_bug_idx])})"
+        self.db.update(
+            "bug_info",
+            set_values={"selected_for_mbfl": True},
+            special=special_str
+        )
+        
+        print(f"Remained versions: {len(included_versions)}")
+        print(f"Per file count: {len(per_file_cnt)}")
+        for file, cnt in per_file_cnt.items():
+            print(f"{file}: {cnt}")
+        
+        self.db.__del__()
+
+        return included_versions
+
     
     # +++++++++++++++++++++++++++
     # ++++++ Testing stage ++++++
