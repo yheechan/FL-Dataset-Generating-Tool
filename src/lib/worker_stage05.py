@@ -69,18 +69,16 @@ class WorkerStage05(Worker):
     def run(self):
         print(f"Testing version {self.version_dir.name} on {self.machine}::{self.core}")
 
-        # 1. Select lines to mutation test
-        # based on self.sbfl_rank_based_perc (ex. 0.30) and self.sbfl_rank_based_formula (ex. gp13)
-        # based on self.number_of_lines_to_mutation_test
-        self.selected_lines_executed_by_failing_tcs, \
-            self.selected_lines_sbfl_rank_desc, \
-            self.selected_lines_sbfl_rank_asc, \
-            self.file2lineno_selected = self.select_lines_to_mutation_test()
-
-        
-
         # 1. Generate mutants
         if not self.version_mutant_zip.exists() and not self.version_mutant_dir.exists():
+            # 1. Select lines to mutation test
+            # based on self.sbfl_rank_based_perc (ex. 0.30) and self.sbfl_rank_based_formula (ex. gp13)
+            # based on self.number_of_lines_to_mutation_test
+            self.selected_lines_executed_by_failing_tcs, \
+                self.selected_lines_sbfl_rank_desc, \
+                self.selected_lines_sbfl_rank_asc, \
+                self.file2lineno_selected = self.select_lines_to_generate_mutations()
+
             res = self.generate_mutants_start()
             if res != 0:
                 print(f"Failed to generate mutants on {self.version_dir.name}")
@@ -165,7 +163,7 @@ class WorkerStage05(Worker):
         
         print(f"Finished testing version {self.version_dir.name} on {self.machine}::{self.core}")
     
-    def select_lines_to_mutation_test(self):
+    def select_lines_to_generate_mutations(self):
         # Select buggy line for mutation test
         # Randomly select lines for mutation test
         failing_tcs_executed_lines = []

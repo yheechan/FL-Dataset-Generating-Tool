@@ -5,243 +5,646 @@ from analysis.rank_utils import *
 from lib.susp_score_formula import *
 from analysis.individual import Individual
 
+from lib.experiment import Experiment
+from lib.database import CRUD
+
 class Validate:
     def __init__(
-            self, subject_name, set_name
+            self, subject_name, experiment_name
         ):
         self.subject_name = subject_name
-        self.set_name = set_name
+        # self.set_dir = out_dir / self.subject_name / self.set_name
+        self.experiment_name = experiment_name
 
-        self.set_dir = out_dir / self.subject_name / self.set_name
+        self.experiment = Experiment()
+        # Settings for database
+        self.host = self.experiment.experiment_config["database"]["host"]
+        self.port = self.experiment.experiment_config["database"]["port"]
+        self.user = self.experiment.experiment_config["database"]["user"]
+        self.password = self.experiment.experiment_config["database"]["password"]
+        self.database = self.experiment.experiment_config["database"]["database"]
 
-    # ++++++++++++++++++++++++++++++++++++++++++++
-    # ++++ VALIDATE USABLE BUGGY VERSION DATA ++++
-    # ++++++++++++++++++++++++++++++++++++++++++++
-    def validate_usable_buggy_versions(self):
-        self.individual_list = get_dirs_in_dir(self.set_dir)
-        for individual in self.individual_list:
-            individual_name = individual.name
-            print(f"Validating usable buggy versions for {individual_name}")
-            individual = Individual(self.subject_name, self.set_name, individual_name)
+        self.db = CRUD(
+            host=self.host,
+            port=self.port,
+            user=self.user,
+            password=self.password,
+            database=self.database
+        )
+    
 
-            # VALIDATE: Assert that bug_info.csv exists
-            bug_info = individual.dir_path / 'bug_info.csv'
-            assert bug_info.exists(), f"Bug info file {bug_info} does not exist"
+    def run(self, validation_criteria):
+        if 0 in validation_criteria:
+            self.val01()
+            self.val02()
+            self.val03()
+            self.val04()
+            self.val05()
+            self.val06()
+            self.val07()
+            self.val08()
+            self.val09()
+            self.val10()
+        else:
+            for val_type in validation_criteria:
+                if val_type == 1:
+                    self.val01()
+                elif val_type == 2:
+                    self.val02()
+                elif val_type == 3:
+                    self.val03()
+                elif val_type == 4:
+                    self.val04()
+                elif val_type == 5:
+                    self.val05()
+                elif val_type == 6:
+                    self.val06()
+                elif val_type == 7:
+                    self.val07()
+                elif val_type == 8:
+                    self.val08()
+                elif val_type == 9:
+                    self.val09()
+                elif val_type == 10:
+                    self.val10()
+    
+    def val01(self):
+        """
+        [stage03] val01: Validate that all usable buggy versions
+            consists 1 buggy line in line_info table
+        """
+        columns = [
+            "b.buggy_file", "b.buggy_function", "b.buggy_lineno", "b.buggy_line_idx",
+            "l.file", "l.function", "l.lineno", "l.line_idx", "l.is_buggy_line"
+        ]
+        col_str = ", ".join(columns)
 
-            # GET: bug info
-            target_code_file, bug_code_filename, buggy_lineno = individual.get_bug_info()
+        special_str = f"""
+            INNER JOIN bug_info b ON l.bug_idx = b.bug_idx
+            WHERE l.is_buggy_line IS TRUE
+                AND b.subject = '{self.subject_name}'
+                AND b.experiment_name = '{self.experiment_name}'
+                AND b.prerequisites is TRUE
+        """
 
-            # VALIDATE: Assert that testsuite_info/failing_tcs.txt and testsuite_info/passing_tcs.txt exist
-            failing_tcs = individual.dir_path / 'testsuite_info' / 'failing_tcs.txt'
-            assert failing_tcs.exists(), f"Failing test cases file {failing_tcs} does not exist"
-            passing_tcs = individual.dir_path / 'testsuite_info' / 'passing_tcs.txt'
-            assert passing_tcs.exists(), f"Passing test cases file {passing_tcs} does not exist"
+        res = self.db.read(
+            "line_info l",
+            columns=col_str,
+            special=special_str
+        )
 
-            # VALIDATE: Assert individual.name and buggy_code_file/<individual.name> exist
-            buggy_code_file = individual.dir_path / 'buggy_code_file' / f"{bug_code_filename}"
-            assert buggy_code_file.exists(), f"Buggy code file {buggy_code_file} does not exist"
+        for row in res:
+            buggy_file = row[0]
+            buggy_function = row[1]
+            buggy_lineno = row[2]
+            buggy_line_idx = row[3]
 
-    # ++++++++++++++++++++++++++++++++++++
-    # ++++ VALIDATE PREREQUISITE DATA ++++
-    # ++++++++++++++++++++++++++++++++++++
-    def validate_prerequisite_data(self):
-        self.individual_list = get_dirs_in_dir(self.set_dir)
-        version_fail_tcs_x_bug_line = []
-        for individual in self.individual_list:
-            individual_name = individual.name
-            print(f"Validating prerequisite data for {individual_name}")
-            individual = Individual(self.subject_name, self.set_name, individual_name)
+            line_file = row[4]
+            line_function = row[5]
+            line_lineno = row[6]
+            line_line_idx = row[7]
 
-            # VALIDATE: Assert that bug_info.csv exists
-            bug_info = individual.dir_path / 'bug_info.csv'
-            assert bug_info.exists(), f"Bug info file {bug_info} does not exist"
+            is_buggy_line = row[8]
 
-            # GET: bug info
-            target_code_file, bug_code_filename, buggy_lineno = individual.get_bug_info()
+            assert is_buggy_line == True, f"Line {line_lineno} in {line_file} is not a buggy line"
 
-            # VALIDATE: Assert that buggy_line_key.txt exists and that it matches with buggy_lineno
-            buggy_line_key_file = individual.dir_path / 'buggy_line_key.txt'
-            assert buggy_line_key_file.exists(), f"Buggy line key file {buggy_line_key_file} does not exist"
-            buggy_line_key = self.check_buggy_lineno(buggy_line_key_file, buggy_lineno)
+            assert buggy_file == line_file, f"Buggy file {buggy_file} does not match with line file {line_file}"
+            assert buggy_function == line_function, f"Buggy function {buggy_function} does not match with line function {line_function}"
+            assert buggy_lineno == line_lineno, f"Buggy line number {buggy_lineno} does not match with line line number {line_lineno}"
+            assert buggy_line_idx == line_line_idx, f"Buggy line index {buggy_line_idx} does not match with line line index {line_line_idx}"
 
-            # VALIDATE: Assert that coverage_summary.csv exists
-            coverage_summary = individual.dir_path / 'coverage_summary.csv'
-            assert coverage_summary.exists(), f"Coverage summary file {coverage_summary} does not exist"
+        print(f"[stage03-VAL01] {len(res)} buggy version with prerequisites=TRUE have valid line information with single buggy line")
+    
+    def val02(self):
+        """
+        [stage03] val02: Validate that all cov_bit_seq sequences in tc_info have the same length 
+            as the number of lines in line_info for each bug_idx where 
+            prerequisites is TRUE in bug_info.
+        """
+        columns = [
+            "b.bug_idx", "COUNT(l.line_idx) AS line_count"
+        ]
+        col_str = ", ".join(columns)
 
-            individual.set_tcs()
+        # Join bug_info with line_info to get the line count for each bug_idx
+        special_str = f"""
+            INNER JOIN line_info l ON b.bug_idx = l.bug_idx
+            WHERE b.subject = '{self.subject_name}'
+            AND b.experiment_name = '{self.experiment_name}'
+            AND b.prerequisites IS TRUE
+            GROUP BY b.bug_idx
+        """
 
-            # VALIDATE: Assert that coverage_info/postprocessed_coverage.csv exists
-            postprocessed_coverage = individual.dir_path / 'coverage_info' / 'postprocessed_coverage.csv'
-            assert postprocessed_coverage.exists(), f"Postprocessed coverage file {postprocessed_coverage} does not exist"
+        # Fetch the line count for each bug_idx
+        line_info_res = self.db.read(
+            "bug_info b",
+            columns=col_str,
+            special=special_str
+        )
 
-            postprocessed_coverage_noCCTs = individual.dir_path / 'coverage_info' / 'postprocessed_coverage_noCCTs.csv'
-            assert postprocessed_coverage_noCCTs.exists(), f"Postprocessed coverage no CCTs file {postprocessed_coverage_noCCTs} does not exist"
+        # Prepare a dictionary to store line counts by bug_idx
+        line_counts = {row[0]: row[1] for row in line_info_res}
 
-            # VALIDATE: Assert that failing TCs execute the buggy line in postprocessed_coverage.csv
-            res = self.check_failing_tcs(postprocessed_coverage, individual.failing_tcs_list, buggy_line_key)
-            # assert res, f"Failing test cases do not execute the buggy line in {postprocessed_coverage}"
-            if res == False:
-                version_fail_tcs_x_bug_line.append((individual_name, 0))
+        # Fetch cov_bit_seq and bug_idx from tc_info
+        columns = ["t.bug_idx", "t.cov_bit_seq"]
+        col_str = ", ".join(columns)
 
-            res = self.check_failing_tcs(postprocessed_coverage_noCCTs, individual.failing_tcs_list, buggy_line_key)
-            # assert res, f"Failing test cases do not execute the buggy line in {postprocessed_coverage_noCCTs}"
-            if res == False:
-                version_fail_tcs_x_bug_line.append((individual_name, 1))
+        special_str = f"""
+            INNER JOIN bug_info b ON t.bug_idx = b.bug_idx
+            WHERE b.subject = '{self.subject_name}'
+            AND b.experiment_name = '{self.experiment_name}'
+            AND b.prerequisites IS TRUE
+            AND t.tc_result != 'crash'
+        """
 
-            # VALIDATE: Assert the postprocessed_coverage_noCCTs.csv has no CCTs
-            self.check_CCTs(postprocessed_coverage_noCCTs, individual.ccts_list, notExist=True)
+        tc_info_res = self.db.read(
+            "tc_info t",
+            columns=col_str,
+            special=special_str
+        )
 
-            # Validate: Assert the postprocessed_coverage.csv has CCTs
-            self.check_CCTs(postprocessed_coverage, individual.ccts_list, notExist=False)
+        # Validate the length of cov_bit_seq against line counts
+        for row in tc_info_res:
+            bug_idx = row[0]
+            cov_bit_seq = row[1]
 
-            # VALIDATE: Assert that coverage_info/lines_executed_by_failing_tc.json exists
-            lines_executed_by_failing_tc = individual.dir_path / 'coverage_info' / 'lines_executed_by_failing_tc.json'
-            assert lines_executed_by_failing_tc.exists(), f"Lines executed by failing test cases file {lines_executed_by_failing_tc} does not exist"
-            lines_executed_by_passing_tc = individual.dir_path / 'coverage_info' / 'lines_executed_by_passing_tc.json'
-            assert lines_executed_by_passing_tc.exists(), f"Lines executed by passing test cases file {lines_executed_by_passing_tc} does not exist"
-            lines_executed_by_ccts = individual.dir_path / 'coverage_info' / 'lines_executed_by_ccts.json'
-            assert lines_executed_by_ccts.exists(), f"Lines executed by CCTs file {lines_executed_by_ccts} does not exist"
+            # Ensure bug_idx exists in line counts
+            assert bug_idx in line_counts, f"bug_idx {bug_idx} not found in line_info results"
 
-            # VALIDATE: Assert that line2function_info/line2function.json exists
-            line2function_info = individual.dir_path / 'line2function_info' / 'line2function.json'
-            assert line2function_info.exists(), f"Line to function mapping file {line2function_info} does not exist"
-
-            # VALIDATE: Assert that len(passing_tcs) > 0 and len(failing_tcs) > 0
-            assert len(individual.failing_tcs_list) > 0, f"length of failing tcs list is less than 0"
-            assert len(individual.passing_tcs_list) > 0, f"length of failing tcs list is less than 0"
+            # Ensure the bit length matches the line count
+            expected_length = line_counts[bug_idx]
+            actual_length = len(cov_bit_seq)
+            assert actual_length == expected_length, (
+                f"cov_bit_seq length {actual_length} does not match line count {expected_length} "
+                f"for bug_idx {bug_idx}"
+            )
         
-        print(f"All {len(self.individual_list)} individuals have been validated successfully")
+        print(f"[stage03-VAL02] {len(tc_info_res)} test cases from {len(line_counts)} buggy versions with prerequisite=TRUE have valid cov_bit_seq sequences")
 
-        print(f"Version failing tcs x bug line: {len(version_fail_tcs_x_bug_line)}")
-        for version, val in version_fail_tcs_x_bug_line:
-            print(f"Version: {version}, val: {val}")
+    def val03(self):
+        """
+        [stage03] val03: Validate that all coverage summary for all buggy versions
+            resulting from prerequisite data preparation has been recorded on bug_info table
+        """
+        columns = [
+            "num_failing_tcs", "num_passing_tcs", "num_ccts", "num_total_tcs",
+            "num_lines_executed_by_failing_tcs", "num_lines_executed_by_passing_tcs",
+            "num_lines_executed_by_ccts", "num_total_lines_executed",
+            "num_total_lines"
+        ]
+        col_str = ", ".join(columns)
 
-    
-    def check_failing_tcs(self, postprocessed_coverage, failing_tc_list, buggy_line_key):
-        with open(postprocessed_coverage, 'r') as f:
-            reader = csv.DictReader(f)
-    
-            for row in reader:
-                if row['key'] == buggy_line_key:
-                    for failing_tc in failing_tc_list:
-                        tc_name = failing_tc.split('.')[0]
-                        if row[tc_name] == '0':
-                            return False
-                    # print(f"\t [VAL] Failing test cases execute buggy line check passed in {postprocessed_coverage.name}")
-                    return True
-    
-    def check_buggy_lineno(self, buggy_line_key_file, buggy_lineno):
-        with open(buggy_line_key_file, "r") as f:
-            lines = f.readlines()
-            buggy_line_key = lines[0].strip()
+        res = self.db.read(
+            "bug_info",
+            columns=col_str,
+            conditions={
+                "subject": self.subject_name,
+                "experiment_name": self.experiment_name,
+                "prerequisites": True
+            }
+        )
+
+        for row in res:
+            for col in row:
+                assert col is not None, f"Column {col} is None"
         
-        file_buggy_lineno = buggy_line_key.split("#")[-1]
-        
-        assert file_buggy_lineno == buggy_lineno, f"Buggy line key {buggy_line_key} does not match with buggy line number {buggy_lineno}"
-        return buggy_line_key
-    
-    def check_CCTs(self, coverage_csv, ccts_list, notExist=True):
-        with open(coverage_csv, 'r') as f:
-            reader = csv.DictReader(f)
-    
-            for row in reader:
-                for cct in ccts_list:
-                    cct_name = cct.split(".")[0]
-                    if notExist:
-                        assert cct_name not in row, f"CCT {cct_name} found in {coverage_csv}"
-                    else:
-                        assert cct_name in row, f"CCT {cct_name} not found in {coverage_csv}"
-        print(f"\t [VAL] CCTs check passed notExist={notExist}")
+        print(f"[stage03-VAL03] {len(res)} buggy versions with prerequisites=TRUE have valid coverage summary")
 
-    # ++++++++++++++++++++++++++++++++
-    # ++++ VALIDATE MBFL FEATURES ++++
-    # ++++++++++++++++++++++++++++++++
-    def validate_mbfl_features(self, trialName=None):
-        # after_mut_json = []
-        self.individual_list = get_dirs_in_dir(self.set_dir)
-        for individual in self.individual_list:
-            individual_name = individual.name
-            print(f"Validating MBFL features for {individual_name}")
-            individual = Individual(self.subject_name, self.set_name, individual_name)
+    def val04(self):
+        """
+        [stage03] val04: Validate that all failing test cases from all buggy versions
+            resulting from prerequisite data preparation executes the buggy line
+        """
+        # Step 1: Fetch all line_idx values where is_buggy_line IS TRUE for each bug_idx
+        columns = ["b.bug_idx", "l.line_idx"]
+        col_str = ", ".join(columns)
 
-            # VALIDATE: Assert that mbfl_featuers.csv exists
-            mbfl_features_csv_file = individual.dir_path / "mbfl_features.csv"
-            assert mbfl_features_csv_file.exists(), f"MBFL features file {mbfl_features_csv_file} does not exist"
+        special_str = f"""
+            INNER JOIN line_info l ON b.bug_idx = l.bug_idx
+            WHERE b.subject = '{self.subject_name}'
+            AND b.experiment_name = '{self.experiment_name}'
+            AND b.prerequisites IS TRUE
+            AND l.is_buggy_line IS TRUE
+        """
 
-            # VALIDATE: Assert that there is only one buggy line
-            self.check_one_buggy_line(mbfl_features_csv_file)
+        buggy_lines_res = self.db.read(
+            "bug_info b",
+            columns=col_str,
+            special=special_str
+        )
 
-            # Validate: Assert that mbfl_feature_noCCTs.csv exists
-            mbfl_features_noCCTs_csv_file = individual.dir_path / "mbfl_features_noCCTs.csv"
-            assert mbfl_features_noCCTs_csv_file.exists(), f"MBFL features no CCTs file {mbfl_features_noCCTs_csv_file} does not exist"
+        # Step 2: Group line_idx values by bug_idx
+        buggy_lines_map = {}
+        for row in buggy_lines_res:
+            bug_idx = row[0]
+            line_idx = row[1]
+            assert bug_idx is not None, f"bug_idx is None"
+            if bug_idx not in buggy_lines_map:
+                buggy_lines_map[bug_idx] = []
+            buggy_lines_map[bug_idx].append(line_idx)
 
-            # VALIDATE: Assert that there is only one buggy line
-            self.check_one_buggy_line(mbfl_features_noCCTs_csv_file)
+        # Step 3: Fetch cov_bit_seq for all test cases in tc_info for each bug_idx
+        columns = ["t.bug_idx", "t.cov_bit_seq"]
+        col_str = ", ".join(columns)
 
-            # VALIDATE: Assert that selected_mutants.csv exists
-            if trialName != None:
-                selected_mutants_csv_file = individual.dir_path / f"selected_mutants-{trialName}.csv"
-                assert selected_mutants_csv_file.exists(), f"Selected mutants file {selected_mutants_csv_file} does not exist"
+        special_str = f"""
+            INNER JOIN bug_info b ON t.bug_idx = b.bug_idx
+            WHERE b.subject = '{self.subject_name}'
+            AND b.experiment_name = '{self.experiment_name}'
+            AND b.prerequisites IS TRUE
+            AND t.tc_result = 'fail'
+        """
 
-            # VALIDATE: Assert that mutation_testing_results.csv exists
-            if trialName != None:
-                mutation_testing_results_csv_file = individual.dir_path / f"mutation_testing_results-{trialName}.csv"
+        tc_info_res = self.db.read(
+            "tc_info t",
+            columns=col_str,
+            special=special_str
+        )
+
+        # Step 4: Validate that the nth bit in cov_bit_seq is "1" for all buggy line_idx
+        for row in tc_info_res:
+            bug_idx = row[0]
+            cov_bit_seq = row[1]
+
+            # Get buggy line indexes for this bug_idx
+            buggy_lines = buggy_lines_map.get(bug_idx, [])
+
+            for line_idx in buggy_lines:
+                # Ensure the nth bit in cov_bit_seq is "1"
+                if line_idx >= len(cov_bit_seq):
+                    raise AssertionError(
+                        f"Line index {line_idx} exceeds bit sequence length in cov_bit_seq for bug_idx {bug_idx}"
+                    )
+                assert cov_bit_seq[line_idx] == "1", (
+                    f"cov_bit_seq does not have '1' at index {line_idx} for bug_idx {bug_idx}"
+                )
+
+        print(f"[stage03-VAL04] {len(tc_info_res)} failing test cases from {len(buggy_lines_map)} buggy versions with prerequisites=TRUE execute buggy line")
+
+    def val05(self):
+        """
+        [stage03] val04: Validate that for each bug_idx in bug_info with prerequisites IS TRUE:
+            1. num_failing_tcs > 0 and num_passing_tcs > 0.
+            2. The number of rows in tc_info with tc_result='fail' matches num_failing_tcs.
+            3. The number of rows in tc_info with tc_result='pass' matches num_passing_tcs.
+        """
+
+        # Step 1: Fetch num_failing_tcs and num_passing_tcs for each bug_idx
+        columns = ["b.bug_idx", "b.num_failing_tcs", "b.num_passing_tcs"]
+        col_str = ", ".join(columns)
+
+        special_str = f"""
+            WHERE b.subject = '{self.subject_name}'
+            AND b.experiment_name = '{self.experiment_name}'
+            AND b.prerequisites IS TRUE
+        """
+
+        bug_info_res = self.db.read(
+            "bug_info b",
+            columns=col_str,
+            special=special_str
+        )
+
+        # Step 2: Fetch counts of tc_result='fail' and tc_result='pass' for each bug_idx from tc_info
+        columns = ["t.bug_idx", 
+                "SUM(CASE WHEN t.tc_result = 'fail' THEN 1 ELSE 0 END) AS fail_count", 
+                "SUM(CASE WHEN t.tc_result = 'pass' THEN 1 ELSE 0 END) AS pass_count"]
+        col_str = ", ".join(columns)
+
+        special_str = f"""
+            INNER JOIN bug_info b ON t.bug_idx = b.bug_idx
+            WHERE b.subject = '{self.subject_name}'
+            AND b.experiment_name = '{self.experiment_name}'
+            AND b.prerequisites IS TRUE
+            GROUP BY t.bug_idx
+        """
+
+        tc_info_res = self.db.read(
+            "tc_info t",
+            columns=col_str,
+            special=special_str
+        )
+
+        # Step 3: Map tc_info counts by bug_idx
+        tc_counts_map = {row[0]: {"fail_count": row[1], "pass_count": row[2]} for row in tc_info_res}
+
+        # Step 4: Validate conditions for each bug_idx
+        for row in bug_info_res:
+            bug_idx = row[0]
+            num_failing_tcs = row[1]
+            num_passing_tcs = row[2]
+
+            # Ensure num_failing_tcs and num_passing_tcs are greater than 0
+            assert num_failing_tcs > 0, f"num_failing_tcs is not greater than 0 for bug_idx {bug_idx}"
+            assert num_passing_tcs > 0, f"num_passing_tcs is not greater than 0 for bug_idx {bug_idx}"
+
+            # Validate the counts from tc_info
+            if bug_idx in tc_counts_map:
+                fail_count = tc_counts_map[bug_idx]["fail_count"]
+                pass_count = tc_counts_map[bug_idx]["pass_count"]
+
+                assert fail_count == num_failing_tcs, (
+                    f"Mismatch for bug_idx {bug_idx}: "
+                    f"tc_info fail_count ({fail_count}) != num_failing_tcs ({num_failing_tcs})"
+                )
+                assert pass_count == num_passing_tcs, (
+                    f"Mismatch for bug_idx {bug_idx}: "
+                    f"tc_info pass_count ({pass_count}) != num_passing_tcs ({num_passing_tcs})"
+                )
             else:
-                mutation_testing_results_csv_file = individual.dir_path / f"mutation_testing_results.csv"
-            assert mutation_testing_results_csv_file.exists(), f"Mutation testing results file {mutation_testing_results_csv_file} does not exist"
+                raise AssertionError(
+                    f"No matching tc_info rows found for bug_idx {bug_idx}."
+                )
 
-            # VALIDATE: assert that mutation_testing_results_noCCTs exists
-            if trialName != None:
-                mutation_testing_results_noCCTs_csv_file = individual.dir_path / f"mutation_testing_results_noCCTs-{trialName}.csv"
-            else:
-                mutation_testing_results_noCCTs_csv_file = individual.dir_path / f"mutation_testing_results_noCCTs.csv"
-            assert mutation_testing_results_noCCTs_csv_file.exists(), f"Mutation testing results no CCTs file {mutation_testing_results_noCCTs_csv_file} does not exist"
+        print(f"[stage03-VAL04] {len(bug_info_res)} buggy versions with prerequisites=TRUE have valid failing and passing test case counts")
 
-        #     # VALIDATE: Assert that mutant_info.csv exists
-        #     mutant_info_csv_file = individual.dir_path / "mutant_info.csv"
-        #     assert mutant_info_csv_file.exists(), f"Mutant info file {mutant_info_csv_file} does not exist"
-        #     with open(mutant_info_csv_file, "r") as f:
-        #         lines = f.readlines()
-        #         line = lines[2]
-        #         info = line.split(",")
-        #         after_mut = info[11]
-        #         after_mut_json.append(after_mut)
+    def val06(self):
+        """
+        [stage03] val06: Validate that all lines_executed_by_failing_tc.json and line2function.json file
+            are available for all buggy versions resulting from prerequisite data preparation
+        """
+
+        version_list = self.db.read(
+            "bug_info",
+            columns="version",
+            conditions={
+                "subject": self.subject_name,
+                "experiment_name": self.experiment_name,
+                "prerequisites": True
+            }
+        )
+
+        prerequisite_dir = out_dir / self.subject_name / "prerequisite_data"
+        for version in version_list:
+            version_name = version[0]
+            version_dir = prerequisite_dir / version_name
+
+            # Validate lines_executed_by_failing_tc.json
+            lines_executed_by_failing_tc_file = version_dir / "coverage_info" / "lines_executed_by_failing_tc.json"
+            assert lines_executed_by_failing_tc_file.exists(), f"lines_executed_by_failing_tc.json not found for {version_name}"
+
+            # Validate line2function.json
+            line2function_file = version_dir / "line2function_info" / "line2function.json"
+            assert line2function_file.exists(), f"line2function.json not found for {version_name}"
         
-        # print(json.dumps(after_mut_json, indent=4))
-        
-        print(f"All {len(self.individual_list)} individuals have been validated successfully")
-    
-    def check_one_buggy_line(self, mbfl_features_csv_file):
-        with open(mbfl_features_csv_file, "r") as f:
-            reader = csv.DictReader(f)
-            buggy_line_cnt = 0
-            for row in reader:
-                bug_stat = int(row["bug"])
-                if bug_stat == 1:
-                    buggy_line_cnt += 1
-            assert buggy_line_cnt == 1, f"More than one buggy line in {mbfl_features_csv_file}"
+        print(f"[stage03-VAL06] {len(version_list)} buggy versions with prerequisites=TRUE have valid lines_executed_by_failing_tc.json and line2function.json files")
 
-    # ++++++++++++++++++++++++++++++++
-    # ++++ VALIDATE SBFL FEATURES ++++
-    # ++++++++++++++++++++++++++++++++
-    def validate_sbfl_features(self):
-        self.individual_list = get_dirs_in_dir(self.set_dir)
-        for individual in self.individual_list:
-            print(f"Validating SBFL features for {individual.name}")
+    def val07(self):
+        """
+        [stage04] val07: Validate the following for all bug_idx in bug_info with sbfl IS TRUE:
+            1. Columns ep, np, ef, nf, cct_ep, and cct_np in line_info are not NULL.
+            2. ep + np = num_passing_tcs in bug_info.
+            3. ef + nf = num_failing_tcs in bug_info.
+            4. cct_ep + cct_np = num_ccts in bug_info.
+        """
+
+        # Step 1: Fetch all bug_idx and required columns from bug_info
+        columns = ["b.bug_idx", "b.num_passing_tcs", "b.num_failing_tcs", "b.num_ccts"]
+        col_str = ", ".join(columns)
+
+        special_str = f"""
+            WHERE b.subject = '{self.subject_name}'
+            AND b.experiment_name = '{self.experiment_name}'
+            AND b.sbfl IS TRUE
+        """
+
+        bug_info_res = self.db.read(
+            "bug_info b",
+            columns=col_str,
+            special=special_str
+        )
+
+        # Map bug_info data by bug_idx for quick validation
+        bug_info_map = {
+            row[0]: {
+                "num_passing_tcs": row[1],
+                "num_failing_tcs": row[2],
+                "num_ccts": row[3]
+            }
+            for row in bug_info_res
+        }
+
+        # Step 2: Fetch line_info data for the relevant bug_idx
+        columns = ["l.bug_idx", "l.line_idx", "l.ep", "l.np", "l.ef", "l.nf", "l.cct_ep", "l.cct_np"]
+        col_str = ", ".join(columns)
+
+        special_str = f"""
+            INNER JOIN bug_info b ON l.bug_idx = b.bug_idx
+            WHERE b.subject = '{self.subject_name}'
+            AND b.experiment_name = '{self.experiment_name}'
+            AND b.sbfl IS TRUE
+        """
+
+        line_info_res = self.db.read(
+            "line_info l",
+            columns=col_str,
+            special=special_str
+        )
+
+        # Step 3: Validate columns and make line_info map values by bug_idx, line_idx
+        line_info_map = {}
+        for row in line_info_res:
+            bug_idx = row[0]
+            line_line_idx = row[1]
+            ep, np, ef, nf, cct_ep, cct_np = row[2:]
+
+            # Ensure no column is NULL
+            assert ep is not None, f"ep is NULL for bug_idx {bug_idx}"
+            assert np is not None, f"np is NULL for bug_idx {bug_idx}"
+            assert ef is not None, f"ef is NULL for bug_idx {bug_idx}"
+            assert nf is not None, f"nf is NULL for bug_idx {bug_idx}"
+            assert cct_ep is not None, f"cct_ep is NULL for bug_idx {bug_idx}"
+            assert cct_np is not None, f"cct_np is NULL for bug_idx {bug_idx}"
+
+            # Store the values in line_info_map
+            if bug_idx not in line_info_map:
+                line_info_map[bug_idx] = {}
+            line_info_map[bug_idx][line_line_idx] = {
+                "ep": ep, "np": np, "ef": ef, "nf": nf, "cct_ep": cct_ep, "cct_np": cct_np
+            }
             
-            # VALIDATE: Assert that sbfl_features.csv exists
-            sbfl_features_csv_file = individual / "sbfl_features.csv"
-            assert sbfl_features_csv_file.exists(), f"SBFL features file {sbfl_features_csv_file} does not exist"
 
-            # VALIDATE: Assert that sbfl_feature_noCCTs.csv exists
-            sbfl_features_noCCTs_csv_file = individual / "sbfl_features_noCCTs.csv"
-            assert sbfl_features_noCCTs_csv_file.exists(), f"SBFL features no CCTs file {sbfl_features_noCCTs_csv_file} does not exist"
+        # Step 4: Validate line_info data against bug_info data
+        for bug_idx, lines_data in line_info_map.items():
+            for line_idx, line_data in lines_data.items():
+                assert line_data["ep"] + line_data["np"] == bug_info_map[bug_idx]["num_passing_tcs"], (
+                    f"Mismatch for bug_idx {bug_idx}, line_idx {line_idx}: "
+                    f"ep + np ({line_data['ep']} + {line_data['np']}) != num_passing_tcs ({bug_info_map[bug_idx]['num_passing_tcs']})"
+                )
 
-            # VALIDATE: Assert that there is only one buggy line
-            self.check_one_buggy_line(sbfl_features_csv_file)
-            self.check_one_buggy_line(sbfl_features_noCCTs_csv_file)
+                assert line_data["ef"] + line_data["nf"] == bug_info_map[bug_idx]["num_failing_tcs"], (
+                    f"Mismatch for bug_idx {bug_idx}, line_idx {line_idx}: "
+                    f"ef + nf ({line_data['ef']} + {line_data['nf']}) != num_failing_tcs ({bug_info_map[bug_idx]['num_failing_tcs']})"
+                )
+
+                assert line_data["cct_ep"] + line_data["cct_np"] == bug_info_map[bug_idx]["num_ccts"], (
+                    f"Mismatch for bug_idx {bug_idx}, line_idx {line_idx}: "
+                    f"cct_ep + cct_np ({line_data['cct_ep']} + {line_data['cct_np']}) != num_ccts ({bug_info_map[bug_idx]['num_ccts']})"
+                )
+
+        print(f"[stage04-VAL07] {len(bug_info_res)} buggy versions with sbfl=TRUE have valid sbfl feature data in line_info")
+
+    def val08(self):
+        """
+        [stage05] val08: Validate the following columns in line_info table for all bug_idx in bug_info with mbfl IS TRUE:
+            1. for_sbfl_ranked_mbfl_asc is TRUE
+            2. for_sbfl_ranked_mbfl_desc is TRUE
+            3. for_random_mbfl is TRUE
+        """
+        # Step 1: Fetch line_info data for buggy line for the relevant bug_idx
+        columns = ["l.bug_idx", "l.for_sbfl_ranked_mbfl_asc", "l.for_sbfl_ranked_mbfl_desc", "l.for_random_mbfl"]
+        col_str = ", ".join(columns)
+
+        special_str = f"""
+            INNER JOIN bug_info b ON l.bug_idx = b.bug_idx
+            WHERE b.subject = '{self.subject_name}'
+            AND b.experiment_name = '{self.experiment_name}'
+            AND b.mbfl IS TRUE
+            AND l.is_buggy_line IS TRUE
+        """
+
+        line_info_res = self.db.read(
+            "line_info l",
+            columns=col_str,
+            special=special_str
+        )
+
+        # Step 2: Validate the values
+        for row in line_info_res:
+            bug_idx = row[0]
+            for_sbfl_ranked_mbfl_asc = row[1]
+            for_sbfl_ranked_mbfl_desc = row[2]
+            for_random_mbfl = row[3]
+
+            assert for_sbfl_ranked_mbfl_asc is True, f"for_sbfl_ranked_mbfl_asc is not TRUE for bug_idx {bug_idx}"
+            assert for_sbfl_ranked_mbfl_desc is True, f"for_sbfl_ranked_mbfl_desc is not TRUE for bug_idx {bug_idx}"
+            assert for_random_mbfl is True, f"for_random_mbfl is not TRUE for bug_idx {bug_idx}"
+
+        print(f"[stage05-VAL08] {len(line_info_res)} buggy lines with mbfl=TRUE is targetd for all types (sbfl asc, desc, and random mbfl) of mbfl extraction method")
+
+    def val09(self):
+        """
+        [stage05] val09: Validate number of mutations generated on buggy line is greater than 0 for all bug_idx in bug_info with mbfl IS TRUE
+        """
+        columns = ["m.bug_idx", "COUNT(m.mutant_idx)"]
+        col_str = ", ".join(columns)
+
+        special_str = f"""
+            INNER JOIN bug_info b ON m.bug_idx = b.bug_idx
+            WHERE b.subject = '{self.subject_name}'
+            AND b.experiment_name = '{self.experiment_name}'
+            AND b.buggy_line_idx = m.line_idx
+            AND b.mbfl IS TRUE
+            AND m.is_for_test IS TRUE
+            GROUP BY m.bug_idx
+        """
         
-        print(f"All {len(self.individual_list)} individuals have been validated successfully")
+        res = self.db.read(
+            "mutation_info m",
+            columns=col_str,
+            special=special_str
+        )
+
+        for row in res:
+            assert row[1] > 0, f"Number of mutations is not greater than 0 for bug_idx {row[0]}"
+
+        print(f"[stage05-VAL09] {len(res)} buggy lines with mbfl=TRUE have greater than 0 mutations generated")
+
+    def val10(self):
+        """
+        [stage05] val10: Validate the following for all bug_idx in bug_info with mbfl IS TRUE:
+            1. Columns f2p, p2f, f2f, p2p, p2f_cct, and p2p_cct in mutation_info are not NULL.
+            2. f2p + f2f = num_failing_tcs in bug_info.
+            3. p2f + p2p = num_passing_tcs in bug_info.
+            4. p2f_cct + p2p_cct = num_ccts in bug_info.
+        """
+
+        # Step 1: Fetch all bug_idx and required columns from bug_info
+        columns = ["b.bug_idx", "b.num_passing_tcs", "b.num_failing_tcs", "b.num_ccts"]
+        col_str = ", ".join(columns)
+
+        special_str = f"""
+            WHERE b.subject = '{self.subject_name}'
+            AND b.experiment_name = '{self.experiment_name}'
+            AND b.mbfl IS TRUE
+        """
+
+        bug_info_res = self.db.read(
+            "bug_info b",
+            columns=col_str,
+            special=special_str
+        )
+
+        # Map bug_info data by bug_idx for quick validation
+        bug_info_map = {
+            row[0]: {
+                "num_passing_tcs": row[1],
+                "num_failing_tcs": row[2],
+                "num_ccts": row[3]
+            }
+            for row in bug_info_res
+        }
+
+        # Step 2: Fetch mutation_info data for the relevant bug_idx
+        columns = ["m.bug_idx", "m.f2p", "m.p2f", "m.f2f", "m.p2p", "m.p2f_cct", "m.p2p_cct"]
+        col_str = ", ".join(columns)
+
+        special_str = f"""
+            INNER JOIN bug_info b ON m.bug_idx = b.bug_idx
+            WHERE b.subject = '{self.subject_name}'
+            AND b.experiment_name = '{self.experiment_name}'
+            AND b.mbfl IS TRUE
+            AND m.is_for_test IS TRUE
+            AND m.build_result IS TRUE
+        """
+
+        mutation_info_res = self.db.read(
+            "mutation_info m",
+            columns=col_str,
+            special=special_str
+        )
+
+        # Step 3: Validate columns and make mutation_info map values by bug_idx
+        mutation_info_map = {}
+        for row in mutation_info_res:
+            bug_idx = row[0]
+            f2p, p2f, f2f, p2p, p2f_cct, p2p_cct = row[1:]
+
+            # Ensure no column is NULL
+            assert f2p is not None, f"f2p is NULL for bug_idx {bug_idx}"
+            assert p2f is not None, f"p2f is NULL for bug_idx {bug_idx}"
+            assert f2f is not None, f"f2f is NULL for bug_idx {bug_idx}"
+            assert p2p is not None, f"p2p is NULL for bug_idx {bug_idx}"
+            assert p2f_cct is not None, f"p2f_cct is NULL for bug_idx {bug_idx}"
+            assert p2p_cct is not None, f"p2p_cct is NULL for bug_idx {bug_idx}"
+
+            # Store the values in mutation_info_map
+            if bug_idx not in mutation_info_map:
+                mutation_info_map[bug_idx] = []
+            mutation_info_map[bug_idx].append({
+                "f2p": f2p, "p2f": p2f, "f2f": f2f, "p2p": p2p, "p2f_cct": p2f_cct, "p2p_cct": p2p_cct
+            })
+
+        # Step 4: Validate mutation_info data against bug_info data
+        for bug_idx, mutations_data in mutation_info_map.items():
+            for mutation_data in mutations_data:
+                assert mutation_data["f2p"] + mutation_data["f2f"] == bug_info_map[bug_idx]["num_failing_tcs"], (
+                    f"Mismatch for bug_idx {bug_idx}: "
+                    f"f2p + f2f ({mutation_data['f2p']} + {mutation_data['f2f']}) != num_failing_tcs ({bug_info_map[bug_idx]['num_failing_tcs']})"
+                )
+
+                assert mutation_data["p2f"] + mutation_data["p2p"] == bug_info_map[bug_idx]["num_passing_tcs"], (
+                    f"Mismatch for bug_idx {bug_idx}: "
+                    f"p2f + p2p ({mutation_data['p2f']} + {mutation_data['p2p']}) != num_passing_tcs ({bug_info_map[bug_idx]['num_passing_tcs']})"
+                )
+
+                assert mutation_data["p2f_cct"] + mutation_data["p2p_cct"] == bug_info_map[bug_idx]["num_ccts"], (
+                    f"Mismatch for bug_idx {bug_idx}: "
+                    f"p2f_cct + p2p_cct ({mutation_data['p2f_cct']} + {mutation_data['p2p_cct']}) != num_ccts ({bug_info_map[bug_idx]['num_ccts']})"
+                )
+
+        print(f"[stage05-VAL10] {len(bug_info_res)} buggy versions with mbfl=TRUE have valid mbfl feature data in mutation_info")
+
 
 
     # ++++++++++++++++++++++++++++++++

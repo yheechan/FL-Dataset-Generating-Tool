@@ -9,6 +9,7 @@ for b in a:
 
 def foo(mydata):
   mydata["hello world"] = [1, 2, 3]
+  return
 
 
 init_data = {}
