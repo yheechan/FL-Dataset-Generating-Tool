@@ -3,30 +3,491 @@ import random
 import subprocess as sp
 import csv
 import json
+import math
 
 from lib.utils import *
 from analysis.individual import Individual
 from lib.experiment import Experiment
 from analysis.rank_utils import *
+
+from lib.experiment import Experiment
+from lib.database import CRUD
+from lib.config import set_seed
+
+
+MBFL_METHOD = "for_random_mbfl"
+# MBFL_METHOD = "for_sbfl_ranked_mbfl_desc"
+MAX_LINES_FOR_RANDOM = 100
+SBFL_RANKED_RATE = 0.30
+SBFL_STANDARD = "gp13"
+MUT_CNT_CONFIG = [2, 4, 6, 8, 10]
+INCLUDE_CCT = False
         
 
 class Analyze:
     def __init__(
-            self, subject_name, set_name, output_csv,
+            self, subject_name, experiment_name
         ):
         self.subject_name = subject_name
+        self.experiment_name = experiment_name
+
+        self.experiment = Experiment()
+        # Settings for database
+        self.host = self.experiment.experiment_config["database"]["host"]
+        self.port = self.experiment.experiment_config["database"]["port"]
+        self.user = self.experiment.experiment_config["database"]["user"]
+        self.password = self.experiment.experiment_config["database"]["password"]
+        self.database = self.experiment.experiment_config["database"]["database"]
+
+        self.db = CRUD(
+            host=self.host,
+            port=self.port,
+            user=self.user,
+            password=self.password,
+            database=self.database
+        )
+
+        # self.set_name = set_name
+        # self.set_dir = out_dir / self.subject_name / self.set_name
+        # self.individual_list = get_dirs_in_dir(self.set_dir)
+        # self.set_size = len(self.individual_list)
+
+        # self.stat_dir = stats_dir / self.subject_name
+        # self.stat_dir.mkdir(exist_ok=True, parents=True)
+
+        # if not output_csv.endswith(".csv"):
+        #     output_csv += ".csv"
+        # self.output_csv = self.stat_dir / output_csv
+    
+    def run(self, analysis_criteria):
+        for ana_type in analysis_criteria:
+            if ana_type == 1:
+                self.analyze01()
+            elif ana_type == 2:
+                self.analyze02()
+
+
+    def analyze01(self):
+        """
+        [stage03] analyze01: Analyze test cases and coverage statistics
+            for all buggy versions resulting from prerequisite data preparation
+        """
+        columns = [
+            "version", "buggy_file", "buggy_function", "buggy_lineno",
+            "num_failing_tcs", "num_passing_tcs", "num_ccts", "num_total_tcs",
+            "num_lines_executed_by_failing_tcs", "num_lines_executed_by_passing_tcs",
+            "num_lines_executed_by_ccts", "num_total_lines_executed",
+            "num_total_lines"
+        ]
+        col_str = ", ".join(columns)
+
+        res = self.db.read(
+            "bug_info",
+            columns=col_str,
+            conditions={
+                "subject": self.subject_name,
+                "experiment_name": self.experiment_name,
+                "prerequisites": True
+            }
+        )
+
+        columns.extend(["fail_line_cov", "pass_line_cov", "cct_line_cov", "total_line_cov"])
+
+        analysis_result = {}
+        total_result = {}
+        for row in res:
+            for key_num, key_val in enumerate(row):
+                if key_num == 0:
+                    version = key_val
+                    analysis_result[version] = {}
+                else:
+                    analysis_result[version][columns[key_num]] = key_val
+
+            fail_line_cov = (analysis_result[version]["num_lines_executed_by_failing_tcs"] \
+                                / analysis_result[version]["num_total_lines"]) * 100
+            pass_line_cov = (analysis_result[version]["num_lines_executed_by_passing_tcs"] \
+                                / analysis_result[version]["num_total_lines"]) * 100
+            cct_line_cov = (analysis_result[version]["num_lines_executed_by_ccts"] \
+                                / analysis_result[version]["num_total_lines"]) * 100
+            total_line_cov = (analysis_result[version]["num_total_lines_executed"] \
+                                / analysis_result[version]["num_total_lines"]) * 100
+
+            analysis_result[version]["fail_line_cov"] = fail_line_cov
+            analysis_result[version]["pass_line_cov"] = pass_line_cov
+            analysis_result[version]["cct_line_cov"] = cct_line_cov
+            analysis_result[version]["total_line_cov"] = total_line_cov
+            
+            for key in list(analysis_result[version].keys())[3:]:
+                if key not in total_result:
+                    total_result[key] = []
+                total_result[key].append(analysis_result[version][key])
         
-        self.set_name = set_name
-        self.set_dir = out_dir / self.subject_name / self.set_name
-        self.individual_list = get_dirs_in_dir(self.set_dir)
-        self.set_size = len(self.individual_list)
 
-        self.stat_dir = stats_dir / self.subject_name
-        self.stat_dir.mkdir(exist_ok=True, parents=True)
+        # print(json.dumps(analysis_result, indent=2))
+        print(f"Average results for {len(analysis_result)} versions:")
+        for key in total_result:
+            print(f"\t{key}: {sum(total_result[key]) / len(total_result[key])}")
 
-        if not output_csv.endswith(".csv"):
-            output_csv += ".csv"
-        self.output_csv = self.stat_dir / output_csv
+        
+        col_for_table = ["subject TEXT", "experiment_name TEXT"]
+        for col in total_result:
+            col_for_table.append(f"{col} FLOAT")
+        col_for_table_str = ", ".join(col_for_table)
+        if not self.db.table_exists("average_statistics_info"):
+            self.db.create_table(
+                "average_statistics_info",
+                columns=col_for_table_str
+            )
+
+        values = {}
+        for key in total_result:
+            values[key] = sum(total_result[key]) / len(total_result[key])
+        
+        if not self.db.value_exists(
+            "average_statistics_info",
+            conditions={
+                "subject": self.subject_name,
+                "experiment_name": self.experiment_name
+            }):
+
+            cols = ", ".join(["subject", "experiment_name"])
+            vals = f"'{self.subject_name}', '{self.experiment_name}'"
+            
+            self.db.insert("average_statistics_info", columns=cols, values=vals)
+        
+        self.db.update(
+            "average_statistics_info",
+            set_values=values,
+            conditions={
+                "subject": self.subject_name,
+                "experiment_name": self.experiment_name
+            }
+        )
+
+        print(f"[stage03-analyze01] Average statistics for {self.subject_name} has been saved to database")
+
+
+    def analyze02(self):
+        """
+        [stage05] analyze02: Analyze MBFL results
+            for all buggy versions resulting from MBFL feature extraction
+        """
+
+        # add muse_score, met_score on line_info table
+        if not self.db.column_exists("line_info", "muse_score"):
+            self.db.add_column("line_info", "muse_score FLOAT DEFAULT NULL")
+        if not self.db.column_exists("line_info", "met_score"):
+            self.db.add_column("line_info", "met_score FLOAT DEFAULT NULL")
+
+
+        # Step 1: retrieve list of bug_idx where mbfl is TRUE
+        target_buggy_version_list = self.get_target_buggy_version_list(self.subject_name, self.experiment_name, "mbfl")
+
+        
+        # For each buggy version with MBFL feature
+        for buggy_version in target_buggy_version_list:
+            self.analyze_bug_version_for_mbfl(buggy_version)
+            break
+
+    # +++++++++++++++++++++++
+    # HELPER FUNCTIONS FOR ANALYZE02
+    # +++++++++++++++++++++++
+    def analyze_bug_version_for_mbfl(self, buggy_version):
+        """
+        Analyze a single buggy version for MBFL
+        """
+        bug_idx = buggy_version[0]
+        version = buggy_version[1]
+        buggy_file = buggy_version[2]
+        buggy_function = buggy_version[3]
+        buggy_lineno = buggy_version[4]
+        self.buggy_line_idx = buggy_version[5]
+        buggy_line_idx = buggy_version[5]
+
+        print(f"Analyzing {bug_idx} {version} ({buggy_file}::{buggy_function}::{buggy_lineno})")
+
+        total_num_of_failing_tcs = self.get_total_number_of_failing_tcs(bug_idx)
+        print(f"Total number of failing test cases: {total_num_of_failing_tcs}")
+
+        # THIS IS TEMPORARY
+        # Get lines that we target to analyze for MBFL
+        if MBFL_METHOD == "for_random_mbfl":
+            target_line_idx = self.db.read(
+                "line_info",
+                columns="line_idx, file, function, lineno",
+                conditions={
+                    "bug_idx": bug_idx,
+                    MBFL_METHOD: True
+                },
+                special=f"ORDER BY RANDOM() LIMIT {MAX_LINES_FOR_RANDOM}"
+            )
+        else:
+            # First get number of lines for the bug_idx
+            num_lines = self.db.read(
+                "line_info",
+                columns="COUNT(line_idx)",
+                conditions={"bug_idx": bug_idx}
+            )
+
+            num_lines = num_lines[0][0]
+            num_lines_for_random = int(num_lines * SBFL_RANKED_RATE)
+            target_line_idx = self.db.read(
+                "line_info",
+                columns="line_idx, file, function, lineno",
+                conditions={
+                    "bug_idx": bug_idx,
+                    MBFL_METHOD: True
+                },
+                special=f"ORDER BY {SBFL_STANDARD} LIMIT {num_lines_for_random}"
+            )
+        
+        print(f"Selected {len(target_line_idx)} lines for MBFL analysis")
+        
+        # map line_idx to line_info map
+        line_idx2line_info = {}
+        for row in target_line_idx:
+            line_idx = row[0]
+            line_idx2line_info[line_idx] = {
+                "file": row[1],
+                "function": row[2],
+                "lineno": row[3]
+            }
+
+        if buggy_line_idx not in line_idx2line_info:
+            # remove randomly one line_idx in line_idx2line_info dict
+            key_list = list(line_idx2line_info.keys())
+            random.shuffle(key_list)
+            line_idx2line_info.pop(key_list[0])
+
+            line_idx2line_info[buggy_line_idx] = {
+                "file": buggy_file,
+                "function": buggy_function,
+                "lineno": buggy_lineno
+            }
+        
+        assert buggy_line_idx in line_idx2line_info, f"buggy_line_idx {buggy_line_idx} not in line_idx2line_info"
+
+        print(f"Selected {len(line_idx2line_info)} lines for MBFL analysis")
+
+        # Get all mutants generated on target lines
+        lines_idx2mutant_idx = self.get_mutations_on_target_lines(bug_idx, line_idx2line_info)
+        print(f"Found {len(lines_idx2mutant_idx)} mutants on target lines")
+
+        # measure mbfl scores
+        for mtc in MUT_CNT_CONFIG:
+            self.measure_mbfl_scores(line_idx2line_info, lines_idx2mutant_idx, total_num_of_failing_tcs, mtc)
+    
+    def measure_mbfl_scores(self, line_idx2line_info, lines_idx2mutant_idx, total_num_of_failing_tcs, mtc):
+        """
+        Measure MBFL scores for a given number of mutants
+        """
+        print(f"Measuring MBFL scores for number of mutation setting to {mtc}")
+
+        # Select mtc mutants per line at random
+        utilizing_line_idx2mutants = self.select_random_mtc_mutants_per_line(lines_idx2mutant_idx, mtc)
+
+        # Calculate total information
+        total_p2f, total_f2p, \
+            total_build_time, total_tc_execution_time \
+            = self.calculate_total_info(utilizing_line_idx2mutants)
+
+
+        for line_idx, mutants in utilizing_line_idx2mutants.items():
+            if line_idx != self.buggy_line_idx:
+                continue
+            print(f"Analyzing line {line_idx}")
+            met_data = self.measure_metallaxis(mutants, total_num_of_failing_tcs)
+            muse_data = self.measure_must_score(mutants, total_p2f, total_f2p)
+
+            print(f"Metallaxis score: {met_data}")
+            print(f"MUSE score: {muse_data}")
+
+            break
+    
+    def measure_metallaxis(self, mutants, total_num_of_failing_tcs):
+        """
+        Measure Metallaxis score
+        """
+        met_score_list = []
+
+        for mutant in mutants:
+            f2p = mutant["f2p"]
+            p2f = mutant["p2f"]
+            if INCLUDE_CCT:
+                p2f += mutant["p2f_cct"]
+            
+            score = 0.0
+            if f2p + p2f == 0.0:
+                score = 0.0
+            else:
+                score = ((f2p) / math.sqrt(total_num_of_failing_tcs * (f2p + p2f)))
+            
+            met_score_list.append(score)
+        
+        if len(met_score_list) == 0:
+            return 0.0
+        final_met_score = max(met_score_list)
+        met_data = {
+            "total_num_of_failing_tcs": total_num_of_failing_tcs,
+            "met susp score": final_met_score
+        }
+        return met_data
+    
+
+    def measure_must_score(self, mutants, total_p2f, total_f2p):
+        utilized_mutant_cnt = len(mutants)
+        line_total_p2f = 0
+        line_total_f2p = 0
+
+        final_muse_score = 0.0
+
+        for mutant in mutants:
+            line_total_p2f += mutant["p2f"]
+            line_total_f2p += mutant["f2p"]
+            if INCLUDE_CCT:
+                line_total_p2f += mutant["p2f_cct"]
+        
+        muse_1 = (1 / ((utilized_mutant_cnt + 1) * (total_f2p + 1)))
+        muse_2 = (1 / ((utilized_mutant_cnt + 1) * (total_p2f + 1)))
+
+        muse_3 = muse_1 * line_total_f2p
+        muse_4 = muse_2 * line_total_p2f
+
+        final_muse_score = muse_3 - muse_4
+
+        muse_data = {
+            "utilized_mutant_cnt": utilized_mutant_cnt,
+            "total_f2p": total_f2p,
+            "total_p2f": total_p2f,
+            "line_total_f2p": line_total_f2p,
+            "line_total_p2f": line_total_p2f,
+            "muse_1": muse_1,
+            "muse_2": muse_2,
+            "muse_3": muse_3,
+            "muse_4": muse_4,
+            "muse susp score": final_muse_score
+        }
+
+        return final_muse_score, muse_data
+
+
+
+
+    
+    def calculate_total_info(self, utilizing_line_idx2mutants):
+        """
+        Calculate total information for selected mutants
+            - total_p2f, total_f2p, total_build_time, total_tc_execution_time
+        """
+
+        total_p2f = 0
+        total_f2p = 0
+        total_build_time = 0
+        total_tc_execution_time = 0
+
+        for line_idx, mutants in utilizing_line_idx2mutants.items():
+            for mutant in mutants:
+                total_p2f += mutant["p2f"]
+                total_f2p += mutant["f2p"]
+                total_build_time += mutant["build_time_duration"]
+                total_tc_execution_time += mutant["tc_execution_time_duration"]
+                if INCLUDE_CCT:
+                    total_p2f += mutant["p2f_cct"]
+                    total_tc_execution_time += mutant["ccts_execution_time_duration"]
+
+        return total_p2f, total_f2p, total_build_time, total_tc_execution_time
+
+
+    def select_random_mtc_mutants_per_line(self, lines_idx2mutant_idx, mtc):
+        """
+        Select mtc mutants per line at random
+        """
+        selected_mutants = {}
+        for line_idx in lines_idx2mutant_idx:
+            mutants = lines_idx2mutant_idx[line_idx]
+            random.shuffle(mutants)
+            selected_mutants[line_idx] = []
+            for mutant in mutants:
+                if len(selected_mutants[line_idx]) == mtc:
+                    break
+                if mutant["build_result"] == False:
+                    continue
+                selected_mutants[line_idx].append(mutant)
+        return selected_mutants
+        
+
+    def get_total_number_of_failing_tcs(self, bug_idx):
+        """
+        Get total number of failing test cases for a bug_idx
+        """
+        num_failing_tcs = self.db.read(
+            "bug_info",
+            columns="num_failing_tcs",
+            conditions={"bug_idx": bug_idx}
+        )
+        return num_failing_tcs[0][0]
+
+    def get_target_buggy_version_list(self, subject_name, experiment_name, stage):
+        """
+        Get list of buggy versions that meet the criteria
+        """
+        return self.db.read(
+            "bug_info",
+            columns="bug_idx, version, buggy_file, buggy_function, buggy_lineno, buggy_line_idx",
+            conditions={
+                "subject": subject_name,
+                "experiment_name": experiment_name,
+                stage: True
+            }
+        )
+    
+    def get_mutations_on_target_lines(self, bug_idx, line_idx2line_info):
+        """
+        Get mutations on target lines
+        """
+        columns = [
+            "line_idx", "mutant_idx", "build_result",
+            "f2p", "p2f", "f2f", "p2p", "p2f_cct", "p2p_cct",
+            "build_time_duration", "tc_execution_time_duration", "ccts_execution_time_duration"
+        ]
+        col_str = ", ".join(columns)
+        special_str = f"AND line_idx IN ({', '.join([str(line_idx) for line_idx in line_idx2line_info])})"
+        ret = self.db.read(
+            "mutation_info",
+            columns=col_str,
+            conditions={
+                "bug_idx": bug_idx,
+                "is_for_test": True
+            },
+            special=special_str
+        )
+
+
+        # Map line_idx to mutant_idx
+        lines_idx2mutant_idx = {}
+        for row in ret:
+            line_idx = row[0]
+            if line_idx not in lines_idx2mutant_idx:
+                lines_idx2mutant_idx[line_idx] = []
+            lines_idx2mutant_idx[line_idx].append(
+                {
+                    "mutant_idx": row[1],
+                    "build_result": row[2],
+                    "f2p": row[3],
+                    "p2f": row[4],
+                    "f2f": row[5],
+                    "p2p": row[6],
+                    "p2f_cct": row[7],
+                    "p2p_cct": row[8],
+                    "build_time_duration": row[9],
+                    "tc_execution_time_duration": row[10],
+                    "ccts_execution_time_duration": row[11]
+                }
+            )
+        
+        return lines_idx2mutant_idx
+            
+        
     
     def usable_buggy_versions(self):
         csv_keys = [

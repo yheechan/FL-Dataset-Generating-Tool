@@ -1,0 +1,971 @@
+
++++++ results for mser.MUT1467.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'mser.MUT1467.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [41]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [41]
+Testing version mser.MUT1467.cpp on faster11.swtv::core0
+>> Configuring opencv_features2d_TF_top30 with coverage
+>> Building opencv_features2d_TF_top30
+>> Applied patch to mser.cpp with mser.MUT1467.cpp
+>> Building opencv_features2d_TF_top30
+>> Extracted line2function data from brisk.cpp.ii
+>> Extracted line2function data from fast.avx2.cpp.ii
+>> Extracted line2function data from fast.cpp.ii
+>> Extracted line2function data from fast_score.cpp.ii
+>> Extracted line2function data from fed.cpp.ii
+>> Extracted line2function data from mser.cpp.ii
+>> Reverted mser.cpp to original from mser.MUT1467.cpp
+>> Extracted line2function data saved to line2function.json
+>> Applied patch to mser.cpp with mser.MUT1467.cpp
+>> Building opencv_features2d_TF_top30
+TC40.sh on line 1064 has count: 64
+>> Buggy line 1064 is covered by failing TC TC40.sh
+TC1.sh on line 1064 has count: 0
+TC2.sh on line 1064 has count: 0
+TC3.sh on line 1064 has count: 0
+TC4.sh on line 1064 has count: 0
+TC5.sh on line 1064 has count: 0
+TC6.sh on line 1064 has count: 0
+TC7.sh on line 1064 has count: 0
+TC8.sh on line 1064 has count: 0
+TC9.sh on line 1064 has count: 0
+TC10.sh on line 1064 has count: 0
+TC11.sh on line 1064 has count: 0
+TC12.sh on line 1064 has count: 0
+TC13.sh on line 1064 has count: 0
+TC14.sh on line 1064 has count: 0
+TC15.sh on line 1064 has count: 0
+TC16.sh on line 1064 has count: 0
+TC17.sh on line 1064 has count: 0
+TC18.sh on line 1064 has count: 0
+TC19.sh on line 1064 has count: 0
+TC20.sh on line 1064 has count: 0
+TC21.sh on line 1064 has count: 0
+TC22.sh on line 1064 has count: 0
+TC23.sh on line 1064 has count: 0
+TC24.sh on line 1064 has count: 0
+TC25.sh on line 1064 has count: 0
+TC26.sh on line 1064 has count: 0
+TC27.sh on line 1064 has count: 0
+TC28.sh on line 1064 has count: 0
+TC29.sh on line 1064 has count: 0
+TC30.sh on line 1064 has count: 0
+TC31.sh on line 1064 has count: 0
+TC32.sh on line 1064 has count: 1
+TC33.sh on line 1064 has count: 0
+TC34.sh on line 1064 has count: 0
+TC35.sh on line 1064 has count: 0
+TC36.sh on line 1064 has count: 0
+TC37.sh on line 1064 has count: 0
+TC38.sh on line 1064 has count: 0
+TC39.sh on line 1064 has count: 0
+TC41.sh on line 1064 has count: 0
+TC42.sh on line 1064 has count: 0
+TC43.sh on line 1064 has count: 0
+TC44.sh on line 1064 has count: 0
+TC45.sh on line 1064 has count: 0
+TC46.sh on line 1064 has count: 0
+TC47.sh on line 1064 has count: 0
+TC48.sh on line 1064 has count: 0
+TC49.sh on line 1064 has count: 0
+TC50.sh on line 1064 has count: 0
+TC51.sh on line 1064 has count: 0
+TC52.sh on line 1064 has count: 0
+TC53.sh on line 1064 has count: 0
+TC54.sh on line 1064 has count: 0
+TC55.sh on line 1064 has count: 0
+TC56.sh on line 1064 has count: 0
+TC57.sh on line 1064 has count: 0
+TC58.sh on line 1064 has count: 0
+TC59.sh on line 1064 has count: 0
+TC60.sh on line 1064 has count: 0
+TC61.sh on line 1064 has count: 0
+TC62.sh on line 1064 has count: 0
+initialization on line 1064 has count: 0
+>> Buggy line 1064 is NOT covered by failing TC initialization
+Lines executed on initialization saved at lines_executed_at_initialization.txt
+>> Reverted mser.cpp to original from mser.MUT1467.cpp
+>> CCTs are updated in the database
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [41]
+Failing test case TC40.sh executes buggy line opencv_features2d_TF_top30/modules/features2d/src/mser.cpp#MSER::create(int _delta, int _min_area, int _max_area, double _max_variation, double _min_diversity, int _max_evolution, double _area_threshold, double _min_margin, int _edge_blur_size)#1064
+Executed lines by test cases are saved at lines_executed_by_failing_tc.json
+Executed lines by test cases are saved at lines_executed_by_passing_tc.json
+Executed lines by test cases are saved at lines_executed_by_ccts.json
+>> Saving version mser.MUT1467.cpp to database
+
++++++ STDERR +++++
+
++++++ results for fast.MUT273.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'fast.MUT273.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [368]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [368]
+Testing version fast.MUT273.cpp on faster11.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to fast.cpp with fast.MUT273.cpp
+>> Building opencv_features2d_TF_top30
+>> Extracted line2function data from brisk.cpp.ii
+>> Extracted line2function data from fast.avx2.cpp.ii
+>> Extracted line2function data from fast.cpp.ii
+>> Extracted line2function data from fast_score.cpp.ii
+>> Extracted line2function data from fed.cpp.ii
+>> Extracted line2function data from mser.cpp.ii
+>> Reverted fast.cpp to original from fast.MUT273.cpp
+>> Extracted line2function data saved to line2function.json
+>> Applied patch to fast.cpp with fast.MUT273.cpp
+>> Building opencv_features2d_TF_top30
+TC26.sh on line 229 has count: 210688
+>> Buggy line 229 is covered by failing TC TC26.sh
+TC1.sh on line 229 has count: 0
+TC2.sh on line 229 has count: 0
+TC3.sh on line 229 has count: 0
+TC4.sh on line 229 has count: 0
+TC5.sh on line 229 has count: 0
+TC6.sh on line 229 has count: 0
+TC7.sh on line 229 has count: 0
+TC8.sh on line 229 has count: 0
+TC9.sh on line 229 has count: 0
+TC10.sh on line 229 has count: 0
+TC11.sh on line 229 has count: 0
+TC12.sh on line 229 has count: 0
+TC13.sh on line 229 has count: 0
+TC14.sh on line 229 has count: 200280
+TC15.sh on line 229 has count: 0
+TC16.sh on line 229 has count: 0
+TC17.sh on line 229 has count: 2630
+TC18.sh on line 229 has count: 0
+TC19.sh on line 229 has count: 0
+TC20.sh on line 229 has count: 0
+TC21.sh on line 229 has count: 0
+TC22.sh on line 229 has count: 5398
+TC23.sh on line 229 has count: 0
+TC24.sh on line 229 has count: 0
+TC25.sh on line 229 has count: 0
+TC27.sh on line 229 has count: 0
+TC28.sh on line 229 has count: 2530
+TC29.sh on line 229 has count: 0
+TC30.sh on line 229 has count: 0
+TC31.sh on line 229 has count: 0
+TC32.sh on line 229 has count: 0
+TC33.sh on line 229 has count: 5398
+TC34.sh on line 229 has count: 0
+TC35.sh on line 229 has count: 0
+TC36.sh on line 229 has count: 0
+TC37.sh on line 229 has count: 0
+TC38.sh on line 229 has count: 0
+TC39.sh on line 229 has count: 0
+TC40.sh on line 229 has count: 0
+TC41.sh on line 229 has count: 1544
+TC42.sh on line 229 has count: 0
+TC43.sh on line 229 has count: 0
+TC44.sh on line 229 has count: 0
+TC45.sh on line 229 has count: 0
+TC46.sh on line 229 has count: 0
+TC47.sh on line 229 has count: 11286
+TC48.sh on line 229 has count: 0
+TC49.sh on line 229 has count: 0
+TC50.sh on line 229 has count: 114210
+TC51.sh on line 229 has count: 0
+TC52.sh on line 229 has count: 0
+TC53.sh on line 229 has count: 0
+TC54.sh on line 229 has count: 0
+TC55.sh on line 229 has count: 0
+TC56.sh on line 229 has count: 0
+TC57.sh on line 229 has count: 0
+TC58.sh on line 229 has count: 0
+TC59.sh on line 229 has count: 0
+TC60.sh on line 229 has count: 0
+TC61.sh on line 229 has count: 0
+TC62.sh on line 229 has count: 0
+initialization on line 229 has count: 0
+>> Buggy line 229 is NOT covered by failing TC initialization
+Lines executed on initialization saved at lines_executed_at_initialization.txt
+>> Reverted fast.cpp to original from fast.MUT273.cpp
+>> CCTs are updated in the database
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [368]
+Failing test case TC26.sh executes buggy line opencv_features2d_TF_top30/modules/features2d/src/fast.cpp#FAST_t(cv::InputArray _img, int & keypoints, int threshold, _Bool nonmax_suppression)#229
+Executed lines by test cases are saved at lines_executed_by_failing_tc.json
+Executed lines by test cases are saved at lines_executed_by_passing_tc.json
+Executed lines by test cases are saved at lines_executed_by_ccts.json
+>> Saving version fast.MUT273.cpp to database
+
++++++ STDERR +++++
+
++++++ results for mser.MUT988.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'mser.MUT988.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [667]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [667]
+Testing version mser.MUT988.cpp on faster11.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to mser.cpp with mser.MUT988.cpp
+>> Building opencv_features2d_TF_top30
+>> Extracted line2function data from brisk.cpp.ii
+>> Extracted line2function data from fast.avx2.cpp.ii
+>> Extracted line2function data from fast.cpp.ii
+>> Extracted line2function data from fast_score.cpp.ii
+>> Extracted line2function data from fed.cpp.ii
+>> Extracted line2function data from mser.cpp.ii
+>> Reverted mser.cpp to original from mser.MUT988.cpp
+>> Extracted line2function data saved to line2function.json
+>> Applied patch to mser.cpp with mser.MUT988.cpp
+>> Building opencv_features2d_TF_top30
+TC32.sh on line 767 has count: 382
+>> Buggy line 767 is covered by failing TC TC32.sh
+TC1.sh on line 767 has count: 0
+TC2.sh on line 767 has count: 0
+TC3.sh on line 767 has count: 0
+TC4.sh on line 767 has count: 0
+TC5.sh on line 767 has count: 0
+TC6.sh on line 767 has count: 0
+TC7.sh on line 767 has count: 0
+TC8.sh on line 767 has count: 0
+TC9.sh on line 767 has count: 0
+TC10.sh on line 767 has count: 0
+TC11.sh on line 767 has count: 0
+TC12.sh on line 767 has count: 0
+TC13.sh on line 767 has count: 0
+TC14.sh on line 767 has count: 0
+TC15.sh on line 767 has count: 0
+TC16.sh on line 767 has count: 0
+TC17.sh on line 767 has count: 0
+TC18.sh on line 767 has count: 0
+TC19.sh on line 767 has count: 0
+TC20.sh on line 767 has count: 0
+TC21.sh on line 767 has count: 0
+TC22.sh on line 767 has count: 0
+TC23.sh on line 767 has count: 0
+TC24.sh on line 767 has count: 0
+TC25.sh on line 767 has count: 0
+TC26.sh on line 767 has count: 0
+TC27.sh on line 767 has count: 0
+TC28.sh on line 767 has count: 0
+TC29.sh on line 767 has count: 0
+TC30.sh on line 767 has count: 0
+TC31.sh on line 767 has count: 0
+TC33.sh on line 767 has count: 0
+TC34.sh on line 767 has count: 0
+TC35.sh on line 767 has count: 0
+TC36.sh on line 767 has count: 0
+TC37.sh on line 767 has count: 0
+TC38.sh on line 767 has count: 0
+TC39.sh on line 767 has count: 0
+TC40.sh on line 767 has count: 0
+TC41.sh on line 767 has count: 0
+TC42.sh on line 767 has count: 0
+TC43.sh on line 767 has count: 0
+TC44.sh on line 767 has count: 0
+TC45.sh on line 767 has count: 0
+TC46.sh on line 767 has count: 0
+TC47.sh on line 767 has count: 0
+TC48.sh on line 767 has count: 0
+TC49.sh on line 767 has count: 0
+TC50.sh on line 767 has count: 0
+TC51.sh on line 767 has count: 0
+TC52.sh on line 767 has count: 0
+TC53.sh on line 767 has count: 0
+TC54.sh on line 767 has count: 0
+TC55.sh on line 767 has count: 0
+TC56.sh on line 767 has count: 0
+TC57.sh on line 767 has count: 0
+TC58.sh on line 767 has count: 0
+TC59.sh on line 767 has count: 0
+TC60.sh on line 767 has count: 0
+TC61.sh on line 767 has count: 0
+TC62.sh on line 767 has count: 0
+initialization on line 767 has count: 0
+>> Buggy line 767 is NOT covered by failing TC initialization
+Lines executed on initialization saved at lines_executed_at_initialization.txt
+>> Reverted mser.cpp to original from mser.MUT988.cpp
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [667]
+Failing test case TC32.sh executes buggy line opencv_features2d_TF_top30/modules/features2d/src/mser.cpp#preprocessMSER_8uC3(struct cv::MSCRNode * node, struct cv::MSCREdge * edge, double * total, const class cv::Mat & src, class cv::Mat & dx, class cv::Mat & dy, int Ne, int edgeBlurSize)#767
+Executed lines by test cases are saved at lines_executed_by_failing_tc.json
+Executed lines by test cases are saved at lines_executed_by_passing_tc.json
+Executed lines by test cases are saved at lines_executed_by_ccts.json
+>> Saving version mser.MUT988.cpp to database
+
++++++ STDERR +++++
+
++++++ results for fast.MUT505.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'fast.MUT505.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [951]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [951]
+Testing version fast.MUT505.cpp on faster11.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to fast.cpp with fast.MUT505.cpp
+>> Building opencv_features2d_TF_top30
+>> Extracted line2function data from brisk.cpp.ii
+>> Extracted line2function data from fast.avx2.cpp.ii
+>> Extracted line2function data from fast.cpp.ii
+>> Extracted line2function data from fast_score.cpp.ii
+>> Extracted line2function data from fed.cpp.ii
+>> Extracted line2function data from mser.cpp.ii
+>> Reverted fast.cpp to original from fast.MUT505.cpp
+>> Extracted line2function data saved to line2function.json
+>> Applied patch to fast.cpp with fast.MUT505.cpp
+>> Building opencv_features2d_TF_top30
+TC17.sh on line 580 has count: 1
+>> Buggy line 580 is covered by failing TC TC17.sh
+TC28.sh on line 580 has count: 1
+>> Buggy line 580 is covered by failing TC TC28.sh
+TC1.sh on line 580 has count: 0
+TC2.sh on line 580 has count: 0
+TC3.sh on line 580 has count: 0
+TC4.sh on line 580 has count: 0
+TC5.sh on line 580 has count: 0
+TC6.sh on line 580 has count: 0
+TC7.sh on line 580 has count: 0
+TC8.sh on line 580 has count: 0
+TC9.sh on line 580 has count: 0
+TC10.sh on line 580 has count: 0
+TC11.sh on line 580 has count: 0
+TC12.sh on line 580 has count: 0
+TC13.sh on line 580 has count: 0
+TC14.sh on line 580 has count: 0
+TC15.sh on line 580 has count: 0
+TC16.sh on line 580 has count: 0
+TC18.sh on line 580 has count: 0
+TC19.sh on line 580 has count: 0
+TC20.sh on line 580 has count: 0
+TC21.sh on line 580 has count: 0
+TC22.sh on line 580 has count: 0
+TC23.sh on line 580 has count: 0
+TC24.sh on line 580 has count: 0
+TC25.sh on line 580 has count: 0
+TC26.sh on line 580 has count: 0
+TC27.sh on line 580 has count: 0
+TC29.sh on line 580 has count: 0
+TC30.sh on line 580 has count: 0
+TC31.sh on line 580 has count: 0
+TC32.sh on line 580 has count: 0
+TC33.sh on line 580 has count: 0
+TC34.sh on line 580 has count: 0
+TC35.sh on line 580 has count: 0
+TC36.sh on line 580 has count: 0
+TC37.sh on line 580 has count: 0
+TC38.sh on line 580 has count: 0
+TC39.sh on line 580 has count: 0
+TC40.sh on line 580 has count: 0
+TC41.sh on line 580 has count: 0
+TC42.sh on line 580 has count: 0
+TC43.sh on line 580 has count: 0
+TC44.sh on line 580 has count: 0
+TC45.sh on line 580 has count: 0
+TC46.sh on line 580 has count: 0
+TC47.sh on line 580 has count: 0
+TC48.sh on line 580 has count: 0
+TC49.sh on line 580 has count: 0
+TC50.sh on line 580 has count: 0
+TC51.sh on line 580 has count: 0
+TC52.sh on line 580 has count: 0
+TC53.sh on line 580 has count: 0
+TC54.sh on line 580 has count: 0
+TC55.sh on line 580 has count: 0
+TC56.sh on line 580 has count: 0
+TC57.sh on line 580 has count: 0
+TC58.sh on line 580 has count: 0
+TC59.sh on line 580 has count: 0
+TC60.sh on line 580 has count: 0
+TC61.sh on line 580 has count: 0
+TC62.sh on line 580 has count: 0
+initialization on line 580 has count: 0
+>> Buggy line 580 is NOT covered by failing TC initialization
+Lines executed on initialization saved at lines_executed_at_initialization.txt
+>> Reverted fast.cpp to original from fast.MUT505.cpp
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [951]
+Failing test case TC17.sh executes buggy line opencv_features2d_TF_top30/modules/features2d/src/fast.cpp#FastFeatureDetector_Impl::detect(cv::InputArray _image, int & keypoints, cv::InputArray _mask)#580
+Failing test case TC28.sh executes buggy line opencv_features2d_TF_top30/modules/features2d/src/fast.cpp#FastFeatureDetector_Impl::detect(cv::InputArray _image, int & keypoints, cv::InputArray _mask)#580
+Executed lines by test cases are saved at lines_executed_by_failing_tc.json
+Executed lines by test cases are saved at lines_executed_by_passing_tc.json
+Executed lines by test cases are saved at lines_executed_by_ccts.json
+>> Saving version fast.MUT505.cpp to database
+
++++++ STDERR +++++
+
++++++ results for brisk.MUT361.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'brisk.MUT361.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [1210]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [1210]
+Testing version brisk.MUT361.cpp on faster11.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to brisk.cpp with brisk.MUT361.cpp
+>> Building opencv_features2d_TF_top30
+>> Extracted line2function data from brisk.cpp.ii
+>> Extracted line2function data from fast.avx2.cpp.ii
+>> Extracted line2function data from fast.cpp.ii
+>> Extracted line2function data from fast_score.cpp.ii
+>> Extracted line2function data from fed.cpp.ii
+>> Extracted line2function data from mser.cpp.ii
+>> Reverted brisk.cpp to original from brisk.MUT361.cpp
+>> Extracted line2function data saved to line2function.json
+>> Applied patch to brisk.cpp with brisk.MUT361.cpp
+>> Building opencv_features2d_TF_top30
+TC9.sh on line 511 has count: 1
+>> Buggy line 511 is covered by failing TC TC9.sh
+TC1.sh on line 511 has count: 0
+TC2.sh on line 511 has count: 0
+TC3.sh on line 511 has count: 0
+TC4.sh on line 511 has count: 0
+TC5.sh on line 511 has count: 0
+TC6.sh on line 511 has count: 0
+TC7.sh on line 511 has count: 1
+TC8.sh on line 511 has count: 0
+TC10.sh on line 511 has count: 0
+TC11.sh on line 511 has count: 0
+TC12.sh on line 511 has count: 0
+TC13.sh on line 511 has count: 0
+TC14.sh on line 511 has count: 0
+TC15.sh on line 511 has count: 0
+TC16.sh on line 511 has count: 1
+TC17.sh on line 511 has count: 0
+TC18.sh on line 511 has count: 0
+TC19.sh on line 511 has count: 0
+TC20.sh on line 511 has count: 0
+TC21.sh on line 511 has count: 0
+TC22.sh on line 511 has count: 0
+TC23.sh on line 511 has count: 0
+TC24.sh on line 511 has count: 0
+TC25.sh on line 511 has count: 0
+TC26.sh on line 511 has count: 0
+TC27.sh on line 511 has count: 1
+TC28.sh on line 511 has count: 0
+TC29.sh on line 511 has count: 0
+TC30.sh on line 511 has count: 0
+TC31.sh on line 511 has count: 0
+TC32.sh on line 511 has count: 0
+TC33.sh on line 511 has count: 0
+TC34.sh on line 511 has count: 0
+TC35.sh on line 511 has count: 0
+TC36.sh on line 511 has count: 0
+TC37.sh on line 511 has count: 0
+TC38.sh on line 511 has count: 0
+TC39.sh on line 511 has count: 0
+TC40.sh on line 511 has count: 0
+TC41.sh on line 511 has count: 0
+TC42.sh on line 511 has count: 0
+TC43.sh on line 511 has count: 0
+TC44.sh on line 511 has count: 0
+TC45.sh on line 511 has count: 0
+TC46.sh on line 511 has count: 0
+TC47.sh on line 511 has count: 1
+TC48.sh on line 511 has count: 0
+TC49.sh on line 511 has count: 1
+TC50.sh on line 511 has count: 0
+TC51.sh on line 511 has count: 0
+TC52.sh on line 511 has count: 0
+TC53.sh on line 511 has count: 0
+TC54.sh on line 511 has count: 0
+TC55.sh on line 511 has count: 0
+TC56.sh on line 511 has count: 0
+TC57.sh on line 511 has count: 0
+TC58.sh on line 511 has count: 0
+TC59.sh on line 511 has count: 0
+TC60.sh on line 511 has count: 0
+TC61.sh on line 511 has count: 0
+TC62.sh on line 511 has count: 0
+initialization on line 511 has count: 0
+>> Buggy line 511 is NOT covered by failing TC initialization
+Lines executed on initialization saved at lines_executed_at_initialization.txt
+>> Reverted brisk.cpp to original from brisk.MUT361.cpp
+>> CCTs are updated in the database
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [1210]
+Failing test case TC9.sh executes buggy line opencv_features2d_TF_top30/modules/features2d/src/brisk.cpp#BRISK_Impl::generateKernel(const int & radiusList, const int & numberList, float dMax, float dMin, const int & _indexChange)#511
+Executed lines by test cases are saved at lines_executed_by_failing_tc.json
+Executed lines by test cases are saved at lines_executed_by_passing_tc.json
+Executed lines by test cases are saved at lines_executed_by_ccts.json
+>> Saving version brisk.MUT361.cpp to database
+
++++++ STDERR +++++
+
++++++ results for brisk.MUT627.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'brisk.MUT627.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [1503]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [1503]
+Testing version brisk.MUT627.cpp on faster11.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to brisk.cpp with brisk.MUT627.cpp
+>> Building opencv_features2d_TF_top30
+>> Extracted line2function data from brisk.cpp.ii
+>> Extracted line2function data from fast.avx2.cpp.ii
+>> Extracted line2function data from fast.cpp.ii
+>> Extracted line2function data from fast_score.cpp.ii
+>> Extracted line2function data from fed.cpp.ii
+>> Extracted line2function data from mser.cpp.ii
+>> Reverted brisk.cpp to original from brisk.MUT627.cpp
+>> Extracted line2function data saved to line2function.json
+>> Applied patch to brisk.cpp with brisk.MUT627.cpp
+>> Building opencv_features2d_TF_top30
+TC16.sh on line 653 has count: 62257
+>> Buggy line 653 is covered by failing TC TC16.sh
+TC1.sh on line 653 has count: 0
+TC2.sh on line 653 has count: 0
+TC3.sh on line 653 has count: 0
+TC4.sh on line 653 has count: 0
+TC5.sh on line 653 has count: 0
+TC6.sh on line 653 has count: 0
+TC7.sh on line 653 has count: 591295
+TC8.sh on line 653 has count: 0
+TC9.sh on line 653 has count: 60740
+TC10.sh on line 653 has count: 0
+TC11.sh on line 653 has count: 0
+TC12.sh on line 653 has count: 0
+TC13.sh on line 653 has count: 0
+TC14.sh on line 653 has count: 0
+TC15.sh on line 653 has count: 0
+TC17.sh on line 653 has count: 0
+TC18.sh on line 653 has count: 0
+TC19.sh on line 653 has count: 0
+TC20.sh on line 653 has count: 0
+TC21.sh on line 653 has count: 0
+TC22.sh on line 653 has count: 0
+TC23.sh on line 653 has count: 0
+TC24.sh on line 653 has count: 0
+TC25.sh on line 653 has count: 0
+TC26.sh on line 653 has count: 0
+TC27.sh on line 653 has count: 62257
+TC28.sh on line 653 has count: 0
+TC29.sh on line 653 has count: 0
+TC30.sh on line 653 has count: 0
+TC31.sh on line 653 has count: 0
+TC32.sh on line 653 has count: 0
+TC33.sh on line 653 has count: 0
+TC34.sh on line 653 has count: 0
+TC35.sh on line 653 has count: 0
+TC36.sh on line 653 has count: 0
+TC37.sh on line 653 has count: 0
+TC38.sh on line 653 has count: 0
+TC39.sh on line 653 has count: 0
+TC40.sh on line 653 has count: 0
+TC41.sh on line 653 has count: 0
+TC42.sh on line 653 has count: 0
+TC43.sh on line 653 has count: 0
+TC44.sh on line 653 has count: 0
+TC45.sh on line 653 has count: 0
+TC46.sh on line 653 has count: 0
+TC47.sh on line 653 has count: 0
+TC48.sh on line 653 has count: 0
+TC49.sh on line 653 has count: 488530
+TC50.sh on line 653 has count: 0
+TC51.sh on line 653 has count: 0
+TC52.sh on line 653 has count: 0
+TC53.sh on line 653 has count: 0
+TC54.sh on line 653 has count: 0
+TC55.sh on line 653 has count: 0
+TC56.sh on line 653 has count: 0
+TC57.sh on line 653 has count: 0
+TC58.sh on line 653 has count: 0
+TC59.sh on line 653 has count: 0
+TC60.sh on line 653 has count: 0
+TC61.sh on line 653 has count: 0
+TC62.sh on line 653 has count: 0
+initialization on line 653 has count: 0
+>> Buggy line 653 is NOT covered by failing TC initialization
+Lines executed on initialization saved at lines_executed_at_initialization.txt
+>> Reverted brisk.cpp to original from brisk.MUT627.cpp
+>> CCTs are updated in the database
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [1503]
+Failing test case TC16.sh executes buggy line opencv_features2d_TF_top30/modules/features2d/src/brisk.cpp#BRISK_Impl::smoothedIntensity(const cv::Mat & image, const cv::Mat & integral, const float key_x, const float key_y, const unsigned int scale, const unsigned int rot, const unsigned int point)#653
+Executed lines by test cases are saved at lines_executed_by_failing_tc.json
+Executed lines by test cases are saved at lines_executed_by_passing_tc.json
+Executed lines by test cases are saved at lines_executed_by_ccts.json
+>> Saving version brisk.MUT627.cpp to database
+
++++++ STDERR +++++
+
++++++ results for brisk.MUT558.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'brisk.MUT558.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [1770]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [1770]
+Testing version brisk.MUT558.cpp on faster11.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to brisk.cpp with brisk.MUT558.cpp
+>> Building opencv_features2d_TF_top30
+>> Extracted line2function data from brisk.cpp.ii
+>> Extracted line2function data from fast.avx2.cpp.ii
+>> Extracted line2function data from fast.cpp.ii
+>> Extracted line2function data from fast_score.cpp.ii
+>> Extracted line2function data from fed.cpp.ii
+>> Extracted line2function data from mser.cpp.ii
+>> Reverted brisk.cpp to original from brisk.MUT558.cpp
+>> Extracted line2function data saved to line2function.json
+>> Applied patch to brisk.cpp with brisk.MUT558.cpp
+>> Building opencv_features2d_TF_top30
+TC7.sh on line 627 has count: 134
+>> Buggy line 627 is covered by failing TC TC7.sh
+TC9.sh on line 627 has count: 242
+>> Buggy line 627 is covered by failing TC TC9.sh
+TC1.sh on line 627 has count: 0
+TC2.sh on line 627 has count: 0
+TC3.sh on line 627 has count: 0
+TC4.sh on line 627 has count: 0
+TC5.sh on line 627 has count: 0
+TC6.sh on line 627 has count: 0
+TC8.sh on line 627 has count: 0
+TC10.sh on line 627 has count: 0
+TC11.sh on line 627 has count: 0
+TC12.sh on line 627 has count: 0
+TC13.sh on line 627 has count: 0
+TC14.sh on line 627 has count: 0
+TC15.sh on line 627 has count: 0
+TC16.sh on line 627 has count: 62257
+TC17.sh on line 627 has count: 0
+TC18.sh on line 627 has count: 0
+TC19.sh on line 627 has count: 0
+TC20.sh on line 627 has count: 0
+TC21.sh on line 627 has count: 0
+TC22.sh on line 627 has count: 0
+TC23.sh on line 627 has count: 0
+TC24.sh on line 627 has count: 0
+TC25.sh on line 627 has count: 0
+TC26.sh on line 627 has count: 0
+TC27.sh on line 627 has count: 62257
+TC28.sh on line 627 has count: 0
+TC29.sh on line 627 has count: 0
+TC30.sh on line 627 has count: 0
+TC31.sh on line 627 has count: 0
+TC32.sh on line 627 has count: 0
+TC33.sh on line 627 has count: 0
+TC34.sh on line 627 has count: 0
+TC35.sh on line 627 has count: 0
+TC36.sh on line 627 has count: 0
+TC37.sh on line 627 has count: 0
+TC38.sh on line 627 has count: 0
+TC39.sh on line 627 has count: 0
+TC40.sh on line 627 has count: 0
+TC41.sh on line 627 has count: 0
+TC42.sh on line 627 has count: 0
+TC43.sh on line 627 has count: 0
+TC44.sh on line 627 has count: 0
+TC45.sh on line 627 has count: 0
+TC46.sh on line 627 has count: 0
+TC47.sh on line 627 has count: 0
+TC48.sh on line 627 has count: 0
+TC50.sh on line 627 has count: 0
+TC51.sh on line 627 has count: 0
+TC52.sh on line 627 has count: 0
+TC53.sh on line 627 has count: 0
+TC54.sh on line 627 has count: 0
+TC55.sh on line 627 has count: 0
+TC56.sh on line 627 has count: 0
+TC57.sh on line 627 has count: 0
+TC58.sh on line 627 has count: 0
+TC59.sh on line 627 has count: 0
+TC60.sh on line 627 has count: 0
+TC61.sh on line 627 has count: 0
+TC62.sh on line 627 has count: 0
+initialization on line 627 has count: 0
+>> Buggy line 627 is NOT covered by failing TC initialization
+Lines executed on initialization saved at lines_executed_at_initialization.txt
+>> Reverted brisk.cpp to original from brisk.MUT558.cpp
+>> CCTs are updated in the database
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [1770]
+Failing test case TC7.sh executes buggy line opencv_features2d_TF_top30/modules/features2d/src/brisk.cpp#BRISK_Impl::smoothedIntensity(const cv::Mat & image, const cv::Mat & integral, const float key_x, const float key_y, const unsigned int scale, const unsigned int rot, const unsigned int point)#627
+Failing test case TC9.sh executes buggy line opencv_features2d_TF_top30/modules/features2d/src/brisk.cpp#BRISK_Impl::smoothedIntensity(const cv::Mat & image, const cv::Mat & integral, const float key_x, const float key_y, const unsigned int scale, const unsigned int rot, const unsigned int point)#627
+Executed lines by test cases are saved at lines_executed_by_failing_tc.json
+Executed lines by test cases are saved at lines_executed_by_passing_tc.json
+Executed lines by test cases are saved at lines_executed_by_ccts.json
+>> Saving version brisk.MUT558.cpp to database
+
++++++ STDERR +++++
+
++++++ results for fast.MUT338.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'fast.MUT338.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [359]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [359]
+Testing version fast.MUT338.cpp on faster11.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to fast.cpp with fast.MUT338.cpp
+>> Building opencv_features2d_TF_top30
+>> Extracted line2function data from brisk.cpp.ii
+>> Extracted line2function data from fast.avx2.cpp.ii
+>> Extracted line2function data from fast.cpp.ii
+>> Extracted line2function data from fast_score.cpp.ii
+>> Extracted line2function data from fed.cpp.ii
+>> Extracted line2function data from mser.cpp.ii
+>> Reverted fast.cpp to original from fast.MUT338.cpp
+>> Extracted line2function data saved to line2function.json
+>> Applied patch to fast.cpp with fast.MUT338.cpp
+>> Building opencv_features2d_TF_top30
+TC17.sh on line 276 has count: 564
+>> Buggy line 276 is covered by failing TC TC17.sh
+TC22.sh on line 276 has count: 2556
+>> Buggy line 276 is covered by failing TC TC22.sh
+TC26.sh on line 276 has count: 2856
+>> Buggy line 276 is covered by failing TC TC26.sh
+TC1.sh on line 276 has count: 0
+TC2.sh on line 276 has count: 0
+TC3.sh on line 276 has count: 0
+TC4.sh on line 276 has count: 0
+TC5.sh on line 276 has count: 0
+TC6.sh on line 276 has count: 0
+TC7.sh on line 276 has count: 0
+TC8.sh on line 276 has count: 0
+TC9.sh on line 276 has count: 0
+TC10.sh on line 276 has count: 0
+TC11.sh on line 276 has count: 0
+TC12.sh on line 276 has count: 0
+TC13.sh on line 276 has count: 0
+TC14.sh on line 276 has count: 34776
+TC15.sh on line 276 has count: 0
+TC16.sh on line 276 has count: 0
+TC18.sh on line 276 has count: 0
+TC19.sh on line 276 has count: 0
+TC20.sh on line 276 has count: 0
+TC21.sh on line 276 has count: 0
+TC23.sh on line 276 has count: 0
+TC24.sh on line 276 has count: 0
+TC25.sh on line 276 has count: 0
+TC27.sh on line 276 has count: 0
+TC28.sh on line 276 has count: 564
+TC29.sh on line 276 has count: 0
+TC30.sh on line 276 has count: 0
+TC31.sh on line 276 has count: 0
+TC32.sh on line 276 has count: 0
+TC33.sh on line 276 has count: 2556
+TC34.sh on line 276 has count: 0
+TC35.sh on line 276 has count: 0
+TC36.sh on line 276 has count: 0
+TC37.sh on line 276 has count: 0
+TC38.sh on line 276 has count: 0
+TC39.sh on line 276 has count: 0
+TC40.sh on line 276 has count: 0
+TC41.sh on line 276 has count: 4620
+TC42.sh on line 276 has count: 0
+TC43.sh on line 276 has count: 1730
+TC44.sh on line 276 has count: 0
+TC45.sh on line 276 has count: 0
+TC46.sh on line 276 has count: 0
+TC47.sh on line 276 has count: 1100
+TC48.sh on line 276 has count: 0
+TC49.sh on line 276 has count: 0
+TC50.sh on line 276 has count: 16162
+TC51.sh on line 276 has count: 0
+TC52.sh on line 276 has count: 0
+TC53.sh on line 276 has count: 0
+TC54.sh on line 276 has count: 0
+TC55.sh on line 276 has count: 0
+TC56.sh on line 276 has count: 0
+TC57.sh on line 276 has count: 0
+TC58.sh on line 276 has count: 0
+TC59.sh on line 276 has count: 0
+TC60.sh on line 276 has count: 0
+TC61.sh on line 276 has count: 0
+TC62.sh on line 276 has count: 0
+initialization on line 276 has count: 0
+>> Buggy line 276 is NOT covered by failing TC initialization
+Lines executed on initialization saved at lines_executed_at_initialization.txt
+>> Reverted fast.cpp to original from fast.MUT338.cpp
+>> CCTs are updated in the database
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [359]
+Failing test case TC17.sh executes buggy line opencv_features2d_TF_top30/modules/features2d/src/fast.cpp#FAST_t(cv::InputArray _img, int & keypoints, int threshold, _Bool nonmax_suppression)#276
+Failing test case TC22.sh executes buggy line opencv_features2d_TF_top30/modules/features2d/src/fast.cpp#FAST_t(cv::InputArray _img, int & keypoints, int threshold, _Bool nonmax_suppression)#276
+Failing test case TC26.sh executes buggy line opencv_features2d_TF_top30/modules/features2d/src/fast.cpp#FAST_t(cv::InputArray _img, int & keypoints, int threshold, _Bool nonmax_suppression)#276
+Executed lines by test cases are saved at lines_executed_by_failing_tc.json
+Executed lines by test cases are saved at lines_executed_by_passing_tc.json
+Executed lines by test cases are saved at lines_executed_by_ccts.json
+>> Saving version fast.MUT338.cpp to database
+
++++++ STDERR +++++
+
++++++ results for fast.MUT319.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'fast.MUT319.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [1190]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [1190]
+Testing version fast.MUT319.cpp on faster11.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to fast.cpp with fast.MUT319.cpp
+>> Building opencv_features2d_TF_top30
+>> Extracted line2function data from brisk.cpp.ii
+>> Extracted line2function data from fast.avx2.cpp.ii
+>> Extracted line2function data from fast.cpp.ii
+>> Extracted line2function data from fast_score.cpp.ii
+>> Extracted line2function data from fed.cpp.ii
+>> Extracted line2function data from mser.cpp.ii
+>> Reverted fast.cpp to original from fast.MUT319.cpp
+>> Extracted line2function data saved to line2function.json
+>> Applied patch to fast.cpp with fast.MUT319.cpp
+>> Building opencv_features2d_TF_top30
+TC17.sh on line 258 has count: 214
+>> Buggy line 258 is covered by failing TC TC17.sh
+TC26.sh on line 258 has count: 1450
+>> Buggy line 258 is covered by failing TC TC26.sh
+TC1.sh on line 258 has count: 0
+TC2.sh on line 258 has count: 0
+TC3.sh on line 258 has count: 0
+TC4.sh on line 258 has count: 0
+TC5.sh on line 258 has count: 0
+TC6.sh on line 258 has count: 0
+TC7.sh on line 258 has count: 0
+TC8.sh on line 258 has count: 0
+TC9.sh on line 258 has count: 0
+TC10.sh on line 258 has count: 0
+TC11.sh on line 258 has count: 0
+TC12.sh on line 258 has count: 0
+TC13.sh on line 258 has count: 0
+TC14.sh on line 258 has count: 6332
+TC15.sh on line 258 has count: 0
+TC16.sh on line 258 has count: 0
+TC18.sh on line 258 has count: 0
+TC19.sh on line 258 has count: 0
+TC20.sh on line 258 has count: 0
+TC21.sh on line 258 has count: 0
+TC22.sh on line 258 has count: 488
+TC23.sh on line 258 has count: 0
+TC24.sh on line 258 has count: 0
+TC25.sh on line 258 has count: 0
+TC27.sh on line 258 has count: 0
+TC28.sh on line 258 has count: 214
+TC29.sh on line 258 has count: 0
+TC30.sh on line 258 has count: 0
+TC31.sh on line 258 has count: 0
+TC32.sh on line 258 has count: 0
+TC33.sh on line 258 has count: 488
+TC34.sh on line 258 has count: 0
+TC35.sh on line 258 has count: 0
+TC36.sh on line 258 has count: 0
+TC37.sh on line 258 has count: 0
+TC38.sh on line 258 has count: 0
+TC39.sh on line 258 has count: 0
+TC40.sh on line 258 has count: 0
+TC41.sh on line 258 has count: 6
+TC42.sh on line 258 has count: 0
+TC43.sh on line 258 has count: 0
+TC44.sh on line 258 has count: 0
+TC45.sh on line 258 has count: 0
+TC46.sh on line 258 has count: 0
+TC47.sh on line 258 has count: 322
+TC48.sh on line 258 has count: 0
+TC49.sh on line 258 has count: 0
+TC50.sh on line 258 has count: 2770
+TC51.sh on line 258 has count: 0
+TC52.sh on line 258 has count: 0
+TC53.sh on line 258 has count: 0
+TC54.sh on line 258 has count: 0
+TC55.sh on line 258 has count: 0
+TC56.sh on line 258 has count: 0
+TC57.sh on line 258 has count: 0
+TC58.sh on line 258 has count: 0
+TC59.sh on line 258 has count: 0
+TC60.sh on line 258 has count: 0
+TC61.sh on line 258 has count: 0
+TC62.sh on line 258 has count: 0
+initialization on line 258 has count: 0
+>> Buggy line 258 is NOT covered by failing TC initialization
+Lines executed on initialization saved at lines_executed_at_initialization.txt
+>> Reverted fast.cpp to original from fast.MUT319.cpp
+>> CCTs are updated in the database
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [1190]
+Failing test case TC17.sh executes buggy line opencv_features2d_TF_top30/modules/features2d/src/fast.cpp#FAST_t(cv::InputArray _img, int & keypoints, int threshold, _Bool nonmax_suppression)#258
+Failing test case TC26.sh executes buggy line opencv_features2d_TF_top30/modules/features2d/src/fast.cpp#FAST_t(cv::InputArray _img, int & keypoints, int threshold, _Bool nonmax_suppression)#258
+Executed lines by test cases are saved at lines_executed_by_failing_tc.json
+Executed lines by test cases are saved at lines_executed_by_passing_tc.json
+Executed lines by test cases are saved at lines_executed_by_ccts.json
+>> Saving version fast.MUT319.cpp to database
+
++++++ STDERR +++++
+
++++++ results for fast.MUT360.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'fast.MUT360.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [683]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [683]
+Testing version fast.MUT360.cpp on faster11.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to fast.cpp with fast.MUT360.cpp
+>> Building opencv_features2d_TF_top30
+>> Extracted line2function data from brisk.cpp.ii
+>> Extracted line2function data from fast.avx2.cpp.ii
+>> Extracted line2function data from fast.cpp.ii
+>> Extracted line2function data from fast_score.cpp.ii
+>> Extracted line2function data from fed.cpp.ii
+>> Extracted line2function data from mser.cpp.ii
+>> Reverted fast.cpp to original from fast.MUT360.cpp
+>> Extracted line2function data saved to line2function.json
+>> Applied patch to fast.cpp with fast.MUT360.cpp
+>> Building opencv_features2d_TF_top30
+TC17.sh on line 285 has count: 9256
+>> Buggy line 285 is covered by failing TC TC17.sh
+TC26.sh on line 285 has count: 5092
+>> Buggy line 285 is covered by failing TC TC26.sh
+TC1.sh on line 285 has count: 0
+TC2.sh on line 285 has count: 0
+TC3.sh on line 285 has count: 0
+TC4.sh on line 285 has count: 0
+TC5.sh on line 285 has count: 0
+TC6.sh on line 285 has count: 0
+TC7.sh on line 285 has count: 0
+TC8.sh on line 285 has count: 0
+TC9.sh on line 285 has count: 0
+TC10.sh on line 285 has count: 0
+TC11.sh on line 285 has count: 0
+TC12.sh on line 285 has count: 0
+TC13.sh on line 285 has count: 0
+TC14.sh on line 285 has count: 465600
+TC15.sh on line 285 has count: 0
+TC16.sh on line 285 has count: 0
+TC18.sh on line 285 has count: 0
+TC19.sh on line 285 has count: 0
+TC20.sh on line 285 has count: 0
+TC21.sh on line 285 has count: 0
+TC22.sh on line 285 has count: 18210
+TC23.sh on line 285 has count: 0
+TC24.sh on line 285 has count: 0
+TC25.sh on line 285 has count: 0
+TC27.sh on line 285 has count: 0
+TC28.sh on line 285 has count: 9256
+TC29.sh on line 285 has count: 0
+TC30.sh on line 285 has count: 0
+TC31.sh on line 285 has count: 0
+TC32.sh on line 285 has count: 0
+TC33.sh on line 285 has count: 18210
+TC34.sh on line 285 has count: 0
+TC35.sh on line 285 has count: 0
+TC36.sh on line 285 has count: 0
+TC37.sh on line 285 has count: 0
+TC38.sh on line 285 has count: 0
+TC39.sh on line 285 has count: 0
+TC40.sh on line 285 has count: 0
+TC41.sh on line 285 has count: 19416
+TC42.sh on line 285 has count: 0
+TC43.sh on line 285 has count: 0
+TC44.sh on line 285 has count: 0
+TC45.sh on line 285 has count: 0
+TC46.sh on line 285 has count: 0
+TC47.sh on line 285 has count: 646
+TC48.sh on line 285 has count: 0
+TC49.sh on line 285 has count: 0
+TC50.sh on line 285 has count: 115924
+TC51.sh on line 285 has count: 0
+TC52.sh on line 285 has count: 0
+TC53.sh on line 285 has count: 0
+TC54.sh on line 285 has count: 0
+TC55.sh on line 285 has count: 0
+TC56.sh on line 285 has count: 0
+TC57.sh on line 285 has count: 0
+TC58.sh on line 285 has count: 0
+TC59.sh on line 285 has count: 0
+TC60.sh on line 285 has count: 0
+TC61.sh on line 285 has count: 0
+TC62.sh on line 285 has count: 0
+initialization on line 285 has count: 0
+>> Buggy line 285 is NOT covered by failing TC initialization
+Lines executed on initialization saved at lines_executed_at_initialization.txt
+>> Reverted fast.cpp to original from fast.MUT360.cpp
+>> CCTs are updated in the database
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [683]
+Failing test case TC17.sh executes buggy line opencv_features2d_TF_top30/modules/features2d/src/fast.cpp#FAST_t(cv::InputArray _img, int & keypoints, int threshold, _Bool nonmax_suppression)#285
+Failing test case TC26.sh executes buggy line opencv_features2d_TF_top30/modules/features2d/src/fast.cpp#FAST_t(cv::InputArray _img, int & keypoints, int threshold, _Bool nonmax_suppression)#285
+Executed lines by test cases are saved at lines_executed_by_failing_tc.json
+Executed lines by test cases are saved at lines_executed_by_passing_tc.json
+Executed lines by test cases are saved at lines_executed_by_ccts.json
+>> Saving version fast.MUT360.cpp to database
+>> Cleaning build for opencv_features2d_TF_top30
+
++++++ STDERR +++++

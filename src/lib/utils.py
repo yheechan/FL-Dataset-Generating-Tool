@@ -287,3 +287,6 @@ def get_mutation_testing_results_csv_row(csv_file):
             line = line.strip()
             mutant_list.append(line)
     return mutant_list
+
+def list_of_ints(arg):
+    return list(map(int, arg.split(',')))

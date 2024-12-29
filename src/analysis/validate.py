@@ -13,7 +13,6 @@ class Validate:
             self, subject_name, experiment_name
         ):
         self.subject_name = subject_name
-        # self.set_dir = out_dir / self.subject_name / self.set_name
         self.experiment_name = experiment_name
 
         self.experiment = Experiment()
@@ -183,7 +182,7 @@ class Validate:
 
     def val03(self):
         """
-        [stage03] val03: Validate that all coverage summary for all buggy versions
+        [stage03] val03: Validate that all test cases and coverage statistics for all buggy versions
             resulting from prerequisite data preparation has been recorded on bug_info table
         """
         columns = [
@@ -208,7 +207,7 @@ class Validate:
             for col in row:
                 assert col is not None, f"Column {col} is None"
         
-        print(f"[stage03-VAL03] {len(res)} buggy versions with prerequisites=TRUE have valid coverage summary")
+        print(f"[stage03-VAL03] {len(res)} buggy versions with prerequisites=TRUE have valid test cases and coverage statistics")
 
     def val04(self):
         """

@@ -112,29 +112,44 @@ class MBFLExtraction(Subject):
     def remain_one_bug_per_line(self):
         self.connect_to_db()
 
-        included_line_idx = []
+        perfile_include_idx = {}
         included_bug_idx = []
         included_versions = []
-        per_file_cnt = {}
+        past_tested_line_idx = {}
 
         # shuffle self.versions_list
         random.shuffle(self.versions_list)
 
         for version in self.versions_list:
             bug_idx = self.get_bug_idx(self.name, self.experiment_name, version.name)
-            res = self.db.read("bug_info", columns="buggy_line_idx, buggy_file", conditions={"bug_idx": bug_idx})
+            res = self.db.read("bug_info", columns="buggy_line_idx, buggy_file, mbfl, sbfl", conditions={"bug_idx": bug_idx})
             assert len(res) == 1, f"Error: {len(res)} rows are returned for {version.name}"
-            line_idx, buggy_file = res[0]
+            line_idx, buggy_file, mbfl, sbfl = res[0]
+            
+            if mbfl == True:
+                if buggy_file not in past_tested_line_idx:
+                    past_tested_line_idx[buggy_file] = []
+                if line_idx not in past_tested_line_idx[buggy_file]:
+                    past_tested_line_idx[buggy_file].append(line_idx)
+                continue
+            
+            if sbfl == False:
+                print(f"SBFL is False for {version.name}")
+                continue
 
-            if line_idx not in included_line_idx:
-                included_line_idx.append(line_idx)
+            if buggy_file in past_tested_line_idx and line_idx in past_tested_line_idx[buggy_file]:
+                continue
+
+            if buggy_file not in perfile_include_idx:
+                perfile_include_idx[buggy_file] = []
+            
+            if line_idx not in perfile_include_idx[buggy_file]:
+                perfile_include_idx[buggy_file].append(line_idx)
                 included_bug_idx.append(bug_idx)
                 included_versions.append(version)
-                if buggy_file not in per_file_cnt:
-                    per_file_cnt[buggy_file] = 1
-                else:
-                    per_file_cnt[buggy_file] += 1
-        
+            
+
+
         special_str = f"WHERE bug_idx IN ({','.join([str(bug_idx) for bug_idx in included_bug_idx])})"
         self.db.update(
             "bug_info",
@@ -143,9 +158,9 @@ class MBFLExtraction(Subject):
         )
         
         print(f"Remained versions: {len(included_versions)}")
-        print(f"Per file count: {len(per_file_cnt)}")
-        for file, cnt in per_file_cnt.items():
-            print(f"{file}: {cnt}")
+        print(f"Per file count: {len(perfile_include_idx)}")
+        for file, line_idx_list in perfile_include_idx.items():
+            print(f"{file}: {len(line_idx_list)}")
         
         self.db.__del__()
 

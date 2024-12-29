@@ -1,8 +1,9 @@
 import argparse
 
 from analysis.validate import Validate
+from lib.utils import list_of_ints
 
-help_for_validation_type = \
+help_for_validation_criteria = \
 """
 *** Example:
     --validation-criteria 1,2,3
@@ -11,7 +12,7 @@ help_for_validation_type = \
     0: Validate all existing validation criteria
     1: [stage03] Validate that all buggy versions resulting from prerequisite data preparation stage consists 1 buggy line in line_info table
     2: [stage03] Validate that coverage for all test cases from all buggy versions resulting from prerequisite data preparation has been recorded on tc_info table
-    3: [stage03] Validate that coverage summary for all buggy versions resulting from prerequisite data preparation has been recorded on bug_info table
+    3: [stage03] Validate that test cases and coverage statistics for all buggy versions resulting from prerequisite data preparation has been recorded on bug_info table
     4: [stage03] Validate that all failing test cases from all buggy versions resulting from prerequisite data executes the buggy line
     5: [stage03] Validate that for each bug_idx in bug_info with prerequisites IS TRUE:
             1. num_failing_tcs > 0 and num_passing_tcs > 0.
@@ -35,9 +36,6 @@ help_for_validation_type = \
             4. p2f_cct + p2p_cct = num_ccts in bug_info.
 
 """
-
-def list_of_ints(arg):
-    return list(map(int, arg.split(',')))
 
 # This script is to test mutants (of subject)
 # the mutant is considered buggy (and saved within out/buggy_mutants)
@@ -68,7 +66,7 @@ def make_parser():
     )
     parser.add_argument("--subject", type=str, help="Subject name", required=True)
     parser.add_argument("--experiment-name", type=str, help="Experiment name", required=True)
-    parser.add_argument("--validation-criteria", type=list_of_ints, help=help_for_validation_type, required=True)
+    parser.add_argument("--validation-criteria", type=list_of_ints, help=help_for_validation_criteria, required=True)
     # parser.add_argument("--set-name", type=str, help="Set name", required=True)
     
     # parser.add_argument("--validate-usable-buggy-versions", action="store_true", help="Validate usable buggy versions")

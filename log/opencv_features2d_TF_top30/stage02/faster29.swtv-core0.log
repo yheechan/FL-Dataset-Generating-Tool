@@ -1,0 +1,256 @@
+
++++++ results for fast.MUT444.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'fast.MUT444.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [155]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [155]
+Testing version fast.MUT444.cpp on faster29.swtv::core0
+>> Configuring opencv_features2d_TF_top30 with coverage
+>> Building opencv_features2d_TF_top30
+>> Applied patch to fast.cpp with fast.MUT444.cpp
+>> Building opencv_features2d_TF_top30
+TC17.sh on line 513 has count: 1
+Buggy line 513 is covered by test case TC17.sh
+TC26.sh on line 513 has count: 2
+Buggy line 513 is covered by test case TC26.sh
+>> Saving version fast.MUT444.cpp to database
+>> Reverted fast.cpp to original from fast.MUT444.cpp
+
++++++ STDERR +++++
+
++++++ results for fast.MUT60.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'fast.MUT60.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [326]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [326]
+Testing version fast.MUT60.cpp on faster29.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to fast.cpp with fast.MUT60.cpp
+>> Building opencv_features2d_TF_top30
+TC17.sh on line 105 has count: 4
+Buggy line 105 is covered by test case TC17.sh
+TC22.sh on line 105 has count: 4
+Buggy line 105 is covered by test case TC22.sh
+TC26.sh on line 105 has count: 0
+Buggy line 105 is NOT covered by test case TC26.sh
+>> Reverted fast.cpp to original from fast.MUT60.cpp
+
++++++ STDERR +++++
+
++++++ results for fast_score.MUT258.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'fast_score.MUT258.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [499]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [499]
+Testing version fast_score.MUT258.cpp on faster29.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to fast_score.cpp with fast_score.MUT258.cpp
+>> Building opencv_features2d_TF_top30
+Buggy line 231 is NOT covered by test case TC26.sh
+>> Reverted fast_score.cpp to original from fast_score.MUT258.cpp
+
++++++ STDERR +++++
+
++++++ results for mser.MUT1002.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'mser.MUT1002.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [674]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [674]
+Testing version mser.MUT1002.cpp on faster29.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to mser.cpp with mser.MUT1002.cpp
+>> Building opencv_features2d_TF_top30
+TC32.sh on line 771 has count: 1
+Buggy line 771 is covered by test case TC32.sh
+>> Saving version mser.MUT1002.cpp to database
+>> Reverted mser.cpp to original from mser.MUT1002.cpp
+
++++++ STDERR +++++
+
++++++ results for fed.MUT53.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'fed.MUT53.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [851]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [851]
+Testing version fed.MUT53.cpp on faster29.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to fed.cpp with fed.MUT53.cpp
+>> Building opencv_features2d_TF_top30
+TC11.sh on line 120 has count: 498
+Buggy line 120 is covered by test case TC11.sh
+TC23.sh on line 120 has count: 166
+Buggy line 120 is covered by test case TC23.sh
+TC24.sh on line 120 has count: 76
+Buggy line 120 is covered by test case TC24.sh
+TC25.sh on line 120 has count: 76
+Buggy line 120 is covered by test case TC25.sh
+>> Saving version fed.MUT53.cpp to database
+>> Reverted fed.cpp to original from fed.MUT53.cpp
+
++++++ STDERR +++++
+
++++++ results for fast.avx2.MUT169.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'fast.avx2.MUT169.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [1029]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [1029]
+Testing version fast.avx2.MUT169.cpp on faster29.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to fast.avx2.cpp with fast.avx2.MUT169.cpp
+>> Building opencv_features2d_TF_top30
+Buggy line 140 is NOT covered by test case TC17.sh
+>> Reverted fast.avx2.cpp to original from fast.avx2.MUT169.cpp
+
++++++ STDERR +++++
+
++++++ results for brisk.MUT114.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'brisk.MUT114.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [1208]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [1208]
+Testing version brisk.MUT114.cpp on faster29.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to brisk.cpp with brisk.MUT114.cpp
+>> Building opencv_features2d_TF_top30
+Buggy line 342 is NOT covered by test case TC16.sh
+>> Reverted brisk.cpp to original from brisk.MUT114.cpp
+
++++++ STDERR +++++
+
++++++ results for brisk.MUT437.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'brisk.MUT437.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [1386]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [1386]
+Testing version brisk.MUT437.cpp on faster29.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to brisk.cpp with brisk.MUT437.cpp
+>> Building opencv_features2d_TF_top30
+Buggy line 561 is NOT covered by test case TC16.sh
+>> Reverted brisk.cpp to original from brisk.MUT437.cpp
+
++++++ STDERR +++++
+
++++++ results for brisk.MUT899.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'brisk.MUT899.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [1566]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [1566]
+Testing version brisk.MUT899.cpp on faster29.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to brisk.cpp with brisk.MUT899.cpp
+>> Building opencv_features2d_TF_top30
+TC16.sh on line 831 has count: 913500
+Buggy line 831 is covered by test case TC16.sh
+>> Saving version brisk.MUT899.cpp to database
+>> Reverted brisk.cpp to original from brisk.MUT899.cpp
+
++++++ STDERR +++++
+
++++++ results for fast.avx2.MUT6.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'fast.avx2.MUT6.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [1744]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [1744]
+Testing version fast.avx2.MUT6.cpp on faster29.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to fast.avx2.cpp with fast.avx2.MUT6.cpp
+>> Building opencv_features2d_TF_top30
+TC17.sh on line 60 has count: 1
+Buggy line 60 is covered by test case TC17.sh
+TC22.sh on line 60 has count: 8
+Buggy line 60 is covered by test case TC22.sh
+TC26.sh on line 60 has count: 6
+Buggy line 60 is covered by test case TC26.sh
+>> Saving version fast.avx2.MUT6.cpp to database
+>> Reverted fast.avx2.cpp to original from fast.avx2.MUT6.cpp
+
++++++ STDERR +++++
+
++++++ results for brisk.MUT511.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'brisk.MUT511.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [1914]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [1914]
+Testing version brisk.MUT511.cpp on faster29.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to brisk.cpp with brisk.MUT511.cpp
+>> Building opencv_features2d_TF_top30
+TC16.sh on line 607 has count: 63000
+Buggy line 607 is covered by test case TC16.sh
+>> Saving version brisk.MUT511.cpp to database
+>> Reverted brisk.cpp to original from brisk.MUT511.cpp
+
++++++ STDERR +++++
+
++++++ results for fast.MUT237.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'fast.MUT237.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [492]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [492]
+Testing version fast.MUT237.cpp on faster29.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to fast.cpp with fast.MUT237.cpp
+>> Building opencv_features2d_TF_top30
+TC17.sh on line 211 has count: 40
+Buggy line 211 is covered by test case TC17.sh
+TC22.sh on line 211 has count: 20
+Buggy line 211 is covered by test case TC22.sh
+TC26.sh on line 211 has count: 0
+Buggy line 211 is NOT covered by test case TC26.sh
+>> Reverted fast.cpp to original from fast.MUT237.cpp
+
++++++ STDERR +++++
+
++++++ results for brisk.MUT428.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'brisk.MUT428.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [1063]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [1063]
+Testing version brisk.MUT428.cpp on faster29.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to brisk.cpp with brisk.MUT428.cpp
+>> Building opencv_features2d_TF_top30
+TC7.sh on line 558 has count: 2
+Buggy line 558 is covered by test case TC7.sh
+TC9.sh on line 558 has count: 2
+Buggy line 558 is covered by test case TC9.sh
+TC16.sh on line 558 has count: 55
+Buggy line 558 is covered by test case TC16.sh
+TC27.sh on line 558 has count: 37
+Buggy line 558 is covered by test case TC27.sh
+>> Saving version brisk.MUT428.cpp to database
+>> Reverted brisk.cpp to original from brisk.MUT428.cpp
+
++++++ STDERR +++++
+
++++++ results for brisk.MUT903.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'brisk.MUT903.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [1613]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [1613]
+Testing version brisk.MUT903.cpp on faster29.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to brisk.cpp with brisk.MUT903.cpp
+>> Building opencv_features2d_TF_top30
+TC16.sh on line 834 has count: 1050
+Buggy line 834 is covered by test case TC16.sh
+>> Saving version brisk.MUT903.cpp to database
+>> Reverted brisk.cpp to original from brisk.MUT903.cpp
+
++++++ STDERR +++++
+
++++++ results for fast_score.MUT255.cpp +++++
++++++ STDOUT +++++
+SELECT bug_idx FROM bug_info WHERE subject = %s AND experiment_name = %s AND version = %s ['opencv_features2d_TF_top30', 'TF_top30', 'fast_score.MUT255.cpp']
+SELECT target_code_file, buggy_code_file, pre_start_line FROM bug_info WHERE bug_idx = %s [1717]
+SELECT tc_name, tc_result FROM tc_info WHERE bug_idx = %s [1717]
+Testing version fast_score.MUT255.cpp on faster29.swtv::core0
+>> Building opencv_features2d_TF_top30
+>> Applied patch to fast_score.cpp with fast_score.MUT255.cpp
+>> Building opencv_features2d_TF_top30
+Buggy line 229 is NOT covered by test case TC26.sh
+>> Reverted fast_score.cpp to original from fast_score.MUT255.cpp
+>> Cleaning build for opencv_features2d_TF_top30
+
++++++ STDERR +++++

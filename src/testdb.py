@@ -25,99 +25,50 @@ database = config["database"]["database"]
 
 db = CRUD(host, port, user, password, database)
 
-if not db.table_exists("test_table"):
-    print("Creating test_table")
-    db.create_table("test_table", "name TEXT, age INT")
-
-if not db.table_exists("test_table2"):
-    print("Creating test_table2")
-    db.create_table("test_table2", "idx TEXT, transaction INT")
-
-
-# special = "AND age in (%s)" % ",".join(["%d" % tc for tc in [30, 40]])
-
-# db.update(
-#     "test_table",
-#     set_values={"test": False},
-#     conditions={"test": True},
-#     special=special
-# )
-
-
-res = db.read("test_table", columns="age")
-
-for row in res:
-    print(row[0])
-print()
-
-"""
-if not db.table_exists("test_table"):
-    print("Creating test_table")
-    db.create_table("test_table", "name TEXT, age INT")
-
-db.insert("test_table", "name, age", "'Alice', 25")
-db.insert("test_table", "name, age", "'Bob', 30")
-db.insert("test_table", "name, age", "'Charlie', 35")
-db.insert("test_table", "name, age", "'Alice', 23")
-
-res = db.read("test_table")
-for row in res:
-    print(row)
-print()
-
-db.update(
-    "test_table",
-    {"name": "Heechan"},
-    {"age": 35}
+res = db.read(
+    "bug_info",
+    columns="bug_idx, mbfl, buggy_line_idx, buggy_file, sbfl",
+    conditions={
+        "experiment_name": "TF_bot30",
+        "prerequisites": True
+    }
 )
-res = db.read("test_table")
+
+print(f"Total: {len(res)}")
+
+perfile_include_idx = {}
+included_bug_idx = []
+included_versions = []
+past_tested_line_idx = {}
 for row in res:
-    print(row)
-print()
+    bug_idx, mbfl, buggy_line_idx, buggy_file, sbfl = row
 
-db.delete("test_table", conditions={"name": "Alice"})
-res = db.read("test_table")
-for row in res:
-    print(row)
-print()
+    if mbfl == True:
+        if buggy_file not in past_tested_line_idx:
+            past_tested_line_idx[buggy_file] = []
+        if buggy_line_idx not in past_tested_line_idx[buggy_file]:
+            print(f"MBFL: {bug_idx}")
+            past_tested_line_idx[buggy_file].append(buggy_line_idx)
+        continue
 
+    if sbfl == False:
+        print(f"SBFL: {bug_idx}")
+        continue
 
-if not db.column_exists("test_table", "job"):
-    db.add_column("test_table", "job TEXT")
+    if buggy_file in past_tested_line_idx and buggy_line_idx in past_tested_line_idx[buggy_file]:
+        continue
 
-db.update(
-    "test_table",
-    {"job": "Engineer"},
-    {"name": "Bob"}
-)
-db.update(
-    "test_table",
-    {"job": "Researcher"},
-    {"name": "Heechan"}
-)
-db.insert("test_table", "name, age", "'David', 40")
+    if buggy_file not in perfile_include_idx:
+        perfile_include_idx[buggy_file] = []
+    
+    if buggy_line_idx not in perfile_include_idx[buggy_file]:
+        perfile_include_idx[buggy_file].append(buggy_line_idx)
+    else:
+        print(f"Duplicate: {bug_idx} : {buggy_file} : {buggy_line_idx}")
 
-res = db.read("test_table")
-for row in res:
-    print(row)
-print()
-
-res = db.value_exists("test_table", conditions={"name": "David"})
-if res == 1:
-    print("David exists")
-else:
-    print("David does not exist")
-res = db.value_exists("test_table", conditions={"name": "Alice"})
-if res == 1:
-    print("Alice exists")
-else:
-    print("Alice does not exist")
-
-
-if not db.column_exists("test_table", "test"):
-    db.add_column("test_table", "test BOOLEAN DEFAULT NULL")
-
-res = db.read("test_table")
-for row in res:
-    print(row)
-"""
+print(f"Total: {len(perfile_include_idx)}")
+total = 0
+for file, lines in perfile_include_idx.items():
+    print(f"{file}: {len(lines)}")
+    total += len(lines)
+print(f"Total: {total}")
