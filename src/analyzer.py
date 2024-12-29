@@ -20,7 +20,7 @@ def main():
     parser = make_parser()
     args = parser.parse_args()
 
-    analyzer = Analyze(args.subject, args.experiment_name)
+    analyzer = Analyze(args.subject, args.experiment_name, verbose=args.verbose)
     analyzer.run(args.analysis_criteria)
 
 
@@ -43,6 +43,7 @@ def make_parser():
     # parser.add_argument("--set-name", type=str, help="Set name", required=True)
     parser.add_argument("--experiment-name", type=str, help="Experiment name", required=True)
     parser.add_argument("--analysis-criteria", type=list_of_ints, help=help_for_analysis_criteria, required=True)
+    parser.add_argument("--verbose", action="store_true", help="Verbose mode")
 
     # parser.add_argument("--output-csv", type=str, help="Output csv name", required=True)
     

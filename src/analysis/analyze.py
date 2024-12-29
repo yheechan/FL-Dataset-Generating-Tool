@@ -4,6 +4,8 @@ import subprocess as sp
 import csv
 import json
 import math
+import pandas as pd
+import matplotlib.pyplot as plt
 
 from lib.utils import *
 from analysis.individual import Individual
@@ -13,6 +15,7 @@ from analysis.rank_utils import *
 from lib.experiment import Experiment
 from lib.database import CRUD
 from lib.config import set_seed
+from tqdm import tqdm
 
 
 MBFL_METHOD = "for_random_mbfl"
@@ -26,10 +29,11 @@ INCLUDE_CCT = False
 
 class Analyze:
     def __init__(
-            self, subject_name, experiment_name
+            self, subject_name, experiment_name, verbose=False,
         ):
         self.subject_name = subject_name
         self.experiment_name = experiment_name
+        self.verbose = verbose
 
         self.experiment = Experiment()
         # Settings for database
@@ -175,9 +179,9 @@ class Analyze:
 
         # add muse_score, met_score on line_info table
         if not self.db.column_exists("line_info", "muse_score"):
-            self.db.add_column("line_info", "muse_score FLOAT DEFAULT NULL")
+            self.db.add_column("line_info", "muse_score FLOAT DEFAULT 0.0")
         if not self.db.column_exists("line_info", "met_score"):
-            self.db.add_column("line_info", "met_score FLOAT DEFAULT NULL")
+            self.db.add_column("line_info", "met_score FLOAT DEFAULT 0.0")
 
 
         # Step 1: retrieve list of bug_idx where mbfl is TRUE
@@ -185,14 +189,86 @@ class Analyze:
 
         
         # For each buggy version with MBFL feature
-        for buggy_version in target_buggy_version_list:
-            self.analyze_bug_version_for_mbfl(buggy_version)
-            break
+        overall_data = {}
+        average_overall_data = {}
+        for mtc in MUT_CNT_CONFIG:
+            overall_data[mtc] = []
+            
+            average_overall_data[mtc] = {}
+            num_failing_tcs = []
+            num_utilized_mutants = []
+            exec_time = []
+            met_rank = []
+            muse_rank = []
+            acc5 = []
+            acc10 = []
+
+            for buggy_version in tqdm(target_buggy_version_list, desc=f"Analyzing buggy versions for mtc={mtc}"):
+                # version_data consists of:
+                #   - total_num_of_failing_tcs
+                #   - total_num_of_utilized_mutants
+                #   - total_build_time
+                #   - total_tc_execution_time
+                #   - met_rank
+                #   - muse_rank
+                #   - total_number_of_functions
+                version_data = self.analyze_bug_version_for_mbfl(buggy_version, mtc)
+
+                overall_data[mtc].append(version_data)
+
+                num_failing_tcs.append(version_data["total_num_of_failing_tcs"])
+                num_utilized_mutants.append(version_data["total_num_of_utilized_mutants"])
+                exec_time.append(version_data["total_build_time"] + version_data["total_tc_execution_time"])
+                met_rank.append(version_data["met_rank"])
+                muse_rank.append(version_data["muse_rank"])
+                acc5.append(1 if version_data["met_rank"] <= 5 else 0)
+                acc10.append(1 if version_data["met_rank"] <= 10 else 0)
+
+            average_overall_data[mtc]["num_failing_tcs"] = sum(num_failing_tcs) / len(num_failing_tcs)
+            average_overall_data[mtc]["num_utilized_mutants"] = sum(num_utilized_mutants) / len(num_utilized_mutants)
+            average_overall_data[mtc]["exec_time"] = sum(exec_time) / len(exec_time)
+            average_overall_data[mtc]["met_rank"] = sum(met_rank) / len(met_rank)
+            average_overall_data[mtc]["muse_rank"] = sum(muse_rank) / len(muse_rank)
+            average_overall_data[mtc]["acc5"] = sum(acc5) / len(acc5)
+            average_overall_data[mtc]["acc10"] = sum(acc10) / len(acc10)
+        
+        # Draw a line graph where x-axis is mtc, y-axis is acc5, acc10
+        mtc_values = list(average_overall_data.keys())
+        acc5_values = [average_overall_data[mtc]["acc5"] for mtc in mtc_values]
+        acc10_values = [average_overall_data[mtc]["acc10"] for mtc in mtc_values]
+
+        plt.figure(figsize=(10, 6))
+        plt.plot(mtc_values, acc5_values, marker='o', label='Acc@5')
+        plt.plot(mtc_values, acc10_values, marker='o', label='Acc@10')
+        plt.xlabel('Number of Mutants (MTC)')
+        plt.ylabel('Accuracy')
+        plt.title('Accuracy vs Number of Mutants (MTC)')
+        plt.legend()
+        plt.grid(True)
+        plt.savefig('accuracy_vs_mtc.png')
+        plt.show()
+
+        # Draw a line graph where x-axis is mtc, y-axis is exec_time in hours, the data is in seconds
+        exec_time_hours = [average_overall_data[mtc]["exec_time"] / 3600 for mtc in mtc_values]
+
+        plt.figure(figsize=(10, 6))
+        plt.plot(mtc_values, exec_time_hours, marker='o', label='Execution Time (hours)')
+        plt.xlabel('Number of Mutants (MTC)')
+        plt.ylabel('Execution Time (hours)')
+        plt.title('Execution Time vs Number of Mutants (MTC)')
+        plt.legend()
+        plt.grid(True)
+        plt.savefig('execution_time_vs_mtc.png')
+        plt.show()
+        
+
+        
+
 
     # +++++++++++++++++++++++
     # HELPER FUNCTIONS FOR ANALYZE02
     # +++++++++++++++++++++++
-    def analyze_bug_version_for_mbfl(self, buggy_version):
+    def analyze_bug_version_for_mbfl(self, buggy_version, mtc):
         """
         Analyze a single buggy version for MBFL
         """
@@ -204,10 +280,10 @@ class Analyze:
         self.buggy_line_idx = buggy_version[5]
         buggy_line_idx = buggy_version[5]
 
-        print(f"Analyzing {bug_idx} {version} ({buggy_file}::{buggy_function}::{buggy_lineno})")
+        debug_print(self.verbose, f">> Analyzing {bug_idx} {version} ({buggy_file}::{buggy_function}::{buggy_lineno})")
 
         total_num_of_failing_tcs = self.get_total_number_of_failing_tcs(bug_idx)
-        print(f"Total number of failing test cases: {total_num_of_failing_tcs}")
+        debug_print(self.verbose, f">> Total number of failing test cases: {total_num_of_failing_tcs}")
 
         # THIS IS TEMPORARY
         # Get lines that we target to analyze for MBFL
@@ -219,7 +295,7 @@ class Analyze:
                     "bug_idx": bug_idx,
                     MBFL_METHOD: True
                 },
-                special=f"ORDER BY RANDOM() LIMIT {MAX_LINES_FOR_RANDOM}"
+                special=f"ORDER BY line_idx LIMIT {MAX_LINES_FOR_RANDOM}"
             )
         else:
             # First get number of lines for the bug_idx
@@ -241,7 +317,7 @@ class Analyze:
                 special=f"ORDER BY {SBFL_STANDARD} LIMIT {num_lines_for_random}"
             )
         
-        print(f"Selected {len(target_line_idx)} lines for MBFL analysis")
+        debug_print(self.verbose, f">> Selected {len(target_line_idx)} lines for MBFL analysis")
         
         # map line_idx to line_info map
         line_idx2line_info = {}
@@ -253,6 +329,7 @@ class Analyze:
                 "lineno": row[3]
             }
 
+        # Make sure to add buggy line to line_idx2line_info
         if buggy_line_idx not in line_idx2line_info:
             # remove randomly one line_idx in line_idx2line_info dict
             key_list = list(line_idx2line_info.keys())
@@ -267,24 +344,108 @@ class Analyze:
         
         assert buggy_line_idx in line_idx2line_info, f"buggy_line_idx {buggy_line_idx} not in line_idx2line_info"
 
-        print(f"Selected {len(line_idx2line_info)} lines for MBFL analysis")
+        debug_print(self.verbose, f">> Selected {len(line_idx2line_info)} lines for MBFL analysis")
 
         # Get all mutants generated on target lines
         lines_idx2mutant_idx = self.get_mutations_on_target_lines(bug_idx, line_idx2line_info)
-        print(f"Found {len(lines_idx2mutant_idx)} mutants on target lines")
+        debug_print(self.verbose, f">> Found {len(lines_idx2mutant_idx)} mutants on target lines")
 
-        # measure mbfl scores
-        for mtc in MUT_CNT_CONFIG:
-            self.measure_mbfl_scores(line_idx2line_info, lines_idx2mutant_idx, total_num_of_failing_tcs, mtc)
+
+        # Measure MBFL score for targetted lines
+        mtc_version_data = self.measure_mbfl_scores(line_idx2line_info, lines_idx2mutant_idx, total_num_of_failing_tcs, mtc)
+        mtc_version_data["total_num_of_failing_tcs"] = total_num_of_failing_tcs
+
+        # Update line_info table with met_score, muse_score
+        self.update_line_info_table_with_mbfl_scores(bug_idx, line_idx2line_info, lines_idx2mutant_idx)
+
+        # Measure rank of buggy line
+        rank_data = self.measure_buggy_line_rank(bug_idx, buggy_file, buggy_function)
+
+        total_data = {**mtc_version_data, **rank_data}
+        return total_data
+    
+    def measure_buggy_line_rank(self, bug_idx, buggy_file, buggy_function):
+        """
+        Measure rank of buggy line
+        """
+
+        # Step 1: getch relevant information
+        columns = ["file", "function", "met_score", "muse_score"]
+        col_str = ", ".join(columns)
+        rows = self.db.read(
+            "line_info",
+            columns=col_str,
+            conditions={"bug_idx": bug_idx}
+        )
+
+        # Step2: Convert to DataFrame for easier manipulation
+        df = pd.DataFrame(rows, columns=columns)
+        grouped = df.groupby(["file", "function"]).agg(
+            met_score=("met_score", "max"),
+            muse_score=("muse_score", "max")
+        ).reset_index()
+
+        # Step 4: Assign ranks based on met_score descening, with tie-braking rules
+        grouped["met_rank"] = grouped["met_score"].rank(method="max", ascending=False).astype(int)
+        grouped["muse_rank"] = grouped["muse_score"].rank(method="max", ascending=False).astype(int)
+
+        # Save to tmp.csv
+        # grouped.to_csv("tmp.csv", index=False)
+
+        # Step 5: Get rank of buggy line by buggy_file, buggy_function
+        buggy_line_rank = grouped[
+            (grouped["file"] == buggy_file) & (grouped["function"] == buggy_function)
+        ][["met_rank", "muse_rank"]]
+
+        met_rank = buggy_line_rank["met_rank"].values[0]
+        muse_rank = buggy_line_rank["muse_rank"].values[0]
+
+        total_number_of_functions = len(grouped)
+
+        rank_data = {
+            "met_rank": met_rank,
+            "muse_rank": muse_rank,
+            "total_number_of_functions": total_number_of_functions
+        }
+
+        return rank_data
+        
+
+    
+    def update_line_info_table_with_mbfl_scores(self, bug_idx, line_idx2line_info, lines_idx2mutant_idx):
+        """
+        Update line_info table with MBFL scores
+        """
+        for line_idx, line_info in line_idx2line_info.items():
+            if line_idx not in lines_idx2mutant_idx:
+                continue
+
+            met_score = line_info["met_score"]
+            muse_score = line_info["muse_score"]
+            # print(f"BUG: {bug_idx}, Line {line_idx} - Metallaxis: {met_score}, MUSE: {muse_score}")
+            
+            self.db.update(
+                "line_info",
+                set_values={
+                    "met_score": met_score,
+                    "muse_score": muse_score
+                },
+                conditions={
+                    "bug_idx": bug_idx,
+                    "line_idx": line_idx
+                }
+            )
+
+
     
     def measure_mbfl_scores(self, line_idx2line_info, lines_idx2mutant_idx, total_num_of_failing_tcs, mtc):
         """
         Measure MBFL scores for a given number of mutants
         """
-        print(f"Measuring MBFL scores for number of mutation setting to {mtc}")
+        debug_print(self.verbose, f">> Measuring MBFL scores for number of mutation setting to {mtc}")
 
         # Select mtc mutants per line at random
-        utilizing_line_idx2mutants = self.select_random_mtc_mutants_per_line(lines_idx2mutant_idx, mtc)
+        utilizing_line_idx2mutants, total_num_of_utilized_mutants = self.select_random_mtc_mutants_per_line(lines_idx2mutant_idx, mtc)
 
         # Calculate total information
         total_p2f, total_f2p, \
@@ -293,16 +454,25 @@ class Analyze:
 
 
         for line_idx, mutants in utilizing_line_idx2mutants.items():
-            if line_idx != self.buggy_line_idx:
-                continue
-            print(f"Analyzing line {line_idx}")
+            # print(f"Analyzing line {line_idx}")
+
             met_data = self.measure_metallaxis(mutants, total_num_of_failing_tcs)
-            muse_data = self.measure_must_score(mutants, total_p2f, total_f2p)
+            muse_data = self.measure_muse(mutants, total_p2f, total_f2p)
 
-            print(f"Metallaxis score: {met_data}")
-            print(f"MUSE score: {muse_data}")
+            # met_score, muse_score = met_data["met_score"], muse_data["muse_score"]
+            # print(f"\tMetallaxis score: {met_score}")
+            # print(f"\tMUSE score: {muse_score}")
 
-            break
+            line_idx2line_info[line_idx]["met_score"] = met_data["met_score"]
+            line_idx2line_info[line_idx]["muse_score"] = muse_data["muse_score"]
+        
+        mtc_version_data = {
+            "total_num_of_utilized_mutants": total_num_of_utilized_mutants,
+            "total_build_time": total_build_time,
+            "total_tc_execution_time": total_tc_execution_time
+        }
+
+        return  mtc_version_data
     
     def measure_metallaxis(self, mutants, total_num_of_failing_tcs):
         """
@@ -325,16 +495,20 @@ class Analyze:
             met_score_list.append(score)
         
         if len(met_score_list) == 0:
-            return 0.0
+            return {
+                "total_num_of_failing_tcs": total_num_of_failing_tcs,
+                "met_score": 0.0
+            }
+
         final_met_score = max(met_score_list)
         met_data = {
             "total_num_of_failing_tcs": total_num_of_failing_tcs,
-            "met susp score": final_met_score
+            "met_score": final_met_score
         }
         return met_data
     
 
-    def measure_must_score(self, mutants, total_p2f, total_f2p):
+    def measure_muse(self, mutants, total_p2f, total_f2p):
         utilized_mutant_cnt = len(mutants)
         line_total_p2f = 0
         line_total_f2p = 0
@@ -365,10 +539,10 @@ class Analyze:
             "muse_2": muse_2,
             "muse_3": muse_3,
             "muse_4": muse_4,
-            "muse susp score": final_muse_score
+            "muse_score": final_muse_score
         }
 
-        return final_muse_score, muse_data
+        return muse_data
 
 
 
@@ -403,6 +577,7 @@ class Analyze:
         Select mtc mutants per line at random
         """
         selected_mutants = {}
+        total_num_of_utilized_mutants = 0
         for line_idx in lines_idx2mutant_idx:
             mutants = lines_idx2mutant_idx[line_idx]
             random.shuffle(mutants)
@@ -413,7 +588,8 @@ class Analyze:
                 if mutant["build_result"] == False:
                     continue
                 selected_mutants[line_idx].append(mutant)
-        return selected_mutants
+                total_num_of_utilized_mutants += 1
+        return selected_mutants, total_num_of_utilized_mutants
         
 
     def get_total_number_of_failing_tcs(self, bug_idx):

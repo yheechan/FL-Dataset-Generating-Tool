@@ -290,3 +290,7 @@ def get_mutation_testing_results_csv_row(csv_file):
 
 def list_of_ints(arg):
     return list(map(int, arg.split(',')))
+
+def debug_print(verbose, message):
+    if verbose:
+        print(message)
