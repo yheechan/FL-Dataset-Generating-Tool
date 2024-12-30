@@ -99,9 +99,9 @@
 
 # 5. Extract MBFL features
 
-date > ../timer/opencv_features2d_TF_top30/stage05_start-remote.txt
-time python3 extract_mbfl_features.py --subject opencv_features2d_TF_top30 --experiment-name TF_top30 --target-set-name prerequisite_data --trial trial1 --parallel-cnt 3 --dont-terminate-leftovers --remain-one-bug-per-line > ../timer/opencv_features2d_TF_top30/stage05.log
-date > ../timer/opencv_features2d_TF_top30/stage05_end-remote.txt
+# date > ../timer/opencv_features2d_TF_top30/stage05_start-remote.txt
+# time python3 extract_mbfl_features.py --subject opencv_features2d_TF_top30 --experiment-name TF_top30 --target-set-name prerequisite_data --trial trial1 --parallel-cnt 3 --dont-terminate-leftovers --remain-one-bug-per-line > ../timer/opencv_features2d_TF_top30/stage05.log
+# date > ../timer/opencv_features2d_TF_top30/stage05_end-remote.txt
 
 # Number of tasks (assigned_works): 240
 # Number of tasks (works): 671
@@ -110,5 +110,9 @@ date > ../timer/opencv_features2d_TF_top30/stage05_end-remote.txt
 # Number of tasks (src): 30
 # Number of tasks (tools): 30
 # Number of tasks (configurations): 30
+
+# sec: 10944.735776901245
+# min: 182.41226294835408
+# hour: 3.040204382472568
 
 # extracted 240 valid MBFL features

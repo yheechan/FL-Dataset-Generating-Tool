@@ -2,6 +2,7 @@ from pathlib import Path
 import time
 import json
 import csv
+import numpy as np
 
 # src/lib/utils.py
 root_dir = Path(__file__).resolve().parent.parent.parent
@@ -294,3 +295,15 @@ def list_of_ints(arg):
 def debug_print(verbose, message):
     if verbose:
         print(message)
+
+def convert_to_native(obj):
+    if isinstance(obj, np.integer):  # Check for NumPy int types
+        return int(obj)
+    elif isinstance(obj, np.floating):  # Check for NumPy float types
+        return float(obj)
+    elif isinstance(obj, dict):  # Recursively handle dictionaries
+        return {key: convert_to_native(value) for key, value in obj.items()}
+    elif isinstance(obj, list):  # Recursively handle lists
+        return [convert_to_native(element) for element in obj]
+    else:
+        return obj  # Return the object as is if no conversion is needed

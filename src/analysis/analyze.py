@@ -24,7 +24,7 @@ MAX_LINES_FOR_RANDOM = 100
 SBFL_RANKED_RATE = 0.30
 SBFL_STANDARD = "gp13"
 MUT_CNT_CONFIG = [2, 4, 6, 8, 10]
-INCLUDE_CCT = False
+INCLUDE_CCT = True
         
 
 class Analyze:
@@ -51,24 +51,33 @@ class Analyze:
             database=self.database
         )
 
-        # self.set_name = set_name
-        # self.set_dir = out_dir / self.subject_name / self.set_name
-        # self.individual_list = get_dirs_in_dir(self.set_dir)
-        # self.set_size = len(self.individual_list)
+        self.subject_out_dir = out_dir / self.subject_name
+        self.analysis_dir = self.subject_out_dir / "analysis"
+        self.analysis_dir.mkdir(exist_ok=True, parents=True)
 
-        # self.stat_dir = stats_dir / self.subject_name
-        # self.stat_dir.mkdir(exist_ok=True, parents=True)
+        """
+        self.set_name = set_name
+        self.set_dir = out_dir / self.subject_name / self.set_name
+        self.individual_list = get_dirs_in_dir(self.set_dir)
+        self.set_size = len(self.individual_list)
 
-        # if not output_csv.endswith(".csv"):
-        #     output_csv += ".csv"
-        # self.output_csv = self.stat_dir / output_csv
+        self.stat_dir = stats_dir / self.subject_name
+        self.stat_dir.mkdir(exist_ok=True, parents=True)
+
+        if not output_csv.endswith(".csv"):
+            output_csv += ".csv"
+        self.output_csv = self.stat_dir / output_csv
+        """
     
-    def run(self, analysis_criteria):
+    def run(self, analysis_criteria, type_name=None):
         for ana_type in analysis_criteria:
             if ana_type == 1:
                 self.analyze01()
             elif ana_type == 2:
-                self.analyze02()
+                if type_name is None:
+                    print("Please provide type_name for analysis criteria 2")
+                    return
+                self.analyze02(type_name)
 
 
     def analyze01(self):
@@ -171,11 +180,14 @@ class Analyze:
         print(f"[stage03-analyze01] Average statistics for {self.subject_name} has been saved to database")
 
 
-    def analyze02(self):
+    def analyze02(self, type_name):
         """
         [stage05] analyze02: Analyze MBFL results
             for all buggy versions resulting from MBFL feature extraction
         """
+
+        self.type_dir = self.analysis_dir / type_name
+        self.type_dir.mkdir(exist_ok=True, parents=True)
 
         # add muse_score, met_score on line_info table
         if not self.db.column_exists("line_info", "muse_score"):
@@ -189,63 +201,141 @@ class Analyze:
 
         
         # For each buggy version with MBFL feature
-        overall_data = {}
-        average_overall_data = {}
-        for mtc in MUT_CNT_CONFIG:
-            overall_data[mtc] = []
-            
-            average_overall_data[mtc] = {}
-            num_failing_tcs = []
-            num_utilized_mutants = []
-            exec_time = []
-            met_rank = []
-            muse_rank = []
-            acc5 = []
-            acc10 = []
+        mbfl_overal_data_json = self.type_dir / "mbfl_overall_data.json"
+        if not mbfl_overal_data_json.exists():
+            overall_data = {}
+            average_overall_data = {}
+            for mtc in MUT_CNT_CONFIG:
+                overall_data[mtc] = {}
+                
+                average_overall_data[mtc] = {}
+                num_failing_tcs = []
+                num_utilized_mutants = []
+                exec_time = []
+                met_rank = []
+                muse_rank = []
+                met_acc5 = []
+                met_acc10 = []
+                muse_acc5 = []
+                muse_acc10 = []
 
-            for buggy_version in tqdm(target_buggy_version_list, desc=f"Analyzing buggy versions for mtc={mtc}"):
-                # version_data consists of:
-                #   - total_num_of_failing_tcs
-                #   - total_num_of_utilized_mutants
-                #   - total_build_time
-                #   - total_tc_execution_time
-                #   - met_rank
-                #   - muse_rank
-                #   - total_number_of_functions
-                version_data = self.analyze_bug_version_for_mbfl(buggy_version, mtc)
+                for buggy_version in tqdm(target_buggy_version_list, desc=f"Analyzing buggy versions for mtc={mtc}"):
+                    # version_data consists of:
+                    #  - bug_idx
+                    #  - version
+                    #  - buggy_file
+                    #  - buggy_function
+                    #  - buggy_lineno
+                    #   - total_num_of_failing_tcs
+                    #   - total_num_of_utilized_mutants
+                    #   - total_build_time
+                    #   - total_tc_execution_time
+                    #   - met_rank
+                    #   - muse_rank
+                    #   - total_number_of_functions
+                    version_data = self.analyze_bug_version_for_mbfl(buggy_version, mtc)
 
-                overall_data[mtc].append(version_data)
+                    overall_data[mtc][version_data["version"]] = version_data
 
-                num_failing_tcs.append(version_data["total_num_of_failing_tcs"])
-                num_utilized_mutants.append(version_data["total_num_of_utilized_mutants"])
-                exec_time.append(version_data["total_build_time"] + version_data["total_tc_execution_time"])
-                met_rank.append(version_data["met_rank"])
-                muse_rank.append(version_data["muse_rank"])
-                acc5.append(1 if version_data["met_rank"] <= 5 else 0)
-                acc10.append(1 if version_data["met_rank"] <= 10 else 0)
+                    num_failing_tcs.append(version_data["total_num_of_failing_tcs"])
+                    num_utilized_mutants.append(version_data["total_num_of_utilized_mutants"])
+                    exec_time.append(version_data["total_build_time"] + version_data["total_tc_execution_time"])
+                    met_rank.append(version_data["met_rank"])
+                    muse_rank.append(version_data["muse_rank"])
+                    met_acc5.append(1 if version_data["met_rank"] <= 5 else 0)
+                    met_acc10.append(1 if version_data["met_rank"] <= 10 else 0)
+                    muse_acc5.append(1 if version_data["muse_rank"] <= 5 else 0)
+                    muse_acc10.append(1 if version_data["muse_rank"] <= 10 else 0)
 
-            average_overall_data[mtc]["num_failing_tcs"] = sum(num_failing_tcs) / len(num_failing_tcs)
-            average_overall_data[mtc]["num_utilized_mutants"] = sum(num_utilized_mutants) / len(num_utilized_mutants)
-            average_overall_data[mtc]["exec_time"] = sum(exec_time) / len(exec_time)
-            average_overall_data[mtc]["met_rank"] = sum(met_rank) / len(met_rank)
-            average_overall_data[mtc]["muse_rank"] = sum(muse_rank) / len(muse_rank)
-            average_overall_data[mtc]["acc5"] = sum(acc5) / len(acc5)
-            average_overall_data[mtc]["acc10"] = sum(acc10) / len(acc10)
+                average_overall_data[mtc]["num_failing_tcs"] = sum(num_failing_tcs) / len(num_failing_tcs)
+                average_overall_data[mtc]["num_utilized_mutants"] = sum(num_utilized_mutants) / len(num_utilized_mutants)
+                average_overall_data[mtc]["exec_time"] = sum(exec_time) / len(exec_time)
+                average_overall_data[mtc]["met_rank"] = sum(met_rank) / len(met_rank)
+                average_overall_data[mtc]["muse_rank"] = sum(muse_rank) / len(muse_rank)
+                average_overall_data[mtc]["met_acc5"] = sum(met_acc5) / len(met_acc5)
+                average_overall_data[mtc]["met_acc10"] = sum(met_acc10) / len(met_acc10)
+                average_overall_data[mtc]["muse_acc5"] = sum(muse_acc5) / len(muse_acc5)
+                average_overall_data[mtc]["muse_acc10"] = sum(muse_acc10) / len(muse_acc10)
+        else:
+            average_overall_data = {}
+            with open(mbfl_overal_data_json, "r") as f:
+                overall_data = json.load(f)
+                for mtc in overall_data:
+                    average_overall_data[mtc] = {}
+                    num_failing_tcs = []
+                    num_utilized_mutants = []
+                    exec_time = []
+                    met_rank = []
+                    muse_rank = []
+                    met_acc5 = []
+                    met_acc10 = []
+                    muse_acc5 = []
+                    muse_acc10 = []
+
+                    for version in overall_data[mtc]:
+                        data = overall_data[mtc][version]
+                        num_failing_tcs.append(data["total_num_of_failing_tcs"])
+                        num_utilized_mutants.append(data["total_num_of_utilized_mutants"])
+                        exec_time.append(data["total_build_time"] + data["total_tc_execution_time"])
+                        met_rank.append(data["met_rank"])
+                        muse_rank.append(data["muse_rank"])
+                        met_acc5.append(1 if data["met_rank"] <= 5 else 0)
+                        met_acc10.append(1 if data["met_rank"] <= 10 else 0)
+                        muse_acc5.append(1 if data["muse_rank"] <= 5 else 0)
+                        muse_acc10.append(1 if data["muse_rank"] <= 10 else 0)
+                    
+                    average_overall_data[mtc]["num_failing_tcs"] = sum(num_failing_tcs) / len(num_failing_tcs)
+                    average_overall_data[mtc]["num_utilized_mutants"] = sum(num_utilized_mutants) / len(num_utilized_mutants)
+                    average_overall_data[mtc]["exec_time"] = sum(exec_time) / len(exec_time)
+                    average_overall_data[mtc]["met_rank"] = sum(met_rank) / len(met_rank)
+                    average_overall_data[mtc]["muse_rank"] = sum(muse_rank) / len(muse_rank)
+                    average_overall_data[mtc]["met_acc5"] = sum(met_acc5) / len(met_acc5)
+                    average_overall_data[mtc]["met_acc10"] = sum(met_acc10) / len(met_acc10)
+                    average_overall_data[mtc]["muse_acc5"] = sum(muse_acc5) / len(muse_acc5)
+                    average_overall_data[mtc]["muse_acc10"] = sum(muse_acc10) / len(muse_acc10)
         
-        # Draw a line graph where x-axis is mtc, y-axis is acc5, acc10
+        # Save overal_data json and csv
+        with open(self.type_dir / "mbfl_overall_data.json", "w") as f:
+            overall_data_native = convert_to_native(overall_data)
+            json.dump(overall_data_native, f, indent=2)
+        
+        with open(self.type_dir / "mbfl_overall_data.csv", "w") as f:
+            writer = csv.writer(f)
+            writer.writerow([
+                "mtc", "bug_idx", "version", "buggy_file", "buggy_function", "buggy_lineno",
+                "total_num_of_failing_tcs", "total_num_of_utilized_mutants",
+                "total_build_time", "total_tc_execution_time",
+                "met_rank", "muse_rank", "total_number_of_functions"
+            ])
+            for mtc in overall_data:
+                for version in overall_data[mtc]:
+                    data = overall_data[mtc][version]
+                    writer.writerow([
+                        mtc, data["bug_idx"], data["version"], data["buggy_file"], data["buggy_function"],
+                        data["buggy_lineno"], data["total_num_of_failing_tcs"], data["total_num_of_utilized_mutants"],
+                        data["total_build_time"], data["total_tc_execution_time"],
+                        data["met_rank"], data["muse_rank"], data["total_number_of_functions"]
+                    ])
+        
+        # Draw a line graph where x-axis is mtc, y-axis is met_acc5, met_acc10, muse_acc5, muse_acc10
         mtc_values = list(average_overall_data.keys())
-        acc5_values = [average_overall_data[mtc]["acc5"] for mtc in mtc_values]
-        acc10_values = [average_overall_data[mtc]["acc10"] for mtc in mtc_values]
+        met_acc5_values = [average_overall_data[mtc]["met_acc5"] for mtc in mtc_values]
+        met_acc10_values = [average_overall_data[mtc]["met_acc10"] for mtc in mtc_values]
+        muse_acc5_values = [average_overall_data[mtc]["muse_acc5"] for mtc in mtc_values]
+        muse_acc10_values = [average_overall_data[mtc]["muse_acc10"] for mtc in mtc_values]
 
         plt.figure(figsize=(10, 6))
-        plt.plot(mtc_values, acc5_values, marker='o', label='Acc@5')
-        plt.plot(mtc_values, acc10_values, marker='o', label='Acc@10')
-        plt.xlabel('Number of Mutants (MTC)')
+        plt.plot(mtc_values, met_acc5_values, marker='o', label='Metallaxis acc@5')
+        plt.plot(mtc_values, met_acc10_values, marker='o', label='Metallaxis acc@10')
+        plt.plot(mtc_values, muse_acc5_values, marker='o', label='MUSE acc@5')
+        plt.plot(mtc_values, muse_acc10_values, marker='o', label='MUSE acc@10')
+        plt.xlabel('Max Mutants Per Line')
         plt.ylabel('Accuracy')
-        plt.title('Accuracy vs Number of Mutants (MTC)')
+        plt.title('Accuracy vs Max Mutants Per Line')
+        # plt.ylim(0.0, 1.0)
         plt.legend()
         plt.grid(True)
-        plt.savefig('accuracy_vs_mtc.png')
+        plt.savefig(self.type_dir / "accuracy_vs_MMPL.png")
         plt.show()
 
         # Draw a line graph where x-axis is mtc, y-axis is exec_time in hours, the data is in seconds
@@ -253,16 +343,23 @@ class Analyze:
 
         plt.figure(figsize=(10, 6))
         plt.plot(mtc_values, exec_time_hours, marker='o', label='Execution Time (hours)')
-        plt.xlabel('Number of Mutants (MTC)')
+        plt.xlabel('Max Mutants Per Line')
         plt.ylabel('Execution Time (hours)')
-        plt.title('Execution Time vs Number of Mutants (MTC)')
+        plt.title('Execution Time vs Max Mutants Per Line')
         plt.legend()
         plt.grid(True)
-        plt.savefig('execution_time_vs_mtc.png')
+        plt.savefig(self.type_dir / "execution_time_vs_MMPL.png")
         plt.show()
-        
 
-        
+        with open(self.type_dir / "parameters.json", "w") as f:
+            json.dump({
+                "MBFL_METHOD": MBFL_METHOD,
+                "MAX_LINES_FOR_RANDOM": MAX_LINES_FOR_RANDOM,
+                "SBFL_RANKED_RATE": SBFL_RANKED_RATE,
+                "SBFL_STANDARD": SBFL_STANDARD,
+                "MUT_CNT_CONFIG": MUT_CNT_CONFIG,
+                "INCLUDE_CCT": INCLUDE_CCT
+            }, f, indent=2)
 
 
     # +++++++++++++++++++++++
@@ -361,7 +458,14 @@ class Analyze:
         # Measure rank of buggy line
         rank_data = self.measure_buggy_line_rank(bug_idx, buggy_file, buggy_function)
 
-        total_data = {**mtc_version_data, **rank_data}
+        version_data = {
+            "bug_idx": bug_idx,
+            "version": version,
+            "buggy_file": buggy_file,
+            "buggy_function": buggy_function,
+            "buggy_lineno": buggy_lineno
+        }
+        total_data = {**version_data, **mtc_version_data, **rank_data}
         return total_data
     
     def measure_buggy_line_rank(self, bug_idx, buggy_file, buggy_function):
@@ -662,8 +766,8 @@ class Analyze:
             )
         
         return lines_idx2mutant_idx
-            
-        
+
+    """       
     
     def usable_buggy_versions(self):
         csv_keys = [
@@ -993,3 +1097,4 @@ class Analyze:
             #         fp.write(f"\tcrash id: {crash_id}, count: {stat_dict[target][crash_id]}\n")
             #         print(f"\tcrash id: {crash_id}, count: {stat_dict[target][crash_id]}")
                 
+    """
