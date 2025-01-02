@@ -20,11 +20,14 @@ from tqdm import tqdm
 
 MBFL_METHOD = "for_random_mbfl"
 # MBFL_METHOD = "for_sbfl_ranked_mbfl_desc"
+# MBFL_METHOD = "for_sbfl_ranked_mbfl_asc"
 MAX_LINES_FOR_RANDOM = 100
 SBFL_RANKED_RATE = 0.30
 SBFL_STANDARD = "gp13"
 MUT_CNT_CONFIG = [2, 4, 6, 8, 10]
-INCLUDE_CCT = True
+INCLUDE_CCT = False
+APPLY_HEURISTIC = True
+VERSIONS_TO_REMOVE = []
         
 
 class Analyze:
@@ -34,6 +37,8 @@ class Analyze:
         self.subject_name = subject_name
         self.experiment_name = experiment_name
         self.verbose = verbose
+
+        self.subject_out_dir = out_dir / self.subject_name
 
         self.experiment = Experiment()
         # Settings for database
@@ -55,20 +60,6 @@ class Analyze:
         self.analysis_dir = self.subject_out_dir / "analysis"
         self.analysis_dir.mkdir(exist_ok=True, parents=True)
 
-        """
-        self.set_name = set_name
-        self.set_dir = out_dir / self.subject_name / self.set_name
-        self.individual_list = get_dirs_in_dir(self.set_dir)
-        self.set_size = len(self.individual_list)
-
-        self.stat_dir = stats_dir / self.subject_name
-        self.stat_dir.mkdir(exist_ok=True, parents=True)
-
-        if not output_csv.endswith(".csv"):
-            output_csv += ".csv"
-        self.output_csv = self.stat_dir / output_csv
-        """
-    
     def run(self, analysis_criteria, type_name=None):
         for ana_type in analysis_criteria:
             if ana_type == 1:
@@ -78,6 +69,8 @@ class Analyze:
                     print("Please provide type_name for analysis criteria 2")
                     return
                 self.analyze02(type_name)
+            elif ana_type == 3:
+                self.analyze03()
 
 
     def analyze01(self):
@@ -90,25 +83,28 @@ class Analyze:
             "num_failing_tcs", "num_passing_tcs", "num_ccts", "num_total_tcs",
             "num_lines_executed_by_failing_tcs", "num_lines_executed_by_passing_tcs",
             "num_lines_executed_by_ccts", "num_total_lines_executed",
-            "num_total_lines"
+            "num_total_lines",
+            "num_funcs_executed_by_failing_tcs", "num_total_funcs",
         ]
         col_str = ", ".join(columns)
 
+        # 1. Retrieve list of buggy versions
         res = self.db.read(
             "bug_info",
             columns=col_str,
             conditions={
                 "subject": self.subject_name,
                 "experiment_name": self.experiment_name,
-                "prerequisites": True
+                "mbfl": True
             }
         )
 
+        # 2. Calculate line coverage for each version
         columns.extend(["fail_line_cov", "pass_line_cov", "cct_line_cov", "total_line_cov"])
-
         analysis_result = {}
         total_result = {}
         for row in res:
+            # 3. Record analysis result
             for key_num, key_val in enumerate(row):
                 if key_num == 0:
                     version = key_val
@@ -142,7 +138,10 @@ class Analyze:
             print(f"\t{key}: {sum(total_result[key]) / len(total_result[key])}")
 
         
-        col_for_table = ["subject TEXT", "experiment_name TEXT"]
+        col_for_table = [
+            "subject TEXT",
+            "experiment_name TEXT",
+        ]
         for col in total_result:
             col_for_table.append(f"{col} FLOAT")
         col_for_table_str = ", ".join(col_for_table)
@@ -204,28 +203,17 @@ class Analyze:
         mbfl_overal_data_json = self.type_dir / "mbfl_overall_data.json"
         if not mbfl_overal_data_json.exists():
             overall_data = {}
-            average_overall_data = {}
             for mtc in MUT_CNT_CONFIG:
                 overall_data[mtc] = {}
                 
-                average_overall_data[mtc] = {}
-                num_failing_tcs = []
-                num_utilized_mutants = []
-                exec_time = []
-                met_rank = []
-                muse_rank = []
-                met_acc5 = []
-                met_acc10 = []
-                muse_acc5 = []
-                muse_acc10 = []
 
                 for buggy_version in tqdm(target_buggy_version_list, desc=f"Analyzing buggy versions for mtc={mtc}"):
                     # version_data consists of:
-                    #  - bug_idx
-                    #  - version
-                    #  - buggy_file
-                    #  - buggy_function
-                    #  - buggy_lineno
+                    #   - bug_idx
+                    #   - version
+                    #   - buggy_file
+                    #   - buggy_function
+                    #   - buggy_lineno
                     #   - total_num_of_failing_tcs
                     #   - total_num_of_utilized_mutants
                     #   - total_build_time
@@ -234,65 +222,52 @@ class Analyze:
                     #   - muse_rank
                     #   - total_number_of_functions
                     version_data = self.analyze_bug_version_for_mbfl(buggy_version, mtc)
-
                     overall_data[mtc][version_data["version"]] = version_data
-
-                    num_failing_tcs.append(version_data["total_num_of_failing_tcs"])
-                    num_utilized_mutants.append(version_data["total_num_of_utilized_mutants"])
-                    exec_time.append(version_data["total_build_time"] + version_data["total_tc_execution_time"])
-                    met_rank.append(version_data["met_rank"])
-                    muse_rank.append(version_data["muse_rank"])
-                    met_acc5.append(1 if version_data["met_rank"] <= 5 else 0)
-                    met_acc10.append(1 if version_data["met_rank"] <= 10 else 0)
-                    muse_acc5.append(1 if version_data["muse_rank"] <= 5 else 0)
-                    muse_acc10.append(1 if version_data["muse_rank"] <= 10 else 0)
-
-                average_overall_data[mtc]["num_failing_tcs"] = sum(num_failing_tcs) / len(num_failing_tcs)
-                average_overall_data[mtc]["num_utilized_mutants"] = sum(num_utilized_mutants) / len(num_utilized_mutants)
-                average_overall_data[mtc]["exec_time"] = sum(exec_time) / len(exec_time)
-                average_overall_data[mtc]["met_rank"] = sum(met_rank) / len(met_rank)
-                average_overall_data[mtc]["muse_rank"] = sum(muse_rank) / len(muse_rank)
-                average_overall_data[mtc]["met_acc5"] = sum(met_acc5) / len(met_acc5)
-                average_overall_data[mtc]["met_acc10"] = sum(met_acc10) / len(met_acc10)
-                average_overall_data[mtc]["muse_acc5"] = sum(muse_acc5) / len(muse_acc5)
-                average_overall_data[mtc]["muse_acc10"] = sum(muse_acc10) / len(muse_acc10)
         else:
-            average_overall_data = {}
             with open(mbfl_overal_data_json, "r") as f:
                 overall_data = json.load(f)
+        
+        if APPLY_HEURISTIC:
+            print(f"Versions to remove: {len(VERSIONS_TO_REMOVE)}")
+            for version in VERSIONS_TO_REMOVE:
                 for mtc in overall_data:
-                    average_overall_data[mtc] = {}
-                    num_failing_tcs = []
-                    num_utilized_mutants = []
-                    exec_time = []
-                    met_rank = []
-                    muse_rank = []
-                    met_acc5 = []
-                    met_acc10 = []
-                    muse_acc5 = []
-                    muse_acc10 = []
+                    if version in overall_data[mtc]:
+                        overall_data[mtc].pop(version)
 
-                    for version in overall_data[mtc]:
-                        data = overall_data[mtc][version]
-                        num_failing_tcs.append(data["total_num_of_failing_tcs"])
-                        num_utilized_mutants.append(data["total_num_of_utilized_mutants"])
-                        exec_time.append(data["total_build_time"] + data["total_tc_execution_time"])
-                        met_rank.append(data["met_rank"])
-                        muse_rank.append(data["muse_rank"])
-                        met_acc5.append(1 if data["met_rank"] <= 5 else 0)
-                        met_acc10.append(1 if data["met_rank"] <= 10 else 0)
-                        muse_acc5.append(1 if data["muse_rank"] <= 5 else 0)
-                        muse_acc10.append(1 if data["muse_rank"] <= 10 else 0)
-                    
-                    average_overall_data[mtc]["num_failing_tcs"] = sum(num_failing_tcs) / len(num_failing_tcs)
-                    average_overall_data[mtc]["num_utilized_mutants"] = sum(num_utilized_mutants) / len(num_utilized_mutants)
-                    average_overall_data[mtc]["exec_time"] = sum(exec_time) / len(exec_time)
-                    average_overall_data[mtc]["met_rank"] = sum(met_rank) / len(met_rank)
-                    average_overall_data[mtc]["muse_rank"] = sum(muse_rank) / len(muse_rank)
-                    average_overall_data[mtc]["met_acc5"] = sum(met_acc5) / len(met_acc5)
-                    average_overall_data[mtc]["met_acc10"] = sum(met_acc10) / len(met_acc10)
-                    average_overall_data[mtc]["muse_acc5"] = sum(muse_acc5) / len(muse_acc5)
-                    average_overall_data[mtc]["muse_acc10"] = sum(muse_acc10) / len(muse_acc10)
+        average_overall_data = {}
+        for mtc in overall_data:
+            average_overall_data[mtc] = {}
+            num_failing_tcs = []
+            num_utilized_mutants = []
+            exec_time = []
+            met_rank = []
+            muse_rank = []
+            met_acc5 = []
+            met_acc10 = []
+            muse_acc5 = []
+            muse_acc10 = []
+            for version, data in overall_data[mtc].items():
+                num_failing_tcs.append(data["total_num_of_failing_tcs"])
+                num_utilized_mutants.append(data["total_num_of_utilized_mutants"])
+                exec_time.append(data["total_build_time"] + data["total_tc_execution_time"])
+                met_rank.append(data["met_rank"])
+                muse_rank.append(data["muse_rank"])
+                met_acc5.append(1 if data["met_rank"] <= 5 else 0)
+                met_acc10.append(1 if data["met_rank"] <= 10 else 0)
+                muse_acc5.append(1 if data["muse_rank"] <= 5 else 0)
+                muse_acc10.append(1 if data["muse_rank"] <= 10 else 0)
+
+            average_overall_data[mtc]["num_failing_tcs"] = sum(num_failing_tcs) / len(num_failing_tcs)
+            average_overall_data[mtc]["num_utilized_mutants"] = sum(num_utilized_mutants) / len(num_utilized_mutants)
+            average_overall_data[mtc]["exec_time"] = sum(exec_time) / len(exec_time)
+            average_overall_data[mtc]["met_rank"] = sum(met_rank) / len(met_rank)
+            average_overall_data[mtc]["muse_rank"] = sum(muse_rank) / len(muse_rank)
+            average_overall_data[mtc]["met_acc5"] = sum(met_acc5) / len(met_acc5)
+            average_overall_data[mtc]["met_acc10"] = sum(met_acc10) / len(met_acc10)
+            average_overall_data[mtc]["muse_acc5"] = sum(muse_acc5) / len(muse_acc5)
+            average_overall_data[mtc]["muse_acc10"] = sum(muse_acc10) / len(muse_acc10)
+
+        
         
         # Save overal_data json and csv
         with open(self.type_dir / "mbfl_overall_data.json", "w") as f:
@@ -358,8 +333,14 @@ class Analyze:
                 "SBFL_RANKED_RATE": SBFL_RANKED_RATE,
                 "SBFL_STANDARD": SBFL_STANDARD,
                 "MUT_CNT_CONFIG": MUT_CNT_CONFIG,
-                "INCLUDE_CCT": INCLUDE_CCT
+                "INCLUDE_CCT": INCLUDE_CCT,
+                "APPLY_HEURISTIC": APPLY_HEURISTIC,
+                "VERSIONS_TO_REMOVE": VERSIONS_TO_REMOVE
             }, f, indent=2)
+        
+        # print number of buggy versions
+        for mtc in overall_data:
+            print(f"Number of buggy versions for mtc={mtc}: {len(overall_data[mtc])}")
 
 
     # +++++++++++++++++++++++
@@ -374,7 +355,6 @@ class Analyze:
         buggy_file = buggy_version[2]
         buggy_function = buggy_version[3]
         buggy_lineno = buggy_version[4]
-        self.buggy_line_idx = buggy_version[5]
         buggy_line_idx = buggy_version[5]
 
         debug_print(self.verbose, f">> Analyzing {bug_idx} {version} ({buggy_file}::{buggy_function}::{buggy_lineno})")
@@ -395,6 +375,7 @@ class Analyze:
                 special=f"ORDER BY line_idx LIMIT {MAX_LINES_FOR_RANDOM}"
             )
         else:
+            """
             # First get number of lines for the bug_idx
             num_lines = self.db.read(
                 "line_info",
@@ -404,6 +385,7 @@ class Analyze:
 
             num_lines = num_lines[0][0]
             num_lines_for_random = int(num_lines * SBFL_RANKED_RATE)
+            """
             target_line_idx = self.db.read(
                 "line_info",
                 columns="line_idx, file, function, lineno",
@@ -411,10 +393,12 @@ class Analyze:
                     "bug_idx": bug_idx,
                     MBFL_METHOD: True
                 },
-                special=f"ORDER BY {SBFL_STANDARD} LIMIT {num_lines_for_random}"
+                # special=f"ORDER BY {SBFL_STANDARD} LIMIT {num_lines_for_random}"
+                special=f"ORDER BY {SBFL_STANDARD}"
             )
         
         debug_print(self.verbose, f">> Selected {len(target_line_idx)} lines for MBFL analysis")
+        # print(f">> Selected {len(target_line_idx)} lines for MBFL analysis")
         
         # map line_idx to line_info map
         line_idx2line_info = {}
@@ -447,6 +431,15 @@ class Analyze:
         lines_idx2mutant_idx = self.get_mutations_on_target_lines(bug_idx, line_idx2line_info)
         debug_print(self.verbose, f">> Found {len(lines_idx2mutant_idx)} mutants on target lines")
 
+        if APPLY_HEURISTIC and mtc == MUT_CNT_CONFIG[-1]:
+            buggy_line_f2p = 0
+            if buggy_line_idx not in lines_idx2mutant_idx:
+                VERSIONS_TO_REMOVE.append(version)
+            else:
+                for buggy_line_mutants in lines_idx2mutant_idx[buggy_line_idx]:
+                    buggy_line_f2p += buggy_line_mutants["f2p"]
+                if buggy_line_f2p == 0:
+                    VERSIONS_TO_REMOVE.append(version)
 
         # Measure MBFL score for targetted lines
         mtc_version_data = self.measure_mbfl_scores(line_idx2line_info, lines_idx2mutant_idx, total_num_of_failing_tcs, mtc)
@@ -766,6 +759,65 @@ class Analyze:
             )
         
         return lines_idx2mutant_idx
+    
+
+    def analyze03(self):
+        """
+        [stage06] analyze03: Analyze probability that buggy line
+            is within top-k percent based on sbfl suspiciousness
+        """
+
+        # Step 1: retrieve list of bug_idx where mbfl is TRUE
+        # "bug_idx, version, buggy_file, buggy_function, buggy_lineno, buggy_line_idx",
+        target_buggy_version_list = self.get_target_buggy_version_list(self.subject_name, self.experiment_name, "mbfl")
+
+        # For each buggy version with MBFL feature
+        within_top_idx = 0
+        within_bot_idx = 0
+        for buggy_version in tqdm(target_buggy_version_list, desc="Analyzing buggy versions for MBFL"):
+            bug_idx, version, buggy_file, buggy_function, buggy_lineno, buggy_line_idx = buggy_version
+
+            # First get number of lines for the bug_idx
+            num_lines = self.db.read(
+                "line_info",
+                columns="COUNT(line_idx)",
+                conditions={"bug_idx": bug_idx}
+            )
+
+            num_lines = num_lines[0][0]
+            num_lines_for_random = int(num_lines * SBFL_RANKED_RATE)
+
+            top_line_idx_list = self.db.read(
+                "line_info",
+                columns="line_idx",
+                conditions={
+                    "bug_idx": bug_idx,
+                },
+                special=f"ORDER BY {SBFL_STANDARD} DESC LIMIT {num_lines_for_random}"
+            )
+            top_line_idx_list = [line_idx[0] for line_idx in top_line_idx_list]
+
+            bot_line_idx_list = self.db.read(
+                "line_info",
+                columns="line_idx",
+                conditions={
+                    "bug_idx": bug_idx,
+                },
+                special=f"ORDER BY {SBFL_STANDARD} ASC LIMIT {num_lines_for_random}"
+            )
+            bot_line_idx_list = [line_idx[0] for line_idx in bot_line_idx_list]
+
+            if buggy_line_idx in top_line_idx_list:
+                within_top_idx += 1
+            if buggy_line_idx in bot_line_idx_list:
+                within_bot_idx += 1
+            
+        probability_within_top = within_top_idx / len(target_buggy_version_list)
+        probability_within_bot = within_bot_idx / len(target_buggy_version_list)
+
+        print(f"Probability that buggy line is within top-{SBFL_RANKED_RATE * 100}%: {probability_within_top}")
+        print(f"Probability that buggy line is within bot-{SBFL_RANKED_RATE * 100}%: {probability_within_bot}")
+
 
     """       
     

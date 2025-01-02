@@ -43,17 +43,19 @@ class PrerequisitePreparation(Subject):
         self.test_versions()
     
     def get_usable_buggy_versions(self):
-        if not self.db.column_exists("bug_info", "prerequisites"):
-            self.db.add_column("bug_info", "prerequisites BOOLEAN DEFAULT NULL")
         
         bug_list = self.get_works(
             self.generated_mutants_dir,
             self.experiment_name,
             "AND initial IS TRUE AND usable IS TRUE AND prerequisites IS NULL"
         )
+        print(f"Number of buggy versions: {len(bug_list)}")
         return bug_list
 
     def init_tables(self,):
+        if not self.db.column_exists("bug_info", "prerequisites"):
+            self.db.add_column("bug_info", "prerequisites BOOLEAN DEFAULT NULL")
+
         # Create table if not exists: line_info
         if not self.db.table_exists("line_info"):
             columns = [
@@ -74,10 +76,7 @@ class PrerequisitePreparation(Subject):
                 "idx_line_info_bug_idx",
                 "bug_idx"
             )
-        
 
-
-        
         # Make coverage csv file
         if not self.db.column_exists("tc_info", "cov_bit_seq"):
             self.db.add_column("tc_info", "cov_bit_seq TEXT DEFAULT NULL")
@@ -102,7 +101,9 @@ class PrerequisitePreparation(Subject):
             "num_lines_executed_by_passing_tcs INT",
             "num_lines_executed_by_ccts INT",
             "num_total_lines_executed INT",
-            "num_total_lines INT"
+            "num_total_lines INT",
+            "num_funcs_executed_by_failing_tcs INT",
+            "num_total_funcs INT",
         ]
         for col in cov_summary:
             col_name = col.split(" ")[0]

@@ -18,7 +18,8 @@ def main():
         args.target_set_name, args.trial,
         args.verbose, args.past_trials, args.exclude_init_lines, # 2024-08-13 exclude lines executed on initialization
         args.parallel_cnt, args.dont_terminate_leftovers, # 2024-08-13 implement parallel mode
-        args.remain_one_bug_per_line # 2024-08-16 implement flag for remaining one bug per line
+        args.remain_one_bug_per_line, # 2024-08-16 implement flag for remaining one bug per line
+        args.version_limit
     )
 
     start_time = time.time()
@@ -46,6 +47,8 @@ def make_parser():
     parser.add_argument("--dont-terminate-leftovers", action="store_true", help="Flag to turn of automatic termination on left overs during MBFL")
     
     parser.add_argument("--remain-one-bug-per-line", action="store_true", help="Flag to only use one bug per line") # 2024-08-16 implement flag for remaining one bug per line
+    parser.add_argument("--version-limit", type=int, default=0, help="Limit the number of versions to be processed")
+
     parser.add_argument("--verbose", action="store_true", help="Verbose mode")
     return parser
 

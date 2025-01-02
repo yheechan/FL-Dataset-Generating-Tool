@@ -129,8 +129,8 @@ class WorkerStage03(Worker):
         # the contents is 0 or 1 (0: not covered, 1: covered)
         first = True
         cov_data = {
-            "col_data": [],
-            "row_data": {} 
+            "col_data": [], # column data is the line key
+            "row_data": {} # row data is the coverage bit sequence by test case
         }
         self.lines_execed_by_failing_tc = {}
         self.lines_execed_by_passing_tc = {}
@@ -162,6 +162,8 @@ class WorkerStage03(Worker):
         self.write_postprocessed_coverage(cov_data)
         self.write_lines(cov_data["col_data"])
         self.write_executed_lines(self.lines_execed_by_failing_tc, "lines_executed_by_failing_tc.json")
+        self.coverage_summary["num_funcs_executed_by_failing_tcs"]  = get_num_funcs(self.lines_execed_by_failing_tc)
+        self.coverage_summary["num_total_funcs"]  = get_num_funcs(cov_data["col_data"])
         self.write_executed_lines(self.lines_execed_by_passing_tc, "lines_executed_by_passing_tc.json")
         self.write_executed_lines(self.lines_execed_by_ccts, "lines_executed_by_ccts.json")
         self.write_summary()

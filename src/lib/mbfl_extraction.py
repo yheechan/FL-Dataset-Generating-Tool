@@ -14,7 +14,8 @@ class MBFLExtraction(Subject):
             target_set_name, trial,
             verbose=False, past_trials=None, exclude_init_lines=False, # 2024-08-13 exclude lines executed on initialization
             parallel_cnt=0, dont_terminate_leftovers=False, # 2024-08-13 implement parallel mode
-            remain_one_bug_per_line_flag=False # 2024-08-16 implement flag for remaining one bug per line
+            remain_one_bug_per_line_flag=False, # 2024-08-16 implement flag for remaining one bug per line
+            version_limit=0
             ):
         self.experiment_name = experiment_name
         self.trial = trial
@@ -25,6 +26,8 @@ class MBFLExtraction(Subject):
         self.parallel_cnt = parallel_cnt
         self.dont_terminate_leftovers = dont_terminate_leftovers
         self.remain_one_bug_per_line_flag = remain_one_bug_per_line_flag
+        self.version_limit = version_limit
+
         super().__init__(subject_name, self.stage_name, verbose) # 2024-08-07 add-mbfl
 
         self.fileManager = FileManager(self.name, self.work, self.verbose)
@@ -40,13 +43,15 @@ class MBFLExtraction(Subject):
         self.db.__del__()
 
         # 2. get versions from set_dir
-        self.versions_list = get_dirs_in_dir(self.target_set_dir)
+        self.versions_list = self.get_sbfl_buggy_version()
 
         # 3. filter versions
         if self.remain_one_bug_per_line_flag == True: # 2024-08-16 implement flag for remaining one bug per line
             self.versions_list = self.remain_one_bug_per_line()
+        
 
         print(f">> MBFL extraction on {len(self.versions_list)} of buggy versions <<")
+
 
         # 4. Assign versions to machines
         self.versions_assignments = self.assign_works_to_machines(self.versions_list)
@@ -56,6 +61,30 @@ class MBFLExtraction(Subject):
 
         # 6. Test versions
         self.test_versions()
+    
+    def get_sbfl_buggy_version(self):
+        self.connect_to_db()
+
+        buggy_version_list = self.db.read(
+            "bug_info",
+            columns="version",
+            conditions={
+                "subject": self.name,
+                "experiment_name": self.experiment_name,
+                "sbfl": True
+            },
+            special="AND mbfl IS NULL and selected_for_mbfl IS NULL"
+        )
+
+        version_list = []
+        for version in buggy_version_list:
+            version_dir = self.target_set_dir / version[0]
+            assert version_dir.exists(), f"Version directory {version_dir} does not exist"
+            version_list.append(version_dir)
+        
+        return version_list
+
+            
     
     def init_tables(self,):
         # Add for_sbfl_ranked_mbfl, for_random_mbfl column to line_info table
@@ -148,6 +177,8 @@ class MBFLExtraction(Subject):
                 included_bug_idx.append(bug_idx)
                 included_versions.append(version)
             
+            if self.version_limit != 0 and len(included_versions) >= self.version_limit:
+                break
 
 
         special_str = f"WHERE bug_idx IN ({','.join([str(bug_idx) for bug_idx in included_bug_idx])})"

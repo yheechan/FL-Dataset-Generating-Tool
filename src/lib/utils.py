@@ -307,3 +307,14 @@ def convert_to_native(obj):
         return [convert_to_native(element) for element in obj]
     else:
         return obj  # Return the object as is if no conversion is needed
+
+def get_num_funcs(lines_key):
+    funcs = []
+    for key in lines_key:
+        file_name = key.split('#')[0]
+        func_name = key.split('#')[1]
+        lineno = int(key.split('#')[-1])
+        
+        if (file_name, func_name) not in funcs:
+            funcs.append((file_name, func_name))
+    return len(funcs)

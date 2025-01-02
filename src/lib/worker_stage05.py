@@ -76,7 +76,6 @@ class WorkerStage05(Worker):
             # based on self.number_of_lines_to_mutation_test
             self.selected_lines_executed_by_failing_tcs, \
                 self.selected_lines_sbfl_rank_desc, \
-                self.selected_lines_sbfl_rank_asc, \
                 self.file2lineno_selected = self.select_lines_to_generate_mutations()
 
             res = self.generate_mutants_start()
@@ -212,8 +211,8 @@ class WorkerStage05(Worker):
 
         self.selected_lines_sbfl_rank_desc = all_line_idx_list[:num_of_line2select]
         self.selected_lines_sbfl_rank_desc.append(self.buggy_line_idx)
-        self.selected_lines_sbfl_rank_asc = all_line_idx_list[-num_of_line2select:]
-        self.selected_lines_sbfl_rank_asc.append(self.buggy_line_idx)
+        # self.selected_lines_sbfl_rank_asc = all_line_idx_list[-num_of_line2select:] # DONT DO BOTTOM PERCENTILE
+        # self.selected_lines_sbfl_rank_asc.append(self.buggy_line_idx)
 
         # Update line_info table
         special_str = f"AND line_idx in ({','.join([str(line_idx) for line_idx in self.selected_lines_sbfl_rank_desc])})"
@@ -224,24 +223,25 @@ class WorkerStage05(Worker):
             special=special_str
         )
 
-        special_str = f"AND line_idx in ({','.join([str(line_idx) for line_idx in self.selected_lines_sbfl_rank_asc])})"
-        self.db.update(
-            "line_info",
-            set_values={"for_sbfl_ranked_mbfl_asc": True},
-            conditions={"bug_idx": self.bug_idx},
-            special=special_str
-        )
+        # DONT DO BOTTOM PERCENTILE
+        # special_str = f"AND line_idx in ({','.join([str(line_idx) for line_idx in self.selected_lines_sbfl_rank_asc])})"
+        # self.db.update(
+            # "line_info",
+            # set_values={"for_sbfl_ranked_mbfl_asc": True},
+            # conditions={"bug_idx": self.bug_idx},
+            # special=special_str
+        # )
 
         # Make union set of selected lines
         self.selected_lines = set()
         self.selected_lines.update(self.selected_lines_executed_by_failing_tcs)
         self.selected_lines.update(self.selected_lines_sbfl_rank_desc)
-        self.selected_lines.update(self.selected_lines_sbfl_rank_asc)
+        # self.selected_lines.update(self.selected_lines_sbfl_rank_asc) # DONT DO BOTTOM PERCENTILE
 
         print(f">>> TOTAL Selected lines: {len(self.selected_lines)}")
         print(f"\t >>> Selected lines executed by failing tcs: {len(self.selected_lines_executed_by_failing_tcs)}")
         print(f"\t >>> Selected lines based on SBFL rank (desc): {len(self.selected_lines_sbfl_rank_desc)}")
-        print(f"\t >>> Selected lines based on SBFL rank (asc): {len(self.selected_lines_sbfl_rank_asc)}")
+        # print(f"\t >>> Selected lines based on SBFL rank (asc): {len(self.selected_lines_sbfl_rank_asc)}") # DONT DO BOTTOM PERCENTILE
 
         special_str = f"AND line_idx in ({','.join([str(line_idx) for line_idx in self.selected_lines])})"
         res = self.db.read(
@@ -259,7 +259,7 @@ class WorkerStage05(Worker):
                 self.file2lineno_selected[filename] = []
             self.file2lineno_selected[filename].append((line_idx, lineno))
         
-        return self.selected_lines_executed_by_failing_tcs, self.selected_lines_sbfl_rank_desc, self.selected_lines_sbfl_rank_asc, self.file2lineno_selected
+        return self.selected_lines_executed_by_failing_tcs, self.selected_lines_sbfl_rank_desc, self.file2lineno_selected
 
 
     

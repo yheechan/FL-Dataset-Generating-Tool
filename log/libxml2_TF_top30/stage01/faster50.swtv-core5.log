@@ -1,0 +1,4433 @@
+
++++++ results for parser.MUT13716.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-buf.lo
+  CC       runtest-runtest.o
+  CC       libxml2_la-chvalid.lo
+  CC       libxml2_la-dict.lo
+  CC       libxml2_la-entities.lo
+  CC       libxml2_la-encoding.lo
+  CC       libxml2_la-error.lo
+  CC       libxml2_la-globals.lo
+  CC       libxml2_la-hash.lo
+  CC       libxml2_la-list.lo
+  CC       libxml2_la-parser.lo
+  CC       libxml2_la-parserInternals.lo
+  CC       libxml2_la-SAX2.lo
+  CC       libxml2_la-threads.lo
+  CC       libxml2_la-tree.lo
+  CC       libxml2_la-uri.lo
+  CC       libxml2_la-valid.lo
+  CC       libxml2_la-xmlIO.lo
+  CC       libxml2_la-xmlmemory.lo
+  CC       libxml2_la-xmlstring.lo
+  CC       libxml2_la-c14n.lo
+  CC       libxml2_la-catalog.lo
+  CC       libxml2_la-debugXML.lo
+  CC       libxml2_la-HTMLparser.lo
+  CC       libxml2_la-HTMLtree.lo
+  CC       libxml2_la-nanohttp.lo
+  CC       libxml2_la-xzlib.lo
+  CC       libxml2_la-xmlmodule.lo
+  CC       libxml2_la-xmlsave.lo
+  CC       libxml2_la-pattern.lo
+  CC       libxml2_la-xmlreader.lo
+  CC       libxml2_la-xmlregexp.lo
+  CC       libxml2_la-xmlunicode.lo
+  CC       libxml2_la-relaxng.lo
+  CC       libxml2_la-xmlschemas.lo
+  CC       libxml2_la-xmlschemastypes.lo
+  CC       libxml2_la-schematron.lo
+  CC       libxml2_la-xmlwriter.lo
+  CC       libxml2_la-xinclude.lo
+  CC       libxml2_la-xpath.lo
+  CC       libxml2_la-xlink.lo
+  CC       libxml2_la-xpointer.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT13716.c on faster50.swtv::core5
+>> Configuring libxml2_TF_top30 without coverage
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT13716.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT13716.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT13716.c
+
++++++ STDERR +++++
+parser.c:11719:21: warning: incompatible integer to pointer conversion passing 'int' to parameter of type 'xmlParserCtxtPtr' (aka 'struct _xmlParserCtxt *') [-Wint-conversion]
+                    xmlHaltParser(-1);
+                                  ^~
+./include/private/parser.h:41:32: note: passing argument to parameter 'ctxt' here
+xmlHaltParser(xmlParserCtxtPtr ctxt);
+                               ^
+1 warning generated.
+
++++++ results for parser.MUT10851.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT10851.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT10851.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT10851.c
+	 - Failing test cases: 191
+	 - Passing test cases: 2452
+	 - Crashing test cases: 0
+>> Reverted parser.c to original from parser.MUT10851.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT9942.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT9942.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT9942.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT9942.c
+	 - Failing test cases: 66
+	 - Passing test cases: 2577
+	 - Crashing test cases: 0
+>> Reverted parser.c to original from parser.MUT9942.c
+
++++++ STDERR +++++
+parser.c:8753:22: warning: comparison of distinct pointer types ('xmlChar *' (aka 'unsigned char *') and 'void *') [-Wcompare-distinct-pointer-types]
+        if (attvalue < NULL) {
+            ~~~~~~~~ ^ ~~~~
+1 warning generated.
+
++++++ results for parser.MUT15705.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT15705.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT15705.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT15705.c
+	 - Failing test cases: 56
+	 - Passing test cases: 2425
+	 - Crashing test cases: 162
+>> Reverted parser.c to original from parser.MUT15705.c
+
++++++ STDERR +++++
+parser.c:12938:16: warning: variable 'content' set but not used [-Wunused-but-set-variable]
+    xmlNodePtr content = NULL;
+               ^
+1 warning generated.
+
++++++ results for parser.MUT13799.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT13799.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT13799.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT13799.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT13799.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT9333.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT9333.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT9333.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT9333.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT9333.c
+
++++++ STDERR +++++
+parser.c:8164:44: warning: incompatible integer to pointer conversion passing 'long' to parameter of type 'xmlEntityPtr' (aka 'struct _xmlEntity *') [-Wint-conversion]
+            input = xmlNewEntityInputStream(ctxt, (4294967295));
+                                                  ^~~~~~~~~~~~
+./include/libxml/parserInternals.h:337:21: note: passing argument to parameter 'entity' here
+                                                 xmlEntityPtr entity);
+                                                              ^
+1 warning generated.
+
++++++ results for parser.MUT3401.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT3401.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT3401.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT3401.c
+	 - Failing test cases: 28
+	 - Passing test cases: 2615
+	 - Crashing test cases: 0
+>> Reverted parser.c to original from parser.MUT3401.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT15944.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT15944.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT15944.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT15944.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT15944.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT6062.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+Testing mutant parser.MUT6062.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT6062.c
+>> Building libxml2_TF_top30
+Failed to build on parser.MUT6062.c
+>> Reverted parser.c to original from parser.MUT6062.c
+
++++++ STDERR +++++
+parser.c:5332:22: error: unexpected type name 'xmlParserInputState': expected expression
+        state = static_cast<xmlParserInputState>((ctxt->instate+1));
+                            ^
+parser.c:5332:10: error: use of undeclared identifier 'static_cast'
+        state = static_cast<xmlParserInputState>((ctxt->instate+1));
+                ^
+2 errors generated.
+make: *** [Makefile:1212: libxml2_la-parser.lo] Error 1
+
++++++ results for parser.MUT10852.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT10852.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT10852.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT10852.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT10852.c
+
++++++ STDERR +++++
+parser.c:9577:30: warning: incompatible integer to pointer conversion passing 'int' to parameter of type 'xmlParserCtxtPtr' (aka 'struct _xmlParserCtxt *') [-Wint-conversion]
+                xmlErrMemory(-1, NULL);
+                             ^~
+./include/private/parser.h:30:31: note: passing argument to parameter 'ctxt' here
+xmlErrMemory(xmlParserCtxtPtr ctxt, const char *extra);
+                              ^
+1 warning generated.
+
++++++ results for parser.MUT8968.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT8968.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT8968.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT8968.c
+	 - Failing test cases: 85
+	 - Passing test cases: 2558
+	 - Crashing test cases: 0
+>> Reverted parser.c to original from parser.MUT8968.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT364.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT364.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT364.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT364.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT364.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT12899.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT12899.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT12899.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT12899.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT12899.c
+
++++++ STDERR +++++
+parser.c:11188:23: warning: incompatible integer to pointer conversion passing 'int' to parameter of type 'xmlParserCtxtPtr' (aka 'struct _xmlParserCtxt *') [-Wint-conversion]
+    xmlDetectEncoding(1);
+                      ^
+./include/private/parser.h:48:36: note: passing argument to parameter 'ctxt' here
+xmlDetectEncoding(xmlParserCtxtPtr ctxt);
+                                   ^
+1 warning generated.
+
++++++ results for parser.MUT12717.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT12717.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT12717.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT12717.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT12717.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT16026.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT16026.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT16026.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT16026.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT16026.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT2872.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT2872.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT2872.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT2872.c
+	 - Failing test cases: 4
+	 - Passing test cases: 2639
+	 - Crashing test cases: 0
+>> Reverted parser.c to original from parser.MUT2872.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT11773.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT11773.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT11773.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT11773.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT11773.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT15478.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT15478.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT15478.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT15478.c
+	 - Failing test cases: 2
+	 - Passing test cases: 2563
+	 - Crashing test cases: 78
+>> Reverted parser.c to original from parser.MUT15478.c
+
++++++ STDERR +++++
+parser.c:12984:19: warning: comparison of distinct pointer types ('const xmlChar *' (aka 'const unsigned char *') and 'void *') [-Wcompare-distinct-pointer-types]
+    if (huri.name <= NULL)
+        ~~~~~~~~~ ^  ~~~~
+1 warning generated.
+
++++++ results for parser.MUT7444.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT7444.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT7444.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT7444.c
+	 - Failing test cases: 44
+	 - Passing test cases: 2597
+	 - Crashing test cases: 2
+>> Reverted parser.c to original from parser.MUT7444.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT7372.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT7372.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT7372.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT7372.c
+	 - Failing test cases: 183
+	 - Passing test cases: 2460
+	 - Crashing test cases: 0
+>> Reverted parser.c to original from parser.MUT7372.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT15646.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT15646.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT15646.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT15646.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT15646.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT13272.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT13272.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT13272.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT13272.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT13272.c
+
++++++ STDERR +++++
+parser.c:11463:21: warning: explicitly assigning value of variable of type 'const xmlChar *' (aka 'const unsigned char *') to itself [-Wself-assign]
+                cur = cur;
+                ~~~ ^ ~~~
+1 warning generated.
+
++++++ results for parser.MUT10251.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT10251.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT10251.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT10251.c
+	 - Failing test cases: 409
+	 - Passing test cases: 2234
+	 - Crashing test cases: 0
+>> Reverted parser.c to original from parser.MUT10251.c
+
++++++ STDERR +++++
+parser.c:9057:13: warning: variable 'ret' is uninitialized when used here [-Wuninitialized]
+            return ret;
+                   ^~~
+parser.c:9033:23: note: initialize the variable 'ret' to silence this warning
+    const xmlChar *ret;
+                      ^
+                       = NULL
+1 warning generated.
+
++++++ results for parser.MUT17620.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT17620.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT17620.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT17620.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT17620.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT4463.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT4463.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT4463.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT4463.c
+	 - Failing test cases: 5
+	 - Passing test cases: 2638
+	 - Crashing test cases: 0
+>> Reverted parser.c to original from parser.MUT4463.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT12519.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+Testing mutant parser.MUT12519.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT12519.c
+>> Building libxml2_TF_top30
+Failed to build on parser.MUT12519.c
+>> Reverted parser.c to original from parser.MUT12519.c
+
++++++ STDERR +++++
+parser.c:10831:45: error: too few arguments to function call, expected 3, have 2
+                xmlFatalErr(ctxt,XML_ERR_STRING_NOT_CLOSED);
+                ~~~~~~~~~~~                               ^
+./include/private/parser.h:32:1: note: 'xmlFatalErr' declared here
+xmlFatalErr(xmlParserCtxtPtr ctxt, xmlParserErrors error, const char *info);
+^
+1 error generated.
+make: *** [Makefile:1212: libxml2_la-parser.lo] Error 1
+
++++++ results for parser.MUT15615.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT15615.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT15615.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT15615.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT15615.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT16072.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT16072.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT16072.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT16072.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT16072.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT7870.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT7870.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT7870.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT7870.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT7870.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT2242.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT2242.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT2242.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT2242.c
+	 - Failing test cases: 58
+	 - Passing test cases: 2585
+	 - Crashing test cases: 0
+>> Reverted parser.c to original from parser.MUT2242.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT16097.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT16097.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT16097.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT16097.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT16097.c
+
++++++ STDERR +++++
+parser.c:13419:28: warning: incompatible integer to pointer conversion passing 'long' to parameter of type 'xmlParserCtxtPtr' (aka 'struct _xmlParserCtxt *') [-Wint-conversion]
+        xmlCtxtUseOptionsInternal((4294967295), XML_PARSE_NODICT);
+                                  ^~~~~~~~~~~~
+parser.c:211:44: note: passing argument to parameter 'ctxt' here
+xmlCtxtUseOptionsInternal(xmlParserCtxtPtr ctxt, int options);
+                                           ^
+1 warning generated.
+
++++++ results for parser.MUT9334.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+Testing mutant parser.MUT9334.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT9334.c
+>> Building libxml2_TF_top30
+Failed to build on parser.MUT9334.c
+>> Reverted parser.c to original from parser.MUT9334.c
+
++++++ STDERR +++++
+parser.c:8165:27: error: too few arguments to function call, expected 2, have 1
+            if (xmlPushInput(ctxt) < 0) {
+                ~~~~~~~~~~~~     ^
+parser.c:2446:1: note: 'xmlPushInput' declared here
+xmlPushInput(xmlParserCtxtPtr ctxt, xmlParserInputPtr input) {
+^
+1 error generated.
+make: *** [Makefile:1212: libxml2_la-parser.lo] Error 1
+
++++++ results for parser.MUT10427.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+Testing mutant parser.MUT10427.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT10427.c
+>> Building libxml2_TF_top30
+Failed to build on parser.MUT10427.c
+>> Reverted parser.c to original from parser.MUT10427.c
+
++++++ STDERR +++++
+parser.c:9210:33: error: expected expression
+                    last = last + static_cast<long>(47);
+                                              ^
+parser.c:9210:21: error: use of undeclared identifier 'static_cast'
+                    last = last + static_cast<long>(47);
+                                  ^
+2 errors generated.
+make: *** [Makefile:1212: libxml2_la-parser.lo] Error 1
+
++++++ results for parser.MUT6170.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT6170.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT6170.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT6170.c
+	 - Failing test cases: 42
+	 - Passing test cases: 2601
+	 - Crashing test cases: 0
+>> Reverted parser.c to original from parser.MUT6170.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT15896.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT15896.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT15896.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT15896.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT15896.c
+
++++++ STDERR +++++
+parser.c:13269:37: warning: incompatible pointer types passing 'xmlNsPtr' (aka 'struct _xmlNs *') to parameter of type 'xmlParserCtxtPtr' (aka 'struct _xmlParserCtxt *') [-Wincompatible-pointer-types]
+                if (xmlParserNsPush(ns,&hprefix,&huri,ctxt,1) > 0)
+                                    ^~
+parser.c:1669:34: note: passing argument to parameter 'ctxt' here
+xmlParserNsPush(xmlParserCtxtPtr ctxt, const xmlHashedString *prefix,
+                                 ^
+1 warning generated.
+
++++++ results for parser.MUT17311.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT17311.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT17311.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT17311.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT17311.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT93.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT93.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT93.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT93.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT93.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT8168.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT8168.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT8168.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT8168.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT8168.c
+
++++++ STDERR +++++
+parser.c:7044:20: warning: result of comparison of constant 256 with expression of type 'const xmlChar' (aka 'const unsigned char') is always false [-Wtautological-constant-out-of-range-compare]
+        } else if (NXT(1) == 256) {
+                   ~~~~~~ ^  ~~~
+1 warning generated.
+
++++++ results for parser.MUT7541.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT7541.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT7541.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT7541.c
+	 - Failing test cases: 27
+	 - Passing test cases: 2616
+	 - Crashing test cases: 0
+>> Reverted parser.c to original from parser.MUT7541.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT5282.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT5282.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT5282.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT5282.c
+	 - Failing test cases: 59
+	 - Passing test cases: 2584
+	 - Crashing test cases: 0
+>> Reverted parser.c to original from parser.MUT5282.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT2425.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT2425.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT2425.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT2425.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT2425.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT12338.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT12338.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT12338.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT12338.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT12338.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT16876.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT16876.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT16876.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT16876.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT16876.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT16196.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT16196.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT16196.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT16196.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT16196.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT6325.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT6325.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT6325.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT6325.c
+	 - Failing test cases: 8
+	 - Passing test cases: 2635
+	 - Crashing test cases: 0
+>> Reverted parser.c to original from parser.MUT6325.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT8536.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT8536.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT8536.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT8536.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT8536.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT479.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT479.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT479.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT479.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT479.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT525.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+Testing mutant parser.MUT525.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT525.c
+>> Building libxml2_TF_top30
+Failed to build on parser.MUT525.c
+>> Reverted parser.c to original from parser.MUT525.c
+
++++++ STDERR +++++
+parser.c:741:2: error: #else without #if
+#else
+ ^
+parser.c:743:2: error: #endif without #if
+#endif
+ ^
+2 errors generated.
+make: *** [Makefile:1212: libxml2_la-parser.lo] Error 1
+
++++++ results for parser.MUT13615.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT13615.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT13615.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT13615.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT13615.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT6528.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT6528.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT6528.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT6528.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT6528.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT14146.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT14146.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT14146.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT14146.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT14146.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT11432.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT11432.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT11432.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT11432.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT11432.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT734.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT734.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT734.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT734.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT734.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT4371.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT4371.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT4371.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT4371.c
+	 - Failing test cases: 152
+	 - Passing test cases: 2491
+	 - Crashing test cases: 0
+>> Reverted parser.c to original from parser.MUT4371.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT16455.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT16455.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT16455.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT16455.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT16455.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT13094.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT13094.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT13094.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT13094.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT13094.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT12216.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+Testing mutant parser.MUT12216.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT12216.c
+>> Building libxml2_TF_top30
+Failed to build on parser.MUT12216.c
+>> Reverted parser.c to original from parser.MUT12216.c
+
++++++ STDERR +++++
+parser.c:10543:24: error: expected expression
+    if (!((static_cast<unsigned char>(41) >= '0') && (cur <= '9'))) {
+                       ^
+parser.c:10543:12: error: use of undeclared identifier 'static_cast'
+    if (!((static_cast<unsigned char>(41) >= '0') && (cur <= '9'))) {
+           ^
+2 errors generated.
+make: *** [Makefile:1212: libxml2_la-parser.lo] Error 1
+
++++++ results for parser.MUT3181.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT3181.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT3181.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT3181.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT3181.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT11412.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT11412.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT11412.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT11412.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT11412.c
+
++++++ STDERR +++++
+parser.c:9902:29: warning: comparison of distinct pointer types ('const xmlChar *' (aka 'const unsigned char *') and 'void *') [-Wcompare-distinct-pointer-types]
+                if (aprefix >= NULL) {
+                    ~~~~~~~ ^  ~~~~
+1 warning generated.
+
++++++ results for parser.MUT7147.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT7147.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT7147.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT7147.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT7147.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT1925.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT1925.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT1925.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT1925.c
+	 - Failing test cases: 62
+	 - Passing test cases: 2579
+	 - Crashing test cases: 2
+>> Reverted parser.c to original from parser.MUT1925.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT1530.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT1530.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT1530.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT1530.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT1530.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT355.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT355.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT355.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT355.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT355.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT7788.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT7788.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT7788.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT7788.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT7788.c
+
++++++ STDERR +++++
+parser.c:6722:20: warning: incompatible integer to pointer conversion passing 'int' to parameter of type 'xmlParserCtxtPtr' (aka 'struct _xmlParserCtxt *') [-Wint-conversion]
+        xmlFatalErrMsgStr(-1, XML_ERR_ELEMCONTENT_NOT_STARTED,
+                          ^~
+parser.c:442:36: note: passing argument to parameter 'ctxt' here
+xmlFatalErrMsgStr(xmlParserCtxtPtr ctxt, xmlParserErrors error,
+                                   ^
+1 warning generated.
+
++++++ results for parser.MUT2527.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT2527.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT2527.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT2527.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT2527.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT8146.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT8146.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT8146.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT8146.c
+	 - Failing test cases: 238
+	 - Passing test cases: 2405
+	 - Crashing test cases: 0
+>> Reverted parser.c to original from parser.MUT8146.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT10522.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT10522.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT10522.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT10522.c
+	 - Failing test cases: 128
+	 - Passing test cases: 2515
+	 - Crashing test cases: 0
+>> Reverted parser.c to original from parser.MUT10522.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT2406.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT2406.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT2406.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT2406.c
+	 - Failing test cases: 58
+	 - Passing test cases: 2585
+	 - Crashing test cases: 0
+>> Reverted parser.c to original from parser.MUT2406.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT14723.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT14723.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT14723.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT14723.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT14723.c
+
++++++ STDERR +++++
+parser.c:12287:13: warning: variable 'res' set but not used [-Wunused-but-set-variable]
+        int res;
+            ^
+1 warning generated.
+
++++++ results for parser.MUT14125.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT14125.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT14125.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT14125.c
+	 - Failing test cases: 35
+	 - Passing test cases: 2608
+	 - Crashing test cases: 0
+>> Reverted parser.c to original from parser.MUT14125.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT1700.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT1700.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT1700.c
+>> Building libxml2_TF_top30
+Mutant parser.MUT1700.c is not killed (all tcs pass)
+>> Reverted parser.c to original from parser.MUT1700.c
+
++++++ STDERR +++++
+
++++++ results for parser.MUT8512.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT8512.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT8512.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT8512.c
+	 - Failing test cases: 141
+	 - Passing test cases: 2489
+	 - Crashing test cases: 13
+>> Reverted parser.c to original from parser.MUT8512.c
+
++++++ STDERR +++++
+parser.c:7399:34: warning: incompatible integer to pointer conversion assigning to 'struct _xmlNode *' from 'long' [-Wint-conversion]
+                    list->parent -= (xmlNodePtr) ent;
+                                 ^  ~~~~~~~~~~~~~~~~
+1 warning generated.
+
++++++ results for parser.MUT16878.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+Testing mutant parser.MUT16878.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT16878.c
+>> Building libxml2_TF_top30
+Failed to build on parser.MUT16878.c
+>> Reverted parser.c to original from parser.MUT16878.c
+
++++++ STDERR +++++
+parser.c:14379:30: error: too few arguments to function call, single argument 'ctxt' was not specified
+    while ((input = inputPop()) != NULL) { /* Non consuming */
+                    ~~~~~~~~ ^
+parser.c:1924:1: note: 'inputPop' declared here
+inputPop(xmlParserCtxtPtr ctxt)
+^
+1 error generated.
+make: *** [Makefile:1212: libxml2_la-parser.lo] Error 1
+
++++++ results for parser.MUT1399.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant parser.MUT1399.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to parser.c with parser.MUT1399.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant parser.MUT1399.c
+	 - Failing test cases: 301
+	 - Passing test cases: 2171
+	 - Crashing test cases: 171
+>> Reverted parser.c to original from parser.MUT1399.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT954.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-parser.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT954.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT954.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT954.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT954.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT3826.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT3826.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT3826.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT3826.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT3826.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT437.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT437.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT437.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant xmlregexp.MUT437.c
+	 - Failing test cases: 151
+	 - Passing test cases: 2386
+	 - Crashing test cases: 106
+>> Reverted xmlregexp.c to original from xmlregexp.MUT437.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT6220.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT6220.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT6220.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT6220.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT6220.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT1401.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT1401.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT1401.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT1401.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT1401.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT7332.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT7332.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT7332.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant xmlregexp.MUT7332.c
+	 - Failing test cases: 1
+	 - Passing test cases: 2642
+	 - Crashing test cases: 0
+>> Reverted xmlregexp.c to original from xmlregexp.MUT7332.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT6107.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT6107.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT6107.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT6107.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT6107.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT1851.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT1851.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT1851.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant xmlregexp.MUT1851.c
+	 - Failing test cases: 148
+	 - Passing test cases: 2495
+	 - Crashing test cases: 0
+>> Reverted xmlregexp.c to original from xmlregexp.MUT1851.c
+
++++++ STDERR +++++
+xmlregexp.c:1727:10: warning: incompatible integer to pointer conversion assigning to 'xmlRegStatePtr' (aka 'struct _xmlAutomataState *') from 'long' [-Wint-conversion]
+    from -= ctxt->states[fromnr];
+         ^  ~~~~~~~~~~~~~~~~~~~~
+xmlregexp.c:1727:5: warning: variable 'from' is uninitialized when used here [-Wuninitialized]
+    from -= ctxt->states[fromnr];
+    ^~~~
+xmlregexp.c:1724:24: note: initialize the variable 'from' to silence this warning
+    xmlRegStatePtr from;
+                       ^
+                        = NULL
+2 warnings generated.
+
++++++ results for xmlregexp.MUT6834.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT6834.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT6834.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT6834.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT6834.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT2221.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT2221.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT2221.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT2221.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT2221.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT7060.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT7060.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT7060.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT7060.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT7060.c
+
++++++ STDERR +++++
+xmlregexp.c:5276:26: warning: incompatible integer to pointer conversion passing 'int' to parameter of type 'xmlRegParserCtxtPtr' (aka 'struct _xmlAutomata *') [-Wint-conversion]
+    xmlFAParseQuantifier(1);
+                         ^
+xmlregexp.c:5131:42: note: passing argument to parameter 'ctxt' here
+xmlFAParseQuantifier(xmlRegParserCtxtPtr ctxt) {
+                                         ^
+1 warning generated.
+
++++++ results for xmlregexp.MUT1369.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT1369.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT1369.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT1369.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT1369.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT3291.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT3291.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT3291.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT3291.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT3291.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT7387.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+Testing mutant xmlregexp.MUT7387.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT7387.c
+>> Building libxml2_TF_top30
+Failed to build on xmlregexp.MUT7387.c
+>> Reverted xmlregexp.c to original from xmlregexp.MUT7387.c
+
++++++ STDERR +++++
+xmlregexp.c:5548:18: error: use of undeclared identifier 'static_cast'
+        for (i = 0; i ||static_cast<bool>(regexp->nbstrings);i++)
+                        ^
+xmlregexp.c:5548:30: error: use of undeclared identifier 'bool'
+        for (i = 0; i ||static_cast<bool>(regexp->nbstrings);i++)
+                                    ^
+2 errors generated.
+make: *** [Makefile:1380: libxml2_la-xmlregexp.lo] Error 1
+
++++++ results for xmlregexp.MUT7526.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT7526.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT7526.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT7526.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT7526.c
+
++++++ STDERR +++++
+xmlregexp.c:5732:25: warning: incompatible integer to pointer conversion passing 'int' to parameter of type 'const void *' [-Wint-conversion]
+        memcpy(&str[lenp + 1], -1, lenn);
+                               ^~
+/usr/include/string.h:43:70: note: passing argument to parameter '__src' here
+extern void *memcpy (void *__restrict __dest, const void *__restrict __src,
+                                                                     ^
+1 warning generated.
+
++++++ results for xmlregexp.MUT4433.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT4433.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT4433.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant xmlregexp.MUT4433.c
+	 - Failing test cases: 4
+	 - Passing test cases: 2639
+	 - Crashing test cases: 0
+>> Reverted xmlregexp.c to original from xmlregexp.MUT4433.c
+
++++++ STDERR +++++
+xmlregexp.c:3284:23: warning: unused variable 'state' [-Wunused-variable]
+                            xmlRegStatePtr state = exec->state;
+                                           ^
+1 warning generated.
+
++++++ results for xmlregexp.MUT4364.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT4364.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT4364.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT4364.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT4364.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT2202.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT2202.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT2202.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant xmlregexp.MUT2202.c
+	 - Failing test cases: 13
+	 - Passing test cases: 2629
+	 - Crashing test cases: 1
+>> Reverted xmlregexp.c to original from xmlregexp.MUT2202.c
+
++++++ STDERR +++++
+xmlregexp.c:1988:13: warning: comparison of distinct pointer types ('xmlRegStatePtr' (aka 'struct _xmlAutomataState *') and 'void *') [-Wcompare-distinct-pointer-types]
+        if (target < NULL) {
+            ~~~~~~ ^ ~~~~
+1 warning generated.
+
++++++ results for xmlregexp.MUT367.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT367.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT367.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT367.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT367.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT7302.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT7302.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT7302.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT7302.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT7302.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT1961.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT1961.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT1961.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT1961.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT1961.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT645.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT645.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT645.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT645.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT645.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT788.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT788.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT788.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT788.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT788.c
+
++++++ STDERR +++++
+xmlregexp.c:994:21: warning: incompatible integer to pointer conversion passing 'int' to parameter of type 'FILE *' (aka 'struct _IO_FILE *') [-Wint-conversion]
+            fprintf(1, "LETTER_TITLECASE "); break;
+                    ^
+/usr/include/stdio.h:350:38: note: passing argument to parameter '__stream' here
+extern int fprintf (FILE *__restrict __stream,
+                                     ^
+1 warning generated.
+
++++++ results for xmlregexp.MUT3313.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT3313.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT3313.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT3313.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT3313.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT6037.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT6037.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT6037.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT6037.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT6037.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT5092.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT5092.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT5092.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant xmlregexp.MUT5092.c
+	 - Failing test cases: 29
+	 - Passing test cases: 2610
+	 - Crashing test cases: 4
+>> Reverted xmlregexp.c to original from xmlregexp.MUT5092.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT3439.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT3439.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT3439.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT3439.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT3439.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT115.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT115.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT115.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT115.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT115.c
+
++++++ STDERR +++++
+xmlregexp.c:480:38: warning: incompatible integer to pointer conversion passing 'int' to parameter of type 'const char *' [-Wint-conversion]
+            xmlRegexpErrMemory(ctxt, (255));
+                                     ^~~~~
+xmlregexp.c:381:58: note: passing argument to parameter 'extra' here
+xmlRegexpErrMemory(xmlRegParserCtxtPtr ctxt, const char *extra)
+                                                         ^
+1 warning generated.
+
++++++ results for xmlregexp.MUT6692.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT6692.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT6692.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant xmlregexp.MUT6692.c
+	 - Failing test cases: 8
+	 - Passing test cases: 2635
+	 - Crashing test cases: 0
+>> Reverted xmlregexp.c to original from xmlregexp.MUT6692.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT5135.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT5135.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT5135.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT5135.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT5135.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT2643.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT2643.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT2643.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT2643.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT2643.c
+
++++++ STDERR +++++
+
++++++ results for xmlregexp.MUT7354.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT7354.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT7354.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant xmlregexp.MUT7354.c
+	 - Failing test cases: 106
+	 - Passing test cases: 2537
+	 - Crashing test cases: 0
+>> Reverted xmlregexp.c to original from xmlregexp.MUT7354.c
+
++++++ STDERR +++++
+xmlregexp.c:5531:24: warning: comparison of distinct pointer types ('xmlRegStatePtr *' (aka 'struct _xmlAutomataState **') and 'void *') [-Wcompare-distinct-pointer-types]
+    if (regexp->states < NULL) {
+        ~~~~~~~~~~~~~~ ^ ~~~~
+1 warning generated.
+
++++++ results for xmlregexp.MUT868.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xmlregexp.MUT868.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xmlregexp.c with xmlregexp.MUT868.c
+>> Building libxml2_TF_top30
+Mutant xmlregexp.MUT868.c is not killed (all tcs pass)
+>> Reverted xmlregexp.c to original from xmlregexp.MUT868.c
+
++++++ STDERR +++++
+
++++++ results for hash.MUT968.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xmlregexp.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-hash.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant hash.MUT968.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to hash.c with hash.MUT968.c
+>> Building libxml2_TF_top30
+Mutant hash.MUT968.c is not killed (all tcs pass)
+>> Reverted hash.c to original from hash.MUT968.c
+
++++++ STDERR +++++
+
++++++ results for hash.MUT398.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-hash.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-hash.lo
+Testing mutant hash.MUT398.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to hash.c with hash.MUT398.c
+>> Building libxml2_TF_top30
+Failed to build on hash.MUT398.c
+>> Reverted hash.c to original from hash.MUT398.c
+
++++++ STDERR +++++
+hash.c:474:43: error: expected expression
+        if (xmlHashGrow(hash, static_cast<unsigned int>((newSize-1))) != 0)
+                                          ^
+hash.c:474:31: error: use of undeclared identifier 'static_cast'
+        if (xmlHashGrow(hash, static_cast<unsigned int>((newSize-1))) != 0)
+                              ^
+2 errors generated.
+make: *** [Makefile:1198: libxml2_la-hash.lo] Error 1
+
++++++ results for hash.MUT138.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-hash.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-hash.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant hash.MUT138.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to hash.c with hash.MUT138.c
+>> Building libxml2_TF_top30
+Mutant hash.MUT138.c is not killed (all tcs pass)
+>> Reverted hash.c to original from hash.MUT138.c
+
++++++ STDERR +++++
+
++++++ results for hash.MUT246.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-hash.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-hash.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant hash.MUT246.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to hash.c with hash.MUT246.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant hash.MUT246.c
+	 - Failing test cases: 175
+	 - Passing test cases: 2468
+	 - Crashing test cases: 0
+>> Reverted hash.c to original from hash.MUT246.c
+
++++++ STDERR +++++
+
++++++ results for uri.MUT2620.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-hash.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant uri.MUT2620.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to uri.c with uri.MUT2620.c
+>> Building libxml2_TF_top30
+Mutant uri.MUT2620.c is not killed (all tcs pass)
+>> Reverted uri.c to original from uri.MUT2620.c
+
++++++ STDERR +++++
+
++++++ results for uri.MUT2900.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant uri.MUT2900.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to uri.c with uri.MUT2900.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant uri.MUT2900.c
+	 - Failing test cases: 1
+	 - Passing test cases: 2642
+	 - Crashing test cases: 0
+>> Reverted uri.c to original from uri.MUT2900.c
+
++++++ STDERR +++++
+uri.c:2437:16: warning: variable 'c' set but not used [-Wunused-but-set-variable]
+        unsigned char c;
+                      ^
+uri.c:2452:14: warning: variable 'ret' is uninitialized when used here [-Wuninitialized]
+            return (ret);
+                    ^~~
+uri.c:2405:17: note: initialize the variable 'ret' to silence this warning
+    xmlChar *ret;
+                ^
+                 = NULL
+2 warnings generated.
+
++++++ results for uri.MUT732.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant uri.MUT732.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to uri.c with uri.MUT732.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant uri.MUT732.c
+	 - Failing test cases: 10
+	 - Passing test cases: 2633
+	 - Crashing test cases: 0
+>> Reverted uri.c to original from uri.MUT732.c
+
++++++ STDERR +++++
+
++++++ results for uri.MUT452.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant uri.MUT452.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to uri.c with uri.MUT452.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant uri.MUT452.c
+	 - Failing test cases: 406
+	 - Passing test cases: 2237
+	 - Crashing test cases: 0
+>> Reverted uri.c to original from uri.MUT452.c
+
++++++ STDERR +++++
+
++++++ results for uri.MUT2348.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant uri.MUT2348.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to uri.c with uri.MUT2348.c
+>> Building libxml2_TF_top30
+Mutant uri.MUT2348.c is not killed (all tcs pass)
+>> Reverted uri.c to original from uri.MUT2348.c
+
++++++ STDERR +++++
+
++++++ results for uri.MUT1338.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant uri.MUT1338.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to uri.c with uri.MUT1338.c
+>> Building libxml2_TF_top30
+Mutant uri.MUT1338.c is not killed (all tcs pass)
+>> Reverted uri.c to original from uri.MUT1338.c
+
++++++ STDERR +++++
+
++++++ results for uri.MUT1491.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant uri.MUT1491.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to uri.c with uri.MUT1491.c
+>> Building libxml2_TF_top30
+Mutant uri.MUT1491.c is not killed (all tcs pass)
+>> Reverted uri.c to original from uri.MUT1491.c
+
++++++ STDERR +++++
+
++++++ results for uri.MUT1430.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant uri.MUT1430.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to uri.c with uri.MUT1430.c
+>> Building libxml2_TF_top30
+Mutant uri.MUT1430.c is not killed (all tcs pass)
+>> Reverted uri.c to original from uri.MUT1430.c
+
++++++ STDERR +++++
+
++++++ results for uri.MUT1774.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant uri.MUT1774.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to uri.c with uri.MUT1774.c
+>> Building libxml2_TF_top30
+Mutant uri.MUT1774.c is not killed (all tcs pass)
+>> Reverted uri.c to original from uri.MUT1774.c
+
++++++ STDERR +++++
+uri.c:1554:14: warning: incompatible integer to pointer conversion assigning to 'char *' from 'int' [-Wint-conversion]
+        segp = 3;
+             ^ ~
+1 warning generated.
+
++++++ results for uri.MUT2847.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant uri.MUT2847.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to uri.c with uri.MUT2847.c
+>> Building libxml2_TF_top30
+Mutant uri.MUT2847.c is not killed (all tcs pass)
+>> Reverted uri.c to original from uri.MUT2847.c
+
++++++ STDERR +++++
+
++++++ results for uri.MUT423.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant uri.MUT423.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to uri.c with uri.MUT423.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant uri.MUT423.c
+	 - Failing test cases: 2
+	 - Passing test cases: 2641
+	 - Crashing test cases: 0
+>> Reverted uri.c to original from uri.MUT423.c
+
++++++ STDERR +++++
+
++++++ results for uri.MUT1123.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant uri.MUT1123.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to uri.c with uri.MUT1123.c
+>> Building libxml2_TF_top30
+Mutant uri.MUT1123.c is not killed (all tcs pass)
+>> Reverted uri.c to original from uri.MUT1123.c
+
++++++ STDERR +++++
+
++++++ results for uri.MUT2583.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant uri.MUT2583.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to uri.c with uri.MUT2583.c
+>> Building libxml2_TF_top30
+Mutant uri.MUT2583.c is not killed (all tcs pass)
+>> Reverted uri.c to original from uri.MUT2583.c
+
++++++ STDERR +++++
+uri.c:2141:22: warning: incompatible integer to pointer conversion passing 'long' to parameter of type 'xmlURIPtr' (aka 'struct _xmlURI *') [-Wint-conversion]
+    val = xmlSaveUri((4294967295));
+                     ^~~~~~~~~~~~
+uri.c:1074:22: note: passing argument to parameter 'uri' here
+xmlSaveUri(xmlURIPtr uri) {
+                     ^
+1 warning generated.
+
++++++ results for pattern.MUT200.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-uri.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-pattern.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant pattern.MUT200.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to pattern.c with pattern.MUT200.c
+>> Building libxml2_TF_top30
+Mutant pattern.MUT200.c is not killed (all tcs pass)
+>> Reverted pattern.c to original from pattern.MUT200.c
+
++++++ STDERR +++++
+
++++++ results for pattern.MUT2505.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-pattern.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-pattern.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant pattern.MUT2505.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to pattern.c with pattern.MUT2505.c
+>> Building libxml2_TF_top30
+Mutant pattern.MUT2505.c is not killed (all tcs pass)
+>> Reverted pattern.c to original from pattern.MUT2505.c
+
++++++ STDERR +++++
+
++++++ results for pattern.MUT2130.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-pattern.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-pattern.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant pattern.MUT2130.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to pattern.c with pattern.MUT2130.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant pattern.MUT2130.c
+	 - Failing test cases: 5
+	 - Passing test cases: 2638
+	 - Crashing test cases: 0
+>> Reverted pattern.c to original from pattern.MUT2130.c
+
++++++ STDERR +++++
+
++++++ results for pattern.MUT1730.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-pattern.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-pattern.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant pattern.MUT1730.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to pattern.c with pattern.MUT1730.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant pattern.MUT1730.c
+	 - Failing test cases: 1
+	 - Passing test cases: 2642
+	 - Crashing test cases: 0
+>> Reverted pattern.c to original from pattern.MUT1730.c
+
++++++ STDERR +++++
+
++++++ results for pattern.MUT2258.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-pattern.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-pattern.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant pattern.MUT2258.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to pattern.c with pattern.MUT2258.c
+>> Building libxml2_TF_top30
+Mutant pattern.MUT2258.c is not killed (all tcs pass)
+>> Reverted pattern.c to original from pattern.MUT2258.c
+
++++++ STDERR +++++
+
++++++ results for pattern.MUT2141.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-pattern.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-pattern.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant pattern.MUT2141.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to pattern.c with pattern.MUT2141.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant pattern.MUT2141.c
+	 - Failing test cases: 1
+	 - Passing test cases: 2642
+	 - Crashing test cases: 0
+>> Reverted pattern.c to original from pattern.MUT2141.c
+
++++++ STDERR +++++
+
++++++ results for pattern.MUT1495.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-pattern.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-pattern.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant pattern.MUT1495.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to pattern.c with pattern.MUT1495.c
+>> Building libxml2_TF_top30
+Mutant pattern.MUT1495.c is not killed (all tcs pass)
+>> Reverted pattern.c to original from pattern.MUT1495.c
+
++++++ STDERR +++++
+
++++++ results for pattern.MUT1385.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-pattern.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-pattern.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant pattern.MUT1385.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to pattern.c with pattern.MUT1385.c
+>> Building libxml2_TF_top30
+Mutant pattern.MUT1385.c is not killed (all tcs pass)
+>> Reverted pattern.c to original from pattern.MUT1385.c
+
++++++ STDERR +++++
+
++++++ results for pattern.MUT1837.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-pattern.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-pattern.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant pattern.MUT1837.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to pattern.c with pattern.MUT1837.c
+>> Building libxml2_TF_top30
+Mutant pattern.MUT1837.c is not killed (all tcs pass)
+>> Reverted pattern.c to original from pattern.MUT1837.c
+
++++++ STDERR +++++
+
++++++ results for pattern.MUT2380.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-pattern.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-pattern.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant pattern.MUT2380.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to pattern.c with pattern.MUT2380.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant pattern.MUT2380.c
+	 - Failing test cases: 30
+	 - Passing test cases: 2613
+	 - Crashing test cases: 0
+>> Reverted pattern.c to original from pattern.MUT2380.c
+
++++++ STDERR +++++
+
++++++ results for xinclude.MUT1994.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-pattern.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xinclude.MUT1994.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xinclude.c with xinclude.MUT1994.c
+>> Building libxml2_TF_top30
+Mutant xinclude.MUT1994.c is not killed (all tcs pass)
+>> Reverted xinclude.c to original from xinclude.MUT1994.c
+
++++++ STDERR +++++
+
++++++ results for xinclude.MUT728.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xinclude.MUT728.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xinclude.c with xinclude.MUT728.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant xinclude.MUT728.c
+	 - Failing test cases: 22
+	 - Passing test cases: 2621
+	 - Crashing test cases: 0
+>> Reverted xinclude.c to original from xinclude.MUT728.c
+
++++++ STDERR +++++
+
++++++ results for xinclude.MUT549.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xinclude.MUT549.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xinclude.c with xinclude.MUT549.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant xinclude.MUT549.c
+	 - Failing test cases: 4
+	 - Passing test cases: 2639
+	 - Crashing test cases: 0
+>> Reverted xinclude.c to original from xinclude.MUT549.c
+
++++++ STDERR +++++
+
++++++ results for xinclude.MUT1470.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xinclude.MUT1470.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xinclude.c with xinclude.MUT1470.c
+>> Building libxml2_TF_top30
+Mutant xinclude.MUT1470.c is not killed (all tcs pass)
+>> Reverted xinclude.c to original from xinclude.MUT1470.c
+
++++++ STDERR +++++
+
++++++ results for xinclude.MUT1084.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xinclude.MUT1084.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xinclude.c with xinclude.MUT1084.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant xinclude.MUT1084.c
+	 - Failing test cases: 54
+	 - Passing test cases: 2589
+	 - Crashing test cases: 0
+>> Reverted xinclude.c to original from xinclude.MUT1084.c
+
++++++ STDERR +++++
+
++++++ results for xinclude.MUT2076.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xinclude.MUT2076.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xinclude.c with xinclude.MUT2076.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant xinclude.MUT2076.c
+	 - Failing test cases: 3
+	 - Passing test cases: 2640
+	 - Crashing test cases: 0
+>> Reverted xinclude.c to original from xinclude.MUT2076.c
+
++++++ STDERR +++++
+
++++++ results for xinclude.MUT692.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xinclude.MUT692.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xinclude.c with xinclude.MUT692.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant xinclude.MUT692.c
+	 - Failing test cases: 14
+	 - Passing test cases: 2629
+	 - Crashing test cases: 0
+>> Reverted xinclude.c to original from xinclude.MUT692.c
+
++++++ STDERR +++++
+
++++++ results for xinclude.MUT638.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xinclude.MUT638.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xinclude.c with xinclude.MUT638.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant xinclude.MUT638.c
+	 - Failing test cases: 38
+	 - Passing test cases: 2605
+	 - Crashing test cases: 0
+>> Reverted xinclude.c to original from xinclude.MUT638.c
+
++++++ STDERR +++++
+
++++++ results for xinclude.MUT1851.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xinclude.MUT1851.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xinclude.c with xinclude.MUT1851.c
+>> Building libxml2_TF_top30
+Mutant xinclude.MUT1851.c is not killed (all tcs pass)
+>> Reverted xinclude.c to original from xinclude.MUT1851.c
+
++++++ STDERR +++++
+xinclude.c:1958:14: warning: variable 'oldBase' is uninitialized when used here [-Wuninitialized]
+            xmlFree(oldBase);
+                    ^~~~~~~
+xinclude.c:1902:21: note: initialize the variable 'oldBase' to silence this warning
+    xmlChar *oldBase;
+                    ^
+                     = NULL
+1 warning generated.
+
++++++ results for xinclude.MUT174.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xinclude.MUT174.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xinclude.c with xinclude.MUT174.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant xinclude.MUT174.c
+	 - Failing test cases: 32
+	 - Passing test cases: 2611
+	 - Crashing test cases: 0
+>> Reverted xinclude.c to original from xinclude.MUT174.c
+
++++++ STDERR +++++
+
++++++ results for xinclude.MUT675.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xinclude.MUT675.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xinclude.c with xinclude.MUT675.c
+>> Building libxml2_TF_top30
+Mutant xinclude.MUT675.c is not killed (all tcs pass)
+>> Reverted xinclude.c to original from xinclude.MUT675.c
+
++++++ STDERR +++++
+
++++++ results for xpointer.MUT35.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xinclude.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xpointer.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xpointer.MUT35.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xpointer.c with xpointer.MUT35.c
+>> Building libxml2_TF_top30
+Mutant xpointer.MUT35.c is not killed (all tcs pass)
+>> Reverted xpointer.c to original from xpointer.MUT35.c
+
++++++ STDERR +++++
+
++++++ results for xpointer.MUT63.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xpointer.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-xpointer.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant xpointer.MUT63.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to xpointer.c with xpointer.MUT63.c
+>> Building libxml2_TF_top30
+Mutant xpointer.MUT63.c is not killed (all tcs pass)
+>> Reverted xpointer.c to original from xpointer.MUT63.c
+
++++++ STDERR +++++
+
++++++ results for c14n.MUT2012.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-xpointer.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-c14n.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant c14n.MUT2012.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to c14n.c with c14n.MUT2012.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant c14n.MUT2012.c
+	 - Failing test cases: 3
+	 - Passing test cases: 2640
+	 - Crashing test cases: 0
+>> Reverted c14n.c to original from c14n.MUT2012.c
+
++++++ STDERR +++++
+
++++++ results for c14n.MUT1204.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-c14n.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-c14n.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant c14n.MUT1204.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to c14n.c with c14n.MUT1204.c
+>> Building libxml2_TF_top30
+Mutant c14n.MUT1204.c is not killed (all tcs pass)
+>> Reverted c14n.c to original from c14n.MUT1204.c
+
++++++ STDERR +++++
+
++++++ results for c14n.MUT1704.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-c14n.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-c14n.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant c14n.MUT1704.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to c14n.c with c14n.MUT1704.c
+>> Building libxml2_TF_top30
+Mutant c14n.MUT1704.c is not killed (all tcs pass)
+>> Reverted c14n.c to original from c14n.MUT1704.c
+
++++++ STDERR +++++
+
++++++ results for c14n.MUT1636.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-c14n.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-c14n.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant c14n.MUT1636.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to c14n.c with c14n.MUT1636.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant c14n.MUT1636.c
+	 - Failing test cases: 76
+	 - Passing test cases: 2567
+	 - Crashing test cases: 0
+>> Reverted c14n.c to original from c14n.MUT1636.c
+
++++++ STDERR +++++
+
++++++ results for c14n.MUT1532.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-c14n.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-c14n.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant c14n.MUT1532.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to c14n.c with c14n.MUT1532.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant c14n.MUT1532.c
+	 - Failing test cases: 26
+	 - Passing test cases: 2617
+	 - Crashing test cases: 0
+>> Reverted c14n.c to original from c14n.MUT1532.c
+
++++++ STDERR +++++
+
++++++ results for c14n.MUT1816.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-c14n.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-c14n.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant c14n.MUT1816.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to c14n.c with c14n.MUT1816.c
+>> Building libxml2_TF_top30
+Mutant c14n.MUT1816.c is not killed (all tcs pass)
+>> Reverted c14n.c to original from c14n.MUT1816.c
+
++++++ STDERR +++++
+
++++++ results for c14n.MUT54.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-c14n.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-c14n.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant c14n.MUT54.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to c14n.c with c14n.MUT54.c
+>> Building libxml2_TF_top30
+Mutant c14n.MUT54.c is not killed (all tcs pass)
+>> Reverted c14n.c to original from c14n.MUT54.c
+
++++++ STDERR +++++
+
++++++ results for c14n.MUT585.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-c14n.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-c14n.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant c14n.MUT585.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to c14n.c with c14n.MUT585.c
+>> Building libxml2_TF_top30
+Mutant c14n.MUT585.c is not killed (all tcs pass)
+>> Reverted c14n.c to original from c14n.MUT585.c
+
++++++ STDERR +++++
+
++++++ results for c14n.MUT826.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-c14n.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-c14n.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant c14n.MUT826.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to c14n.c with c14n.MUT826.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant c14n.MUT826.c
+	 - Failing test cases: 43
+	 - Passing test cases: 2600
+	 - Crashing test cases: 0
+>> Reverted c14n.c to original from c14n.MUT826.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT13932.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-c14n.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT13932.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT13932.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT13932.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT13932.c
+
++++++ STDERR +++++
+relaxng.c:10051:68: warning: incompatible integer to pointer conversion passing 'int' to parameter of type 'xmlRelaxNGValidStatePtr' (aka 'struct _xmlRelaxNGValidState *') [-Wint-conversion]
+                                                                   1);
+                                                                   ^
+relaxng.c:1261:50: note: passing argument to parameter 'state' here
+                         xmlRelaxNGValidStatePtr state)
+                                                 ^
+1 warning generated.
+
++++++ results for relaxng.MUT3532.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT3532.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT3532.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT3532.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT3532.c
+
++++++ STDERR +++++
+relaxng.c:3381:17: warning: variable 'escape' is uninitialized when used here [-Wuninitialized]
+            if (escape == NULL) {
+                ^~~~~~
+relaxng.c:3368:26: note: initialize the variable 'escape' to silence this warning
+    xmlChar *ret, *escape;
+                         ^
+                          = NULL
+1 warning generated.
+
++++++ results for relaxng.MUT1749.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT1749.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT1749.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT1749.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT1749.c
+
++++++ STDERR +++++
+relaxng.c:1989:13: warning: enumeration value 'XML_RELAXNG_NOOP' not handled in switch [-Wswitch]
+    switch (def->type) {
+            ^
+1 warning generated.
+
++++++ results for relaxng.MUT11207.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT11207.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT11207.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT11207.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT11207.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT5848.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT5848.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT5848.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT5848.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT5848.c
+
++++++ STDERR +++++
+relaxng.c:4831:35: warning: incompatible integer to pointer conversion passing 'long' to parameter of type 'xmlHashTablePtr' (aka 'struct _xmlHashTable *') [-Wint-conversion]
+            tmp = xmlHashAddEntry((4294967295), def->name, def);
+                                  ^~~~~~~~~~~~
+./include/libxml/hash.h:113:37: note: passing argument to parameter 'hash' here
+                xmlHashAddEntry         (xmlHashTablePtr hash,
+                                                         ^
+1 warning generated.
+
++++++ results for relaxng.MUT3629.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT3629.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT3629.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant relaxng.MUT3629.c
+	 - Failing test cases: 4
+	 - Passing test cases: 2639
+	 - Crashing test cases: 0
+>> Reverted relaxng.c to original from relaxng.MUT3629.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT10569.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+Testing mutant relaxng.MUT10569.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT10569.c
+>> Building libxml2_TF_top30
+Failed to build on relaxng.MUT10569.c
+>> Reverted relaxng.c to original from relaxng.MUT10569.c
+
++++++ STDERR +++++
+relaxng.c:7834:46: error: too few arguments to function call, expected 2, have 1
+    ret = xmlRelaxNGValidateDefinition(define);
+          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~       ^
+relaxng.c:7795:12: note: 'xmlRelaxNGValidateDefinition' declared here
+static int xmlRelaxNGValidateDefinition(xmlRelaxNGValidCtxtPtr ctxt,
+           ^
+1 error generated.
+make: *** [Makefile:1394: libxml2_la-relaxng.lo] Error 1
+
++++++ results for relaxng.MUT12138.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT12138.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT12138.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant relaxng.MUT12138.c
+	 - Failing test cases: 8
+	 - Passing test cases: 2635
+	 - Crashing test cases: 0
+>> Reverted relaxng.c to original from relaxng.MUT12138.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT4219.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT4219.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT4219.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant relaxng.MUT4219.c
+	 - Failing test cases: 2
+	 - Passing test cases: 2641
+	 - Crashing test cases: 0
+>> Reverted relaxng.c to original from relaxng.MUT4219.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT13583.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT13583.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT13583.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT13583.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT13583.c
+
++++++ STDERR +++++
+relaxng.c:9877:25: warning: incompatible integer to pointer conversion assigning to 'xmlRelaxNGValidStatePtr' (aka 'struct _xmlRelaxNGValidState *') from 'long' [-Wint-conversion]
+            ctxt->state -= oldstate;
+                        ^  ~~~~~~~~
+1 warning generated.
+
++++++ results for relaxng.MUT1666.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT1666.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT1666.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT1666.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT1666.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT413.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT413.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT413.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant relaxng.MUT413.c
+	 - Failing test cases: 2
+	 - Passing test cases: 2641
+	 - Crashing test cases: 0
+>> Reverted relaxng.c to original from relaxng.MUT413.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT6059.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT6059.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT6059.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT6059.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT6059.c
+
++++++ STDERR +++++
+relaxng.c:4947:22: warning: incompatible integer to pointer conversion assigning to 'xmlRelaxNGDefinePtr' (aka 'struct _xmlRelaxNGDefine *') from 'long' [-Wint-conversion]
+                prev -= (xmlRelaxNGDefinePtr)
+                     ^  ~~~~~~~~~~~~~~~~~~~~~
+relaxng.c:4947:17: warning: variable 'prev' is uninitialized when used here [-Wuninitialized]
+                prev -= (xmlRelaxNGDefinePtr)
+                ^~~~
+relaxng.c:4945:41: note: initialize the variable 'prev' to silence this warning
+                xmlRelaxNGDefinePtr prev;
+                                        ^
+                                         = NULL
+2 warnings generated.
+
++++++ results for relaxng.MUT6473.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT6473.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT6473.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT6473.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT6473.c
+
++++++ STDERR +++++
+relaxng.c:5219:22: warning: comparison of distinct pointer types ('xmlChar *' (aka 'unsigned char *') and 'void *') [-Wcompare-distinct-pointer-types]
+            (ret->ns >= NULL) &&
+             ~~~~~~~ ^  ~~~~
+1 warning generated.
+
++++++ results for relaxng.MUT13103.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT13103.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT13103.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT13103.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT13103.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT1324.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT1324.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT1324.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT1324.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT1324.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT2711.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT2711.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT2711.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant relaxng.MUT2711.c
+	 - Failing test cases: 6
+	 - Passing test cases: 2637
+	 - Crashing test cases: 0
+>> Reverted relaxng.c to original from relaxng.MUT2711.c
+
++++++ STDERR +++++
+relaxng.c:2736:11: warning: explicitly assigning value of variable of type 'xmlRelaxNGTypeFree' (aka 'void (*)(void *, void *)') to itself [-Wself-assign]
+    freef = freef;
+    ~~~~~ ^ ~~~~~
+1 warning generated.
+
++++++ results for relaxng.MUT2845.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT2845.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT2845.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT2845.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT2845.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT2603.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT2603.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT2603.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT2603.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT2603.c
+
++++++ STDERR +++++
+relaxng.c:2639:27: warning: incompatible integer to pointer conversion passing 'int' to parameter of type 'const xmlChar *' (aka 'const unsigned char *') [-Wint-conversion]
+    if (xmlStrEqual(type, -1)) {
+                          ^~
+./include/libxml/xmlstring.h:79:57: note: passing argument to parameter 'str2' here
+                                         const xmlChar *str2);
+                                                        ^
+1 warning generated.
+
++++++ results for relaxng.MUT5031.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT5031.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT5031.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT5031.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT5031.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT11270.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT11270.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT11270.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant relaxng.MUT11270.c
+	 - Failing test cases: 2
+	 - Passing test cases: 2641
+	 - Crashing test cases: 0
+>> Reverted relaxng.c to original from relaxng.MUT11270.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT143.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT143.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT143.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT143.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT143.c
+
++++++ STDERR +++++
+relaxng.c:669:19: warning: comparison of distinct pointer types ('xmlDocPtr' (aka 'struct _xmlDoc *') and 'void *') [-Wcompare-distinct-pointer-types]
+    if (docu->doc >= NULL)
+        ~~~~~~~~~ ^  ~~~~
+1 warning generated.
+
++++++ results for relaxng.MUT14324.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT14324.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT14324.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT14324.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT14324.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT4559.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT4559.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT4559.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant relaxng.MUT4559.c
+	 - Failing test cases: 5
+	 - Passing test cases: 2583
+	 - Crashing test cases: 55
+>> Reverted relaxng.c to original from relaxng.MUT4559.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT7406.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT7406.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT7406.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT7406.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT7406.c
+
++++++ STDERR +++++
+relaxng.c:5799:28: warning: remainder by zero is undefined [-Wdivision-by-zero]
+        choiceOrInterleave %= 0;
+                           ^  ~
+1 warning generated.
+
++++++ results for relaxng.MUT1774.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT1774.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT1774.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT1774.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT1774.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT3967.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT3967.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT3967.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT3967.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT3967.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT5104.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT5104.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT5104.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT5104.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT5104.c
+
++++++ STDERR +++++
+relaxng.c:4337:24: warning: incompatible integer to pointer conversion assigning to 'xmlRelaxNGInterleaveGroupPtr *' (aka 'struct _xmlRelaxNGInterleaveGroup **') from 'long' [-Wint-conversion]
+    partitions->groups -= groups;
+                       ^  ~~~~~~
+1 warning generated.
+
++++++ results for relaxng.MUT7460.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+Testing mutant relaxng.MUT7460.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT7460.c
+>> Building libxml2_TF_top30
+Failed to build on relaxng.MUT7460.c
+>> Reverted relaxng.c to original from relaxng.MUT7460.c
+
++++++ STDERR +++++
+relaxng.c:5822:143: error: too few arguments to function call, expected 6, have 5
+                xmlRngPErr(cur->node,XML_RNGP_INTERLEAVE_CREATE_FAILED,"Failed to add %s to hash table\n",(const xmlChar *)tmpname,((void *)0));
+                ~~~~~~~~~~                                                                                                                    ^
+relaxng.c:493:1: note: 'xmlRngPErr' declared here
+xmlRngPErr(xmlRelaxNGParserCtxtPtr ctxt, xmlNodePtr node, int error,
+^
+1 error generated.
+make: *** [Makefile:1394: libxml2_la-relaxng.lo] Error 1
+
++++++ results for relaxng.MUT1914.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT1914.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT1914.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant relaxng.MUT1914.c
+	 - Failing test cases: 2
+	 - Passing test cases: 2641
+	 - Crashing test cases: 0
+>> Reverted relaxng.c to original from relaxng.MUT1914.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT14183.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT14183.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT14183.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT14183.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT14183.c
+
++++++ STDERR +++++
+relaxng.c:10195:53: warning: incompatible integer to pointer conversion passing 'int' to parameter of type 'xmlRelaxNGDefinePtr' (aka 'struct _xmlRelaxNGDefine *') [-Wint-conversion]
+            ret = xmlRelaxNGValidateAttribute(ctxt, !(define));
+                                                    ^~~~~~~~~
+relaxng.c:8900:49: note: passing argument to parameter 'define' here
+                            xmlRelaxNGDefinePtr define)
+                                                ^
+1 warning generated.
+
++++++ results for relaxng.MUT7386.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT7386.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT7386.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT7386.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT7386.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT14755.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT14755.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT14755.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT14755.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT14755.c
+
++++++ STDERR +++++
+relaxng.c:10549:34: warning: incompatible integer to pointer conversion passing 'long' to parameter of type 'xmlRelaxNGValidCtxtPtr' (aka 'struct _xmlRelaxNGValidCtxt *') [-Wint-conversion]
+        xmlRelaxNGDumpValidError((4294967295));
+                                 ^~~~~~~~~~~~
+relaxng.c:2255:49: note: passing argument to parameter 'ctxt' here
+xmlRelaxNGDumpValidError(xmlRelaxNGValidCtxtPtr ctxt)
+                                                ^
+1 warning generated.
+
++++++ results for relaxng.MUT13239.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT13239.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT13239.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT13239.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT13239.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT8243.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT8243.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT8243.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT8243.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT8243.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT6773.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT6773.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT6773.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant relaxng.MUT6773.c
+	 - Failing test cases: 17
+	 - Passing test cases: 2537
+	 - Crashing test cases: 89
+>> Reverted relaxng.c to original from relaxng.MUT6773.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT1359.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT1359.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT1359.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT1359.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT1359.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT2281.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+Testing mutant relaxng.MUT2281.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT2281.c
+>> Building libxml2_TF_top30
+Failed to build on relaxng.MUT2281.c
+>> Reverted relaxng.c to original from relaxng.MUT2281.c
+
++++++ STDERR +++++
+relaxng.c:2338:51: error: too few arguments to function call, expected 5, have 4
+        xmlRelaxNGValidErrorPush(ctxt,err,arg2,dup);
+        ~~~~~~~~~~~~~~~~~~~~~~~~                  ^
+relaxng.c:1727:1: note: 'xmlRelaxNGValidErrorPush' declared here
+xmlRelaxNGValidErrorPush(xmlRelaxNGValidCtxtPtr ctxt,
+^
+1 error generated.
+make: *** [Makefile:1394: libxml2_la-relaxng.lo] Error 1
+
++++++ results for relaxng.MUT2897.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT2897.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT2897.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant relaxng.MUT2897.c
+	 - Failing test cases: 6
+	 - Passing test cases: 2637
+	 - Crashing test cases: 0
+>> Reverted relaxng.c to original from relaxng.MUT2897.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT13477.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT13477.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT13477.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant relaxng.MUT13477.c
+	 - Failing test cases: 63
+	 - Passing test cases: 2580
+	 - Crashing test cases: 0
+>> Reverted relaxng.c to original from relaxng.MUT13477.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT368.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT368.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT368.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT368.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT368.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT4531.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT4531.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT4531.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant relaxng.MUT4531.c
+	 - Failing test cases: 1
+	 - Passing test cases: 2642
+	 - Crashing test cases: 0
+>> Reverted relaxng.c to original from relaxng.MUT4531.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT8288.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT8288.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT8288.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT8288.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT8288.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT14297.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT14297.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT14297.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT14297.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT14297.c
+
++++++ STDERR +++++
+relaxng.c:10266:33: warning: comparison of distinct pointer types ('xmlChar *' (aka 'unsigned char *') and 'void *') [-Wcompare-distinct-pointer-types]
+                    if (content < NULL)
+                        ~~~~~~~ ^ ~~~~
+1 warning generated.
+
++++++ results for relaxng.MUT8767.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+Testing mutant relaxng.MUT8767.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT8767.c
+>> Building libxml2_TF_top30
+Failed to build on relaxng.MUT8767.c
+>> Reverted relaxng.c to original from relaxng.MUT8767.c
+
++++++ STDERR +++++
+relaxng.c:6580:58: error: use of undeclared identifier 'static_cast'
+        if ((ctxt->flags & XML_RELAXNG_IN_EXTERNALREF) &&static_cast<bool>(0)) {
+                                                         ^
+relaxng.c:6580:70: error: use of undeclared identifier 'bool'
+        if ((ctxt->flags & XML_RELAXNG_IN_EXTERNALREF) &&static_cast<bool>(0)) {
+                                                                     ^
+2 errors generated.
+make: *** [Makefile:1394: libxml2_la-relaxng.lo] Error 1
+
++++++ results for relaxng.MUT8095.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT8095.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT8095.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT8095.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT8095.c
+
++++++ STDERR +++++
+relaxng.c:6233:23: warning: use of logical '&&' with constant operand [-Wconstant-logical-operand]
+            if (flags && XML_RELAXNG_IN_LIST) {
+                      ^  ~~~~~~~~~~~~~~~~~~~
+relaxng.c:6233:23: note: use '&' for a bitwise operation
+            if (flags && XML_RELAXNG_IN_LIST) {
+                      ^~
+                      &
+relaxng.c:6233:23: note: remove constant to silence this warning
+            if (flags && XML_RELAXNG_IN_LIST) {
+                     ~^~~~~~~~~~~~~~~~~~~~~~
+relaxng.c:6233:26: warning: converting the result of '<<' to a boolean always evaluates to true [-Wtautological-constant-compare]
+            if (flags && XML_RELAXNG_IN_LIST) {
+                         ^
+relaxng.c:178:33: note: expanded from macro 'XML_RELAXNG_IN_LIST'
+#define XML_RELAXNG_IN_LIST             (1 << 2)
+                                           ^
+2 warnings generated.
+
++++++ results for relaxng.MUT4134.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT4134.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT4134.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT4134.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT4134.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT8619.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT8619.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT8619.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant relaxng.MUT8619.c
+	 - Failing test cases: 9
+	 - Passing test cases: 2634
+	 - Crashing test cases: 0
+>> Reverted relaxng.c to original from relaxng.MUT8619.c
+
++++++ STDERR +++++
+relaxng.c:6474:17: warning: explicitly assigning value of variable of type 'xmlRelaxNGGrammarPtr' (aka 'struct _xmlRelaxNGGrammar *') to itself [-Wself-assign]
+            ret = ret;
+            ~~~ ^ ~~~
+1 warning generated.
+
++++++ results for relaxng.MUT5589.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+Testing mutant relaxng.MUT5589.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT5589.c
+>> Building libxml2_TF_top30
+Failed to build on relaxng.MUT5589.c
+>> Reverted relaxng.c to original from relaxng.MUT5589.c
+
++++++ STDERR +++++
+relaxng.c:4678:56: error: too few arguments to function call, expected 2, have 1
+            docu->schema = xmlRelaxNGParseDocument(root);
+                           ~~~~~~~~~~~~~~~~~~~~~~~     ^
+relaxng.c:3238:22: note: 'xmlRelaxNGParseDocument' declared here
+static xmlRelaxNGPtr xmlRelaxNGParseDocument(xmlRelaxNGParserCtxtPtr ctxt,
+                     ^
+1 error generated.
+make: *** [Makefile:1394: libxml2_la-relaxng.lo] Error 1
+
++++++ results for relaxng.MUT3052.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT3052.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT3052.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant relaxng.MUT3052.c
+	 - Failing test cases: 69
+	 - Passing test cases: 2574
+	 - Crashing test cases: 0
+>> Reverted relaxng.c to original from relaxng.MUT3052.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT12099.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT12099.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT12099.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant relaxng.MUT12099.c
+	 - Failing test cases: 2
+	 - Passing test cases: 2637
+	 - Crashing test cases: 4
+>> Reverted relaxng.c to original from relaxng.MUT12099.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT1964.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT1964.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT1964.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant relaxng.MUT1964.c
+	 - Failing test cases: 1
+	 - Passing test cases: 2642
+	 - Crashing test cases: 0
+>> Reverted relaxng.c to original from relaxng.MUT1964.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT8976.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT8976.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT8976.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT8976.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT8976.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT5684.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT5684.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT5684.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT5684.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT5684.c
+
++++++ STDERR +++++
+relaxng.c:4748:61: warning: incompatible integer to pointer conversion passing 'int' to parameter of type 'const xmlChar *' (aka 'const unsigned char *') [-Wint-conversion]
+                       "Element %s is empty\n", node->name, -1);
+                                                            ^~
+relaxng.c:494:67: note: passing argument to parameter 'str2' here
+           const char *msg, const xmlChar * str1, const xmlChar * str2)
+                                                                  ^
+1 warning generated.
+
++++++ results for relaxng.MUT5593.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT5593.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT5593.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT5593.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT5593.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT9623.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT9623.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT9623.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant relaxng.MUT9623.c
+	 - Failing test cases: 171
+	 - Passing test cases: 2468
+	 - Crashing test cases: 4
+>> Reverted relaxng.c to original from relaxng.MUT9623.c
+
++++++ STDERR +++++
+relaxng.c:7089:33: warning: variable 'ns' is uninitialized when used here [-Wuninitialized]
+                        xmlFree(ns);
+                                ^~
+relaxng.c:7058:39: note: initialize the variable 'ns' to silence this warning
+                    xmlChar *name, *ns;
+                                      ^
+                                       = NULL
+1 warning generated.
+
++++++ results for relaxng.MUT8184.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT8184.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT8184.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT8184.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT8184.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT6245.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT6245.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT6245.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant relaxng.MUT6245.c
+	 - Failing test cases: 2
+	 - Passing test cases: 2641
+	 - Crashing test cases: 0
+>> Reverted relaxng.c to original from relaxng.MUT6245.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT5365.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT5365.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT5365.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT5365.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT5365.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT4724.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT4724.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT4724.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT4724.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT4724.c
+
++++++ STDERR +++++
+
++++++ results for relaxng.MUT8905.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT8905.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT8905.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT8905.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT8905.c
+
++++++ STDERR +++++
+relaxng.c:6718:24: warning: comparison of distinct pointer types ('xmlRelaxNGIncludePtr' (aka 'struct _xmlRelaxNGInclude *') and 'void *') [-Wcompare-distinct-pointer-types]
+    if (ctxt->includes > NULL)
+        ~~~~~~~~~~~~~~ ^ ~~~~
+1 warning generated.
+
++++++ results for relaxng.MUT5172.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT5172.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT5172.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT5172.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT5172.c
+
++++++ STDERR +++++
+relaxng.c:4390:26: warning: incompatible integer to pointer conversion passing 'int' to parameter of type 'xmlRelaxNGParserCtxtPtr' (aka 'struct _xmlRelaxNGParserCtxt *') [-Wint-conversion]
+        xmlRngPErrMemory(-1, "create interleaves\n");
+                         ^~
+relaxng.c:419:42: note: passing argument to parameter 'ctxt' here
+xmlRngPErrMemory(xmlRelaxNGParserCtxtPtr ctxt, const char *extra)
+                                         ^
+1 warning generated.
+
++++++ results for relaxng.MUT10037.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant relaxng.MUT10037.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to relaxng.c with relaxng.MUT10037.c
+>> Building libxml2_TF_top30
+Mutant relaxng.MUT10037.c is not killed (all tcs pass)
+>> Reverted relaxng.c to original from relaxng.MUT10037.c
+
++++++ STDERR +++++
+relaxng.c:7385:30: warning: incompatible integer to pointer conversion passing 'int' to parameter of type 'const xmlChar *' (aka 'const unsigned char *') [-Wint-conversion]
+        doc->URL = xmlStrdup(!((xmlChar *)"in_memory_buffer"));
+                             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./include/libxml/xmlstring.h:41:58: note: passing argument to parameter 'cur' here
+                xmlStrdup                (const xmlChar *cur);
+                                                         ^
+1 warning generated.
+
++++++ results for dict.MUT812.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-relaxng.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-dict.lo
+Testing mutant dict.MUT812.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to dict.c with dict.MUT812.c
+>> Building libxml2_TF_top30
+Failed to build on dict.MUT812.c
+>> Reverted dict.c to original from dict.MUT812.c
+
++++++ STDERR +++++
+dict.c:944:43: error: expected expression
+    s[0] = HASH_ROL(s0, 26) ^ static_cast<unsigned int>(9) ^ (s1 << 9);
+                                          ^
+dict.c:944:31: error: use of undeclared identifier 'static_cast'
+    s[0] = HASH_ROL(s0, 26) ^ static_cast<unsigned int>(9) ^ (s1 << 9);
+                              ^
+2 errors generated.
+make: *** [Makefile:1163: libxml2_la-dict.lo] Error 1
+
++++++ results for dict.MUT298.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-dict.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-dict.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant dict.MUT298.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to dict.c with dict.MUT298.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant dict.MUT298.c
+	 - Failing test cases: 1812
+	 - Passing test cases: 831
+	 - Crashing test cases: 0
+>> Reverted dict.c to original from dict.MUT298.c
+
++++++ STDERR +++++
+
++++++ results for dict.MUT189.c +++++
++++++ STDOUT +++++
+  CC       libxml2_la-dict.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+  CC       libxml2_la-dict.lo
+  CCLD     libxml2.la
+  CCLD     runtest
+Testing mutant dict.MUT189.c on faster50.swtv::core5
+>> Building libxml2_TF_top30
+>> Applied patch to dict.c with dict.MUT189.c
+>> Building libxml2_TF_top30
+>> Saved buggy mutant dict.MUT189.c
+	 - Failing test cases: 138
+	 - Passing test cases: 2505
+	 - Crashing test cases: 0
+>> Reverted dict.c to original from dict.MUT189.c
+>> Cleaning build for libxml2_TF_top30
+
++++++ STDERR +++++
