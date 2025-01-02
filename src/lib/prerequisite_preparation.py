@@ -9,10 +9,11 @@ from lib.file_manager import FileManager
 
 class PrerequisitePreparation(Subject):
     def __init__(
-            self, subject_name, experiment_name, verbose=False
+            self, subject_name, experiment_name, version_limit, verbose=False
         ):
         super().__init__(subject_name, "stage03", verbose)
         self.experiment_name = experiment_name
+        self.version_limit = version_limit
 
         self.fileManager = FileManager(self.name, self.work, self.verbose)
         self.generated_mutants_dir = out_dir / self.name / "generated_mutants"
@@ -32,6 +33,11 @@ class PrerequisitePreparation(Subject):
         self.connect_to_db()
         self.init_tables()
         self.versions_list = self.get_usable_buggy_versions()
+
+        if self.version_limit > 0:
+            # shuffle the list of versions
+            random.shuffle(self.versions_list)
+            self.versions_list = self.versions_list[:self.version_limit]
 
         # 4. Assign versions to machines
         self.versions_assignments = self.assign_works_to_machines(self.versions_list)

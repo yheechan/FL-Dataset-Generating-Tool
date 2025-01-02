@@ -49,7 +49,7 @@
 
 # 3. Prepare prerequisites
 date > ../timer/libxml2_TF_top30/stage03_start-remote.txt
-time python3 prepare_prerequisites.py --subject libxml2_TF_top30 --experiment-name TF_top30 > ../timer/libxml2_TF_top30/stage03.log
+time python3 prepare_prerequisites.py --subject libxml2_TF_top30 --experiment-name TF_top30 --version-limit 240 > ../timer/libxml2_TF_top30/stage03.log
 date > ../timer/libxml2_TF_top30/stage03_end-remote.txt
 
 

@@ -20,13 +20,13 @@ from tqdm import tqdm
 
 MBFL_METHOD = "for_random_mbfl"
 # MBFL_METHOD = "for_sbfl_ranked_mbfl_desc"
-# MBFL_METHOD = "for_sbfl_ranked_mbfl_asc"
-MAX_LINES_FOR_RANDOM = 100
+MAX_LINES_FOR_RANDOM = 50
 SBFL_RANKED_RATE = 0.30
 SBFL_STANDARD = "gp13"
-MUT_CNT_CONFIG = [2, 4, 6, 8, 10]
+MUT_CNT_CONFIG = [2, 6,10]
+EXPERIMENT_REPEAT = 5
 INCLUDE_CCT = False
-APPLY_HEURISTIC = True
+APPLY_HEURISTIC = False
 VERSIONS_TO_REMOVE = []
         
 
@@ -221,8 +221,11 @@ class Analyze:
                     #   - met_rank
                     #   - muse_rank
                     #   - total_number_of_functions
-                    version_data = self.analyze_bug_version_for_mbfl(buggy_version, mtc)
-                    overall_data[mtc][version_data["version"]] = version_data
+                    for iter_num in range(EXPERIMENT_REPEAT):
+                        version_data = self.analyze_bug_version_for_mbfl(buggy_version, mtc)
+                        if version_data["version"] not in overall_data[mtc]:
+                            overall_data[mtc][version_data["version"]] = []
+                        overall_data[mtc][version_data["version"]].append(version_data)
         else:
             with open(mbfl_overal_data_json, "r") as f:
                 overall_data = json.load(f)
@@ -236,7 +239,7 @@ class Analyze:
 
         average_overall_data = {}
         for mtc in overall_data:
-            average_overall_data[mtc] = {}
+            average_overall_data[mtc] = []
             num_failing_tcs = []
             num_utilized_mutants = []
             exec_time = []
@@ -246,28 +249,32 @@ class Analyze:
             met_acc10 = []
             muse_acc5 = []
             muse_acc10 = []
-            for version, data in overall_data[mtc].items():
-                num_failing_tcs.append(data["total_num_of_failing_tcs"])
-                num_utilized_mutants.append(data["total_num_of_utilized_mutants"])
-                exec_time.append(data["total_build_time"] + data["total_tc_execution_time"])
-                met_rank.append(data["met_rank"])
-                muse_rank.append(data["muse_rank"])
-                met_acc5.append(1 if data["met_rank"] <= 5 else 0)
-                met_acc10.append(1 if data["met_rank"] <= 10 else 0)
-                muse_acc5.append(1 if data["muse_rank"] <= 5 else 0)
-                muse_acc10.append(1 if data["muse_rank"] <= 10 else 0)
+            
+            for iter_cnt in range(EXPERIMENT_REPEAT):
+                for version, data_list in overall_data[mtc].items():
+                    num_failing_tcs.append(data_list[iter_cnt]["total_num_of_failing_tcs"])
+                    num_utilized_mutants.append(data_list[iter_cnt]["total_num_of_utilized_mutants"])
+                    exec_time.append(data_list[iter_cnt]["total_build_time"] + data_list[iter_cnt]["total_tc_execution_time"])
+                    met_rank.append(data_list[iter_cnt]["met_rank"])
+                    muse_rank.append(data_list[iter_cnt]["muse_rank"])
+                    met_acc5.append(1 if data_list[iter_cnt]["met_rank"] <= 5 else 0)
+                    met_acc10.append(1 if data_list[iter_cnt]["met_rank"] <= 10 else 0)
+                    muse_acc5.append(1 if data_list[iter_cnt]["muse_rank"] <= 5 else 0)
+                    muse_acc10.append(1 if data_list[iter_cnt]["muse_rank"] <= 10 else 0)
+                
+                iter_data = {
+                    "num_failing_tcs": sum(num_failing_tcs) / len(num_failing_tcs),
+                    "num_utilized_mutants": sum(num_utilized_mutants) / len(num_utilized_mutants),
+                    "exec_time": sum(exec_time) / len(exec_time),
+                    "met_rank": sum(met_rank) / len(met_rank),
+                    "muse_rank": sum(muse_rank) / len(muse_rank),
+                    "met_acc5": sum(met_acc5) / len(met_acc5),
+                    "met_acc10": sum(met_acc10) / len(met_acc10),
+                    "muse_acc5": sum(muse_acc5) / len(muse_acc5),
+                    "muse_acc10": sum(muse_acc10) / len(muse_acc10)
+                }
 
-            average_overall_data[mtc]["num_failing_tcs"] = sum(num_failing_tcs) / len(num_failing_tcs)
-            average_overall_data[mtc]["num_utilized_mutants"] = sum(num_utilized_mutants) / len(num_utilized_mutants)
-            average_overall_data[mtc]["exec_time"] = sum(exec_time) / len(exec_time)
-            average_overall_data[mtc]["met_rank"] = sum(met_rank) / len(met_rank)
-            average_overall_data[mtc]["muse_rank"] = sum(muse_rank) / len(muse_rank)
-            average_overall_data[mtc]["met_acc5"] = sum(met_acc5) / len(met_acc5)
-            average_overall_data[mtc]["met_acc10"] = sum(met_acc10) / len(met_acc10)
-            average_overall_data[mtc]["muse_acc5"] = sum(muse_acc5) / len(muse_acc5)
-            average_overall_data[mtc]["muse_acc10"] = sum(muse_acc10) / len(muse_acc10)
-
-        
+                average_overall_data[mtc].append(iter_data)
         
         # Save overal_data json and csv
         with open(self.type_dir / "mbfl_overall_data.json", "w") as f:
@@ -277,33 +284,77 @@ class Analyze:
         with open(self.type_dir / "mbfl_overall_data.csv", "w") as f:
             writer = csv.writer(f)
             writer.writerow([
-                "mtc", "bug_idx", "version", "buggy_file", "buggy_function", "buggy_lineno",
+                "mtc", "iter_cnt", "bug_idx", "version", "buggy_file", "buggy_function", "buggy_lineno",
                 "total_num_of_failing_tcs", "total_num_of_utilized_mutants",
                 "total_build_time", "total_tc_execution_time",
                 "met_rank", "muse_rank", "total_number_of_functions"
             ])
             for mtc in overall_data:
-                for version in overall_data[mtc]:
-                    data = overall_data[mtc][version]
-                    writer.writerow([
-                        mtc, data["bug_idx"], data["version"], data["buggy_file"], data["buggy_function"],
-                        data["buggy_lineno"], data["total_num_of_failing_tcs"], data["total_num_of_utilized_mutants"],
-                        data["total_build_time"], data["total_tc_execution_time"],
-                        data["met_rank"], data["muse_rank"], data["total_number_of_functions"]
-                    ])
+                for iter_cnt in range(EXPERIMENT_REPEAT):
+                    for version, data_list in overall_data[mtc].items():
+                        data = data_list[iter_cnt]
+                        writer.writerow([
+                            mtc, iter_cnt, data["bug_idx"], data["version"], data["buggy_file"], data["buggy_function"],
+                            data["buggy_lineno"], data["total_num_of_failing_tcs"], data["total_num_of_utilized_mutants"],
+                            data["total_build_time"], data["total_tc_execution_time"],
+                            data["met_rank"], data["muse_rank"], data["total_number_of_functions"]
+                        ])
         
         # Draw a line graph where x-axis is mtc, y-axis is met_acc5, met_acc10, muse_acc5, muse_acc10
         mtc_values = list(average_overall_data.keys())
-        met_acc5_values = [average_overall_data[mtc]["met_acc5"] for mtc in mtc_values]
-        met_acc10_values = [average_overall_data[mtc]["met_acc10"] for mtc in mtc_values]
-        muse_acc5_values = [average_overall_data[mtc]["muse_acc5"] for mtc in mtc_values]
-        muse_acc10_values = [average_overall_data[mtc]["muse_acc10"] for mtc in mtc_values]
+        # average_overall_data[mtc] has EXPERIMENT_REPEAT amount of data
+        # I need to get average, upper, and lower for each mtc on met_acc5, met_acc10, muse_acc5, muse_acc10
+
+        met_acc5_avg = []
+        met_acc5_upper = []
+        met_acc5_lower = []
+        met_acc10_avg = []
+        met_acc10_upper = []
+        met_acc10_lower = []
+        muse_acc5_avg = []
+        muse_acc5_upper = []
+        muse_acc5_lower = []
+        muse_acc10_avg = []
+        muse_acc10_upper = []
+        muse_acc10_lower = []
+        exec_time_avg = []
+        exec_time_upper = []
+        exec_time_lower = []
+        
+        for mtc in average_overall_data:
+            met_acc5_values = [data["met_acc5"] for data in average_overall_data[mtc]]
+            met_acc10_values = [data["met_acc10"] for data in average_overall_data[mtc]]
+            muse_acc5_values = [data["muse_acc5"] for data in average_overall_data[mtc]]
+            muse_acc10_values = [data["muse_acc10"] for data in average_overall_data[mtc]]
+
+            met_acc5_avg.append(sum(met_acc5_values) / len(met_acc5_values))
+            met_acc5_upper.append(max(met_acc5_values))
+            met_acc5_lower.append(min(met_acc5_values))
+            met_acc10_avg.append(sum(met_acc10_values) / len(met_acc10_values))
+            met_acc10_upper.append(max(met_acc10_values))
+            met_acc10_lower.append(min(met_acc10_values))
+            muse_acc5_avg.append(sum(muse_acc5_values) / len(muse_acc5_values))
+            muse_acc5_upper.append(max(muse_acc5_values))
+            muse_acc5_lower.append(min(muse_acc5_values))
+            muse_acc10_avg.append(sum(muse_acc10_values) / len(muse_acc10_values))
+            muse_acc10_upper.append(max(muse_acc10_values))
+            muse_acc10_lower.append(min(muse_acc10_values))
+
+            # get exec_time in hours
+            exec_time_values = [data["exec_time"] / 3600 for data in average_overall_data[mtc]]
+            exec_time_avg.append(sum(exec_time_values) / len(exec_time_values))
+            exec_time_upper.append(max(exec_time_values))
+            exec_time_lower.append(min(exec_time_values))
 
         plt.figure(figsize=(10, 6))
-        plt.plot(mtc_values, met_acc5_values, marker='o', label='Metallaxis acc@5')
-        plt.plot(mtc_values, met_acc10_values, marker='o', label='Metallaxis acc@10')
-        plt.plot(mtc_values, muse_acc5_values, marker='o', label='MUSE acc@5')
-        plt.plot(mtc_values, muse_acc10_values, marker='o', label='MUSE acc@10')
+        plt.plot(mtc_values, met_acc5_avg, marker='o', label='Metallaxis acc@5')
+        # plt.fill_between(mtc_values, met_acc5_lower, met_acc5_upper, alpha=0.2)
+        plt.plot(mtc_values, met_acc10_avg, marker='o', label='Metallaxis acc@10')
+        # plt.fill_between(mtc_values, met_acc10_lower, met_acc10_upper, alpha=0.2)
+        plt.plot(mtc_values, muse_acc5_avg, marker='o', label='MUSE acc@5')
+        # plt.fill_between(mtc_values, muse_acc5_lower, muse_acc5_upper, alpha=0.2)
+        plt.plot(mtc_values, muse_acc10_avg, marker='o', label='MUSE acc@10')
+        # plt.fill_between(mtc_values, muse_acc10_lower, muse_acc10_upper, alpha=0.2)
         plt.xlabel('Max Mutants Per Line')
         plt.ylabel('Accuracy')
         plt.title('Accuracy vs Max Mutants Per Line')
@@ -314,10 +365,10 @@ class Analyze:
         plt.show()
 
         # Draw a line graph where x-axis is mtc, y-axis is exec_time in hours, the data is in seconds
-        exec_time_hours = [average_overall_data[mtc]["exec_time"] / 3600 for mtc in mtc_values]
 
         plt.figure(figsize=(10, 6))
-        plt.plot(mtc_values, exec_time_hours, marker='o', label='Execution Time (hours)')
+        plt.plot(mtc_values, exec_time_avg, marker='o', label='Execution Time (hours)')
+        # plt.fill_between(mtc_values, exec_time_lower, exec_time_upper, alpha=0.2)
         plt.xlabel('Max Mutants Per Line')
         plt.ylabel('Execution Time (hours)')
         plt.title('Execution Time vs Max Mutants Per Line')
@@ -333,6 +384,7 @@ class Analyze:
                 "SBFL_RANKED_RATE": SBFL_RANKED_RATE,
                 "SBFL_STANDARD": SBFL_STANDARD,
                 "MUT_CNT_CONFIG": MUT_CNT_CONFIG,
+                "EXPERIMENT_REPEAT": EXPERIMENT_REPEAT,
                 "INCLUDE_CCT": INCLUDE_CCT,
                 "APPLY_HEURISTIC": APPLY_HEURISTIC,
                 "VERSIONS_TO_REMOVE": VERSIONS_TO_REMOVE
@@ -375,17 +427,6 @@ class Analyze:
                 special=f"ORDER BY line_idx LIMIT {MAX_LINES_FOR_RANDOM}"
             )
         else:
-            """
-            # First get number of lines for the bug_idx
-            num_lines = self.db.read(
-                "line_info",
-                columns="COUNT(line_idx)",
-                conditions={"bug_idx": bug_idx}
-            )
-
-            num_lines = num_lines[0][0]
-            num_lines_for_random = int(num_lines * SBFL_RANKED_RATE)
-            """
             target_line_idx = self.db.read(
                 "line_info",
                 columns="line_idx, file, function, lineno",
@@ -818,335 +859,3 @@ class Analyze:
         print(f"Probability that buggy line is within top-{SBFL_RANKED_RATE * 100}%: {probability_within_top}")
         print(f"Probability that buggy line is within bot-{SBFL_RANKED_RATE * 100}%: {probability_within_bot}")
 
-
-    """       
-    
-    def usable_buggy_versions(self):
-        csv_keys = [
-            "buggy_version_name", "#_failing_TCs", "#_passing_TCs",
-            "#_excluded_failing_TCs", "#_excluded_passing_TCs",
-            "#_CCTs", "#_total_TCs"
-        ]
-        failing_tcs = []
-        passing_tcs = []
-        excluded_failing_tcs = []
-        excluded_passing_tcs = []
-        ccts = []
-        total_tcs = []
-
-        failing_tcs_set = set()
-        passing_tcs_set = set()
-        testsuite = set()
-
-        too_many_failing_tcs = []
-        none_failing_tcs = []
-        non_passing_tcs = []
-
-        with open(self.output_csv, "w") as f:
-            f.write(",".join(csv_keys) + "\n")
-
-            for individual in self.individual_list:
-                individual_name = individual.name
-                print(f"Analyzing {individual_name} on TCs statistics")
-
-                individual = Individual(self.subject_name, self.set_name, individual_name)
-
-                failing_tcs_set.update(individual.failing_tcs_list)
-                passing_tcs_set.update(individual.passing_tcs_list)
-
-                failing_tcs.append(len(individual.failing_tcs_list))
-                passing_tcs.append(len(individual.passing_tcs_list))
-                excluded_failing_tcs.append(len(individual.excluded_failing_tcs_list))
-                excluded_passing_tcs.append(len(individual.excluded_passing_tcs_list))
-                ccts.append(len(individual.ccts_list))
-                total_tcs.append(len(individual.total_tcs_list))
-
-                if len(individual.failing_tcs_list) > 500:
-                    too_many_failing_tcs.append(individual_name)
-                if len(individual.failing_tcs_list) == 0:
-                    none_failing_tcs.append(individual_name)
-                if len(individual.passing_tcs_list) == 0:
-                    non_passing_tcs.append(individual_name)
-
-                f.write(f"{individual_name}, {len(individual.failing_tcs_list)}, {len(individual.passing_tcs_list)}, {len(individual.excluded_failing_tcs_list)}, {len(individual.excluded_passing_tcs_list)}, {len(individual.ccts_list)}, {len(individual.total_tcs_list)}\n")
-
-                testsuite.update(individual.total_tcs_list)
-            
-            with open(self.stat_dir / "total_TCs.txt", "w") as f:
-                testsuite_list = list(testsuite)
-                testsuite_list = sorted(testsuite_list, key=sort_testcase_script_name)
-                content = "\n".join(testsuite_list)
-                f.write(content)
-            
-            print(f"\nTotal individual: {self.set_size}")
-            print(f"Total # of TCs: {len(testsuite)}")
-            print(f"Average # of failing TCs: {sum(failing_tcs) / self.set_size}")
-            print(f"Average # of passing TCs: {sum(passing_tcs) / self.set_size}")
-            print(f"Average # of excluded failing TCs: {sum(excluded_failing_tcs) / self.set_size}")
-            print(f"Average # of excluded passing TCs: {sum(excluded_passing_tcs) / self.set_size}")
-            print(f"Average # of CCTs: {sum(ccts) / self.set_size}")
-            print(f"Average # of total TCs: {sum(total_tcs) / self.set_size}")
-            print(f"Max # of failing TCs: {max(failing_tcs)}")
-            print(f"Max # of passing TCs: {max(passing_tcs)}")
-            print(f"Min # of failing TCs: {min(failing_tcs)}")
-            print(f"Min # of passing TCs: {min(passing_tcs)}")
-            print(f"# of individuals with too many failing TCs (>500): {len(too_many_failing_tcs)}")
-            print(f"# of individuals with none failing TC: {len(none_failing_tcs)}")
-            print(f"# of individuals with non passing TC: {len(non_passing_tcs)}")
-
-    def prerequisite_data(self, removed_initialization_coverage=False):
-        csv_keys = [
-            "buggy_version_name", "#_failing_TCs", "#_passing_TCs",
-            "#_excluded_failing_TCs", "#_excluded_passing_TCs",
-            "#_CCTs", "#_total_TCs",
-            "#_lines_executed_by_failing_TCs", "#_lines_executed_by_passing_TCs", "#_lines_executed_by_CCTs",
-            "#_total_lines_executed", "#_total_lines", "coverage", "coverage (no CCTs)",
-            "#_funcs_executed_by_failing_TCs",
-            "#_lines_executed_on_initialization",
-            "#_funcs_executed_on_initialization",
-            "#_distinct_funcs_executed_by_failing_TCs",
-            "#_distinct_lines_executed_by_failing_TCs",
-            "buggy_func_is_included_in_func_executed_on_initialization", # 2024-08-13 to check whether buggy func/line is included in func/lines executed by intialization code
-            "buggy_line_is_included_in_func_executed_on_initialization",
-            "#_funcs", "#_files"
-        ]
-        failing_tcs = []
-        passing_tcs = []
-        excluded_failing_tcs = []
-        excluded_passing_tcs = []
-        ccts = []
-        total_tcs = []
-        lines_executed_by_failing_tcs = []
-        lines_executed_by_passing_tcs = []
-        lines_executed_by_CCTs = []
-        total_lines_executed = []
-        total_lines = []
-        all_coverage = []
-        all_coverage_noCCTs = []
-        total_funcs_executed_by_failing_tcs = []
-        total_lines_executed_on_initialization = []
-        total_funcs_executed_on_initialization = []
-        total_distinct_funcs_executed_by_failing_tcs = []
-        total_distinct_lines_executed_by_failing_tcs = []
-        total_files = []
-        total_funcs = []
-        total_bugfunc_included_in_initialization = 0 # 2024-08-13 to check whether buggy func/line is included in func/lines executed by intialization code
-        total_bugline_included_in_initialization = 0
-
-
-        with open(self.output_csv, "w") as out_fp:
-            out_fp.write(",".join(csv_keys) + "\n")
-
-            for individual in self.individual_list:
-                print(f"Analyzing {individual.name} for statistics of prerequisites")
-
-                individual = Individual(self.subject_name, self.set_name, individual.name)
-                coverage_summary_file = individual.dir_path / "coverage_summary.csv"
-                assert coverage_summary_file.exists(), f"Coverage summary file {coverage_summary_file} does not exist"
-                buggy_line_key = get_buggy_line_key_from_data(individual.dir_path) # 2024-08-13 to check whether buggy func/line is included in func/lines executed by intialization code
-                buggy_file = buggy_line_key.split("#")[0]
-                buggy_func = buggy_line_key.split("#")[1]
-                buggy_lineno = buggy_line_key.split("#")[-1]
-
-                with open(coverage_summary_file, "r") as cov_sum_fp:
-                    lines = cov_sum_fp.readlines()
-                    assert len(lines) == 2, f"Coverage summary file {coverage_summary_file} is not in correct format"
-
-                    line = lines[1].strip()
-                    info = line.split(",")
-
-                    failing_tcs.append(int(info[0]))
-                    passing_tcs.append(int(info[1]))
-                    excluded_failing_tcs.append(int(info[2]))
-                    excluded_passing_tcs.append(int(info[3]))
-                    ccts.append(int(info[4]))
-                    total_tcs.append(int(info[5]))
-                    lines_executed_by_failing_tcs.append(int(info[6]))
-                    lines_executed_by_passing_tcs.append(int(info[7]))
-                    lines_executed_by_CCTs.append(int(info[8]))
-                    total_lines_executed.append(int(info[9]))
-                    total_lines.append(int(info[10]))
-             
-                    line_key_by_fail = self.get_line_key(individual.dir_path / "coverage_info/lines_executed_by_failing_tc.json")
-                    line_key_by_pass = self.get_line_key(individual.dir_path / "coverage_info/lines_executed_by_passing_tc.json")
-                    line_key_by_CCT = self.get_line_key(individual.dir_path / "coverage_info/lines_executed_by_ccts.json")
-
-                    all_key_set = set(line_key_by_fail) | set(line_key_by_pass) | set(line_key_by_CCT)
-                    key_set_noCCT = set(line_key_by_fail) | set(line_key_by_pass)
-                    coverage = len(all_key_set) / int(info[10])
-                    all_coverage.append(coverage)
-                    coverage_noCCTs = len(key_set_noCCT) / int(info[10])
-                    all_coverage_noCCTs.append(coverage_noCCTs)
-
-                    assert len(all_key_set) == int(info[9]), f"Total lines executed is not equal to the number of lines executed by failing/passing/CCTs"                    
-                    info.append(coverage)
-                    info.append(coverage_noCCTs)
-                    info.insert(0, individual.name)
-
-                # 2024-08-05: Measure # of functions executed by failing TCss
-                lines_executed_by_failing_tcs_dict = get_lines_executed_by_failing_tcs_from_data(individual.dir_path)
-                func_executed_by_failing_tcs_dict = get_file_func_pair_executed_by_failing_tcs(lines_executed_by_failing_tcs_dict)
-                info.append(len(func_executed_by_failing_tcs_dict))
-                # 2024-08-12: measure distinct lines by failing TCs
-                lines_from_initialization = []
-                if removed_initialization_coverage:
-                    lines_from_initialization = get_lines_executed_on_initialization(individual.dir_path)
-                info.append(len(lines_from_initialization))
-                funcs_from_initialization = []
-                bug_func_is_included = 0
-                bug_line_is_included = 0
-                for key in lines_from_initialization:
-                    file_nm = key.split("#")[0]
-                    func = key.split("#")[1]
-                    lineno = int(key.split("#")[-1])
-                    if key not in lines_from_initialization:
-                        lines_from_initialization.append(key)
-                    if (file_nm, func) not in funcs_from_initialization:
-                        funcs_from_initialization.append((file_nm, func))
-                    if buggy_file == file_nm and buggy_func == func: # 2024-08-13 to check whether buggy func/line is included in func/lines executed by intialization code
-                        bug_func_is_included = 1
-                    if buggy_file == file_nm and buggy_func == func and buggy_lineno == lineno:
-                        bug_line_is_included = 1
-                    
-                total_lines_executed_on_initialization.append(len(lines_from_initialization))
-                info.append(len(funcs_from_initialization))
-                total_funcs_executed_on_initialization.append(len(funcs_from_initialization))
-
-                funcs_by_failing_tcs = []
-                distinct_funcs_by_failing_tcs = []
-                distinct_lines_by_failing_tcs = []
-                for key in lines_executed_by_failing_tcs_dict:
-                    file_nm = key.split("#")[0]
-                    func = key.split("#")[1]
-                    lineno = int(key.split("#")[-1])
-                    if (file_nm, func) not in funcs_by_failing_tcs:
-                        funcs_by_failing_tcs.append((file_nm, func))
-                    
-                    if (file_nm, func) not in funcs_from_initialization and (file_nm, func) not in distinct_funcs_by_failing_tcs:
-                        distinct_funcs_by_failing_tcs.append((file_nm, func))
-                    if key not in lines_from_initialization and key not in distinct_lines_by_failing_tcs:
-                        distinct_lines_by_failing_tcs.append(key)
-
-                info.append(len(distinct_funcs_by_failing_tcs))
-                info.append(len(distinct_lines_by_failing_tcs))
-                info.append(bug_func_is_included) # 2024-08-13 to check whether buggy func/line is included in func/lines executed by intialization code
-                info.append(bug_line_is_included)
-
-                total_funcs_executed_by_failing_tcs.append(len(funcs_by_failing_tcs))
-                total_distinct_funcs_executed_by_failing_tcs.append(len(distinct_funcs_by_failing_tcs))
-                total_distinct_lines_executed_by_failing_tcs.append(len(distinct_lines_by_failing_tcs))
-                total_bugfunc_included_in_initialization += bug_func_is_included # 2024-08-13 to check whether buggy func/line is included in func/lines executed by intialization code
-                total_bugline_included_in_initialization += bug_line_is_included
-
-                # 2024-08-05: Measure total # of files/functions of targetted files
-                pp_cov_line_list = get_postprocessed_coverage_csv_file_from_data(individual.dir_path)
-                funcs = []
-                files = []
-                for line in pp_cov_line_list[1:]:
-                    key = line["key"]
-                    file_nm = key.split("#")[0]
-                    func = key.split("#")[1]
-                    lineno = int(key.split("#")[-1])
-                    if func not in funcs:
-                        funcs.append(func)
-                    if file_nm not in files:
-                        files.append(file_nm)
-                total_funcs.append(len(funcs))
-                total_files.append(len(files))
-                info.append(len(funcs))
-                info.append(len(files))
-                
-                out_fp.write(",".join(map(str, info)) + "\n")
-
-        output = ""
-        output += f"\nTotal individual: {self.set_size}\n"
-        output += f"Average # of failing TCs: {sum(failing_tcs) / self.set_size}\n"
-        output += f"Average # of passing TCs: {sum(passing_tcs) / self.set_size}\n"
-        output += f"Average # of excluded failing TCs: {sum(excluded_failing_tcs) / self.set_size}\n"
-        output += f"Average # of excluded passing TCs: {sum(excluded_passing_tcs) / self.set_size}\n"
-        output += f"Average # of CCTs: {sum(ccts) / self.set_size}\n"
-        output += f"Average # of total TCs: {sum(total_tcs) / self.set_size}\n"
-        output += f"Average # of lines executed by failing TCs: {sum(lines_executed_by_failing_tcs) / self.set_size}\n"
-        output += f"Average # of lines executed by passing TCs: {sum(lines_executed_by_passing_tcs) / self.set_size}\n"
-        output += f"Average # of lines executed by CCTs: {sum(lines_executed_by_CCTs) / self.set_size}\n"
-        output += f"Average # of total lines executed: {sum(total_lines_executed) / self.set_size}\n"
-        output += f"Average # of total lines: {sum(total_lines) / self.set_size}\n"
-        output += f"Average coverage: {sum(all_coverage) / self.set_size}\n"
-        output += f"Average coverage (no CCTs): {sum(all_coverage_noCCTs) / self.set_size}\n"
-        output += f"Max # of failing TCs: {max(failing_tcs)}\n"
-        output += f"Max # of passing TCs: {max(passing_tcs)}\n"
-        output += f"Min # of failing TCs: {min(failing_tcs)}\n"
-        output += f"Min # of passing TCs: {min(passing_tcs)}\n"
-        output += f"Max # of lines executed by failing TCs: {max(lines_executed_by_failing_tcs)}\n"
-        output += f"Min # of lines executed by failing TCs: {min(lines_executed_by_failing_tcs)}\n"
-        output += f"Average # of functions executed by failing TCs: {sum(total_funcs_executed_by_failing_tcs) / self.set_size}\n"
-        output += f"Average # of funcs: {sum(total_funcs) / self.set_size}\n"
-        output += f"Average # of files: {sum(total_files) / self.set_size}\n"
-        output += f"Average # lines executed on initialization: {sum(total_lines_executed_on_initialization) / self.set_size}\n"
-        output += f"Average # funcs executed on initialization: {sum(total_funcs_executed_on_initialization) / self.set_size}\n"
-        output += f"Average # distinct funcs executed by failing TCs: {sum(total_distinct_funcs_executed_by_failing_tcs) / self.set_size}\n"
-        output += f"Average # distinct lines executed by failing TCs: {sum(total_distinct_lines_executed_by_failing_tcs) / self.set_size}\n"
-        output += f"# of versions where buggy func is included in func executed on initialization: {total_bugfunc_included_in_initialization}\n"
-        output += f"# of versions where buggy line is included in func executed on initialization: {total_bugline_included_in_initialization}\n"
-
-        print(output)
-        stat_summary_filename = self.output_csv.name.split(".")[0] + "-stats-summary.txt"
-        with open(self.stat_dir / stat_summary_filename, "w") as f:
-            f.write(output)
-
-    def get_line_key(self, file_path):
-        assert file_path.exists(), f"{file_path} does not exist"
-        with open(file_path, "r") as fp:
-            data = json.load(fp)
-            key_list = list(data.keys())
-        return key_list
-
-    def crashed_buggy_mutants(self,):
-        stat_dict = {}
-        self.individual_list = get_files_in_dir(self.set_dir)
-
-        for individual_file in self.individual_list:
-            filename = individual_file.name
-            info = filename.split("-")
-            version_name = info[0]
-            target_file = version_name.split(".")[0] + "." + version_name.split(".")[2]
-            crash_type = info[1]
-            stage = info[2]
-
-            if target_file not in stat_dict:
-                stat_dict[target_file] = {}
-            
-            if stage not in stat_dict[target_file]:
-                stat_dict[target_file][stage] = {}
-            
-            if crash_type not in stat_dict[target_file][stage]:
-                stat_dict[target_file][stage][crash_type] = 0
-            stat_dict[target_file][stage][crash_type] += 1
-
-            
-            # with open(individual_file, "r") as fp:
-            #     lines = fp.readlines()
-            #     line_info = lines[0].strip().split(",")
-            #     line_name = line_info[0]
-            #     line_crash_type = line_info[1]
-            #     line_exit_num = line_info[2]
-
-            #     crash_id = f"{line_crash_type}:{line_exit_num}"
-            #     if crash_id not in stat_dict[target_file]:
-            #         stat_dict[target_file][crash_id] = 0
-            #     stat_dict[target_file][crash_id] += 1
-        
-        txt_name = self.output_csv.name.split(".")[0] + ".json"
-        self.output_json = self.stat_dir / txt_name
-
-        with open(self.output_json, "w") as fp:
-            print(json.dumps(stat_dict, indent=2))
-            json.dump(stat_dict, fp, ensure_ascii=False, indent=2)
-            # for target in stat_dict:
-            #     fp.write(f"file: {target}\n")
-            #     print(f"file: {target}")
-            #     for crash_id in stat_dict[target]:
-            #         fp.write(f"\tcrash id: {crash_id}, count: {stat_dict[target][crash_id]}\n")
-            #         print(f"\tcrash id: {crash_id}, count: {stat_dict[target][crash_id]}")
-                
-    """
