@@ -147,13 +147,43 @@ class WorkerStage04(Worker):
                 line_info["sbfl_data"][form_name] = sbfl_value
         
     
-    def write_sbfl_features(self):
-        for line_idx, line_info in enumerate(self.line_data):
-            self.db.update(
-                "line_info",
-                set_values=line_info["sbfl_data"],
-                conditions={
-                    "bug_idx": self.bug_idx,
-                    "line_idx": line_idx
-                }
-            )
+    def write_sbfl_features(self, batch_size=250):
+        """
+        Optimized update for line_info using CASE and batched queries, 
+        where line_idx is sequential and corresponds to the list index in line_data.
+        """
+        for i in range(0, len(self.line_data), batch_size):
+            batch = self.line_data[i:i + batch_size]
+
+            # Build SET clauses for each column in sbfl_data
+            set_clauses = []
+            for key in batch[0]["sbfl_data"].keys():  # Iterate over sbfl_data keys
+                case_clause = " ".join(
+                    [f"WHEN {idx} THEN %s" for idx, _ in enumerate(batch, start=i)]
+                )
+                set_clauses.append(f"{key} = CASE line_idx {case_clause} END")
+
+            set_clause_str = ", ".join(set_clauses)
+
+            # Prepare WHERE clause
+            where_clause = f"line_idx BETWEEN {i} AND {i + len(batch) - 1}"
+
+            # Construct query
+            query = f"""
+            UPDATE line_info
+            SET {set_clause_str}
+            WHERE bug_idx = %s AND {where_clause};
+            """
+
+            # Prepare values for placeholders
+            values = []
+            for key in batch[0]["sbfl_data"].keys():
+                values.extend(line["sbfl_data"][key] for line in batch)
+
+            values.append(self.bug_idx)  # Add bug_idx for WHERE clause
+
+            # Execute the query
+            self.db.cursor.execute(query, values)
+
+        # Commit after all batches are processed
+        self.db.commit()

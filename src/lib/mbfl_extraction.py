@@ -46,8 +46,7 @@ class MBFLExtraction(Subject):
         self.versions_list = self.get_sbfl_buggy_version()
 
         # 3. filter versions
-        if self.remain_one_bug_per_line_flag == True: # 2024-08-16 implement flag for remaining one bug per line
-            self.versions_list = self.remain_one_bug_per_line()
+        self.versions_list = self.remain_one_bug_per_line()
         
 
         print(f">> MBFL extraction on {len(self.versions_list)} of buggy versions <<")
@@ -145,13 +144,21 @@ class MBFLExtraction(Subject):
         included_bug_idx = []
         included_versions = []
         past_tested_line_idx = {}
+        perfile_all_idx = {}
 
         # shuffle self.versions_list
         random.shuffle(self.versions_list)
 
         for version in self.versions_list:
             bug_idx = self.get_bug_idx(self.name, self.experiment_name, version.name)
-            res = self.db.read("bug_info", columns="buggy_line_idx, buggy_file, mbfl, sbfl", conditions={"bug_idx": bug_idx})
+            res = self.db.read(
+                "bug_info",
+                columns="buggy_line_idx, buggy_file, mbfl, sbfl",
+                conditions={
+                    "bug_idx": bug_idx,
+                    "sbfl": True
+                }
+            )
             assert len(res) == 1, f"Error: {len(res)} rows are returned for {version.name}"
             line_idx, buggy_file, mbfl, sbfl = res[0]
             
@@ -169,16 +176,37 @@ class MBFLExtraction(Subject):
             if buggy_file in past_tested_line_idx and line_idx in past_tested_line_idx[buggy_file]:
                 continue
 
+
             if buggy_file not in perfile_include_idx:
                 perfile_include_idx[buggy_file] = []
+                perfile_all_idx[buggy_file] = []
+
+            # uf renaub one bug per line, then skip the line if it is already included
+            if self.remain_one_bug_per_line_flag \
+                and line_idx in perfile_include_idx[buggy_file]:
+                continue
             
             if line_idx not in perfile_include_idx[buggy_file]:
                 perfile_include_idx[buggy_file].append(line_idx)
-                included_bug_idx.append(bug_idx)
-                included_versions.append(version)
+            
+            included_bug_idx.append(bug_idx)
+            included_versions.append(version)
+            perfile_all_idx[buggy_file].append(line_idx)
             
             if self.version_limit != 0 and len(included_versions) >= self.version_limit:
                 break
+
+       
+        print(f"Remained versions: {len(included_versions)}")
+        print(f"Per file count: {len(perfile_include_idx)}")
+        for file, line_idx_list in perfile_include_idx.items():
+            print(f"{file}: {len(line_idx_list)}")
+        
+        print(f"\ninclude_bug_idx: {len(included_bug_idx)}")
+        for file, line_idx_list in perfile_all_idx.items():
+            print(f"{file}: {len(line_idx_list)}")
+        
+        # exit() # UNCOMMENT THIS TO CHECK THE NUMBER OF VERSIONS PER FILE BEFORE TESTING
 
 
         special_str = f"WHERE bug_idx IN ({','.join([str(bug_idx) for bug_idx in included_bug_idx])})"
@@ -188,10 +216,6 @@ class MBFLExtraction(Subject):
             special=special_str
         )
         
-        print(f"Remained versions: {len(included_versions)}")
-        print(f"Per file count: {len(perfile_include_idx)}")
-        for file, line_idx_list in perfile_include_idx.items():
-            print(f"{file}: {len(line_idx_list)}")
         
         self.db.__del__()
 

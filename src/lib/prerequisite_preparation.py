@@ -34,7 +34,7 @@ class PrerequisitePreparation(Subject):
         self.init_tables()
         self.versions_list = self.get_usable_buggy_versions()
 
-        if self.version_limit > 0:
+        if self.version_limit > 0 and len(self.versions_list) > self.version_limit:
             # shuffle the list of versions
             random.shuffle(self.versions_list)
             self.versions_list = self.versions_list[:self.version_limit]

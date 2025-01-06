@@ -958,7 +958,7 @@ class WorkerStage05(Worker):
 
         # 5. Generate mutants
         for target_file, mutant_dir, target_file_str in self.targetfile_and_mutantdir:
-            filename = target_file_str
+            filename = "/".join(target_file_str.split("/")[1:])
             if "libxml2" in self.name:
                 filename = target_file.name
             # STRUCTURE: self.file2lineno_selected[filename].append((line_idx, lineno))
@@ -1095,6 +1095,8 @@ class WorkerStage05(Worker):
             target_file_identity = target_file_str
             if "libxml2" in self.name:
                 target_file_identity = target_file_str.split("/")[-1]
+            else:
+                target_file_identity = "/".join(target_file_str.split("/")[1:])
 
             target_file_name = target_file_str.split("/")[-1]
             code_name = ".".join(target_file_name.split(".")[:-1])

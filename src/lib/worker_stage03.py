@@ -116,7 +116,7 @@ class WorkerStage03(Worker):
         }
 
         # Make buggy line key and write to bug_info table
-        self.buggy_line_key = self.make_key(self.target_code_file, self.buggy_lineno)
+        self.buggy_line_key = self.make_key(self.target_code_file, self.buggy_lineno, for_buggy_line_key=True)
         print_command([">> buggy_line_key: ", self.buggy_line_key], self.verbose)
         self.buggy_line_idx = -1
 

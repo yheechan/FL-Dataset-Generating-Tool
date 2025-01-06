@@ -56,6 +56,7 @@ class BuggyMutantCollection(Subject):
             # self.targetfile_and_mutantdir format: (target_file, its mutants_dir)
             self.generate_mutants()
         self.clean_build()
+        # exit() THIS WAS TO CHECK WHETHER MUTATIONS WERE GENERATED CORRECTLY
 
         # 5. Get mutants: self.mutants_list
         # self.mutant_list format: [(target_file, mutant)]
@@ -404,7 +405,7 @@ class BuggyMutantCollection(Subject):
             '-o', str(mutant_dir),
             # '-ll', '1',
             # '-l', '2',
-            '-ll', '3', # limit on line
+            '-ll', '10', # limit on line
             '-l', '20', # limit on mutant operator
             '-d', unused_ops,
             '-p', str(self.compile_command_file)

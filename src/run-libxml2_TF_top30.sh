@@ -48,24 +48,25 @@
 
 
 # 3. Prepare prerequisites
-date > ../timer/libxml2_TF_top30/stage03_start-remote.txt
-time python3 prepare_prerequisites.py --subject libxml2_TF_top30 --experiment-name TF_top30 --version-limit 240 > ../timer/libxml2_TF_top30/stage03.log
-date > ../timer/libxml2_TF_top30/stage03_end-remote.txt
+# date > ../timer/libxml2_TF_top30/stage03_start-remote.txt
+# time python3 prepare_prerequisites.py --subject libxml2_TF_top30 --experiment-name TF_top30 --version-limit 240 > ../timer/libxml2_TF_top30/stage03.log
+# date > ../timer/libxml2_TF_top30/stage03_end-remote.txt
 
 
-# Number of tasks (assigned_works): 128
-# Number of tasks (works): 1225
-# Number of tasks (repo): 128
-# Number of tasks (configurations): 16
-# Number of tasks (src): 16
-# Number of tasks (tools): 16
-# Number of tasks (configurations): 16
+# Number of buggy versions: 1694
+# Number of tasks (assigned_works): 240
+# Number of tasks (works): 240
+# Number of tasks (repo): 240
+# Number of tasks (configurations): 30
+# Number of tasks (src): 30
+# Number of tasks (tools): 30
+# Number of tasks (configurations): 30
 
-# sec: 3268.8114070892334
-# min: 54.48019011815389
-# hour: 0.9080031686358983
+# sec: 4241.871814489365
+# min: 70.69786357482275
+# hour: 1.1782977262470458
 
-# 1223 valid prerequisites
+# 238 valid prerequisites
 
 
 # time python3 validator.py --subject jsoncpp --set-name prerequisite_data --validate-prerequisite-data
@@ -81,28 +82,28 @@ date > ../timer/libxml2_TF_top30/stage03_end-remote.txt
 # time python3 extract_sbfl_features.py --subject libxml2_TF_top30 --experiment-name TF_top30 --target-set-name prerequisite_data > ../timer/libxml2_TF_top30/stage04.log
 # date > ../timer/libxml2_TF_top30/stage04_end-remote.txt
 
-# Number of tasks (assigned_works): 128
-# Number of tasks (works): 1223
-# Number of tasks (repo): 128
-# Number of tasks (configurations): 16
-# Number of tasks (src): 16
-# Number of tasks (tools): 16
-# Number of tasks (configurations): 16
+# Number of tasks (assigned_works): 240
+# Number of tasks (works): 238
+# Number of tasks (repo): 240
+# Number of tasks (configurations): 30
+# Number of tasks (src): 30
+# Number of tasks (tools): 30
+# Number of tasks (configurations): 30
 
-# sec: 338.69401955604553
-# min: 5.644900325934092
-# hour: 0.09408167209890153
+# sec: 342.04348278045654
+# min: 5.700724713007609
+# hour: 0.0950120785501268
 
-# 1223 valid SBFL features
+# 238 valid SBFL features
 
 
 # ===============================
 
 # 5. Extract MBFL features
 
-# date > ../timer/libxml2_TF_top30/stage05_start-remote.txt
-# time python3 extract_mbfl_features.py --subject libxml2_TF_top30 --experiment-name TF_top30 --target-set-name prerequisite_data --trial trial1 --parallel-cnt 3 --dont-terminate-leftovers --remain-one-bug-per-line --version-limit 240 > ../timer/libxml2_TF_top30/stage05.log
-# date > ../timer/libxml2_TF_top30/stage05_end-remote.txt
+date > ../timer/libxml2_TF_top30/stage05_start-remote.txt
+time python3 extract_mbfl_features.py --subject libxml2_TF_top30 --experiment-name TF_top30 --target-set-name prerequisite_data --trial trial1 --parallel-cnt 3 --dont-terminate-leftovers --remain-one-bug-per-line --version-limit 240 > ../timer/libxml2_TF_top30/stage05.log
+date > ../timer/libxml2_TF_top30/stage05_end-remote.txt
 
 # sec: 244.33251810073853
 # min: 4.072208635012308

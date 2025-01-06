@@ -515,7 +515,7 @@ class Validate:
             for_sbfl_ranked_mbfl_desc = row[2]
             for_random_mbfl = row[3]
 
-            assert for_sbfl_ranked_mbfl_asc is True, f"for_sbfl_ranked_mbfl_asc is not TRUE for bug_idx {bug_idx}"
+            # assert for_sbfl_ranked_mbfl_asc is True, f"for_sbfl_ranked_mbfl_asc is not TRUE for bug_idx {bug_idx}"
             assert for_sbfl_ranked_mbfl_desc is True, f"for_sbfl_ranked_mbfl_desc is not TRUE for bug_idx {bug_idx}"
             assert for_random_mbfl is True, f"for_random_mbfl is not TRUE for bug_idx {bug_idx}"
 

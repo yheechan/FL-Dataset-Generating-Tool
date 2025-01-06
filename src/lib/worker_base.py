@@ -257,7 +257,7 @@ class Worker:
 
         self.line2function_dict = line2function_dict
     
-    def make_key(self, target_code_file, buggy_lineno):
+    def make_key(self, target_code_file, buggy_lineno, for_buggy_line_key=False):
         # This was include because in case of libxml2
         # gcovr makes target files as <target-file>.c
         # instead of libxml2/<target-file>.c 2024-12-18
@@ -279,6 +279,8 @@ class Worker:
 
         if len(model_file.split("/")) == 1:
             filename = target_code_file.split("/")[-1]
+        elif for_buggy_line_key:
+            filename = "/".join(target_code_file.split("/")[1:])
         else:
             filename = target_code_file
 
@@ -319,7 +321,7 @@ class Worker:
         if key_type == 0:
             buggy_filename = target_code_file.split("/")[-1]
         else:
-            buggy_filename = target_code_file
+            buggy_filename = "/".join(target_code_file.split("/")[1:])
         
         executed_buggy_line = False
         for key, tcs_list in lines_executed_by_failing_tc_json.items():
@@ -362,7 +364,9 @@ class Worker:
         self.target_gcno_gcda = []
         for target_file in self.targeted_files:
             target_file = target_file.split("/")[-1]
-            if self.subject_lang == "C":
+            if "uriparser" in self.name or "zlib_ng" in self.name: # uriparser's gcno and gcda files include .c extension
+                filename = target_file
+            elif self.subject_lang == "C":
                 # get filename without extension
                 # remember the filename can be x.y.cpp
                 filename = ".".join(target_file.split(".")[:-1])
@@ -418,7 +422,8 @@ class Worker:
         cmd.extend([
             "--filter", self.filtered_files,
             "--json", "-o", raw_cov_file.__str__(),
-            "--gcov-ignore-parse"
+            "--gcov-ignore-parse",
+            "--gcov-ignore-errors=no_working_dir_found"
         ])
         print_command(cmd, self.verbose)
         sp.check_call(cmd, cwd=cov_cwd, stderr=sp.PIPE, stdout=sp.PIPE)
@@ -437,6 +442,8 @@ class Worker:
         model_file = cov_data["files"][0]["file"]
         if len(model_file.split("/")) == 1:
             target_file = target_file.split("/")[-1]
+        else:
+            target_file = "/".join(target_file.split("/")[1:])
         
         file_exists = False
         for file in cov_data["files"]:
