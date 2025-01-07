@@ -18,15 +18,15 @@ from lib.config import set_seed
 from tqdm import tqdm
 
 
-MBFL_METHOD = "for_random_mbfl"
-# MBFL_METHOD = "for_sbfl_ranked_mbfl_desc"
+# MBFL_METHOD = "for_random_mbfl"
+MBFL_METHOD = "for_sbfl_ranked_mbfl_desc"
 MAX_LINES_FOR_RANDOM = 50
 SBFL_RANKED_RATE = 0.30
 SBFL_STANDARD = "gp13"
-MUT_CNT_CONFIG = [2, 6, 10]
+MUT_CNT_CONFIG = [2, 4, 6, 8, 10]
 EXPERIMENT_REPEAT = 5
 INCLUDE_CCT = False
-APPLY_HEURISTIC = False
+APPLY_HEURISTIC = True
 VERSIONS_TO_REMOVE = []
         
 
@@ -435,7 +435,7 @@ class Analyze:
                     MBFL_METHOD: True
                 },
                 # special=f"ORDER BY {SBFL_STANDARD} LIMIT {num_lines_for_random}"
-                special=f"ORDER BY {SBFL_STANDARD}"
+                # special=f"ORDER BY {SBFL_STANDARD}"
             )
         
         debug_print(self.verbose, f">> Selected {len(target_line_idx)} lines for MBFL analysis")
@@ -475,12 +475,14 @@ class Analyze:
         if APPLY_HEURISTIC and mtc == MUT_CNT_CONFIG[-1]:
             buggy_line_f2p = 0
             if buggy_line_idx not in lines_idx2mutant_idx:
-                VERSIONS_TO_REMOVE.append(version)
+                if version not in VERSIONS_TO_REMOVE:
+                    VERSIONS_TO_REMOVE.append(version)
             else:
                 for buggy_line_mutants in lines_idx2mutant_idx[buggy_line_idx]:
                     buggy_line_f2p += buggy_line_mutants["f2p"]
                 if buggy_line_f2p == 0:
-                    VERSIONS_TO_REMOVE.append(version)
+                    if version not in VERSIONS_TO_REMOVE:
+                        VERSIONS_TO_REMOVE.append(version)
 
         # Measure MBFL score for targetted lines
         mtc_version_data = self.measure_mbfl_scores(line_idx2line_info, lines_idx2mutant_idx, total_num_of_failing_tcs, mtc)
@@ -814,7 +816,6 @@ class Analyze:
 
         # For each buggy version with MBFL feature
         within_top_idx = 0
-        within_bot_idx = 0
         for buggy_version in tqdm(target_buggy_version_list, desc="Analyzing buggy versions for MBFL"):
             bug_idx, version, buggy_file, buggy_function, buggy_lineno, buggy_line_idx = buggy_version
 
@@ -838,24 +839,12 @@ class Analyze:
             )
             top_line_idx_list = [line_idx[0] for line_idx in top_line_idx_list]
 
-            bot_line_idx_list = self.db.read(
-                "line_info",
-                columns="line_idx",
-                conditions={
-                    "bug_idx": bug_idx,
-                },
-                special=f"ORDER BY {SBFL_STANDARD} ASC LIMIT {num_lines_for_random}"
-            )
-            bot_line_idx_list = [line_idx[0] for line_idx in bot_line_idx_list]
 
             if buggy_line_idx in top_line_idx_list:
                 within_top_idx += 1
-            if buggy_line_idx in bot_line_idx_list:
-                within_bot_idx += 1
+
             
         probability_within_top = within_top_idx / len(target_buggy_version_list)
-        probability_within_bot = within_bot_idx / len(target_buggy_version_list)
 
         print(f"Probability that buggy line is within top-{SBFL_RANKED_RATE * 100}%: {probability_within_top}")
-        print(f"Probability that buggy line is within bot-{SBFL_RANKED_RATE * 100}%: {probability_within_bot}")
 

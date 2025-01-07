@@ -13,10 +13,14 @@ from ml.dataset import FL_Dataset
 from ml.mlp_model import MLP_Model
 from ml.engine_base import EngineBase
 
+from lib.experiment import Experiment
+from lib.database import CRUD
+from lib.susp_score_formula import *
+
 class Trainer(EngineBase):
     def __init__(self, 
                  # config param
-                 project_name, dataset_pair_list,
+                 subject_name, experiment_name,
                  train_ratio, validate_ratio, test_ratio,
                  random_seed=42,
                  # training param
@@ -29,8 +33,8 @@ class Trainer(EngineBase):
 
         self.params = {
             "config_param": {
-                "project_name": project_name,
-                "dataset_pair_list": dataset_pair_list,
+                "subject_name": subject_name,
+                "experiment_name": experiment_name,
                 "train_ratio": train_ratio,
                 "validate_ratio": validate_ratio,
                 "test_ratio": test_ratio,
@@ -51,14 +55,22 @@ class Trainer(EngineBase):
         # set random seed
         self.set_random_seed(self.params["config_param"]["random_seed"])
 
-        self.project_name = project_name
-        self.project_out_dir = self.get_project_dir(self.project_name)
-        assert self.project_out_dir == None, f"Project {self.project_name} already exists."
-        
-        self.project_out_dir, \
-        self.model_line_susp_score_dir, \
-        self.model_function_susp_score_dir, \
-        self.bug_keys_dir = self.initialize_project_directory(self.project_name)
+        self.experiment = Experiment()
+        # Settings for database
+        self.host = self.experiment.experiment_config["database"]["host"]
+        self.port = self.experiment.experiment_config["database"]["port"]
+        self.user = self.experiment.experiment_config["database"]["user"]
+        self.password = self.experiment.experiment_config["database"]["password"]
+        self.database = self.experiment.experiment_config["database"]["database"]
+
+        self.db = CRUD(
+            host=self.host,
+            port=self.port,
+            user=self.user,
+            password=self.password,
+            database=self.database
+        )
+
 
     def run(self):
         # 0. Save Parameter as json

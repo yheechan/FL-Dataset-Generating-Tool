@@ -96,27 +96,27 @@
 
 # 5. Extract MBFL features
 
-date > ../timer/zlib_ng_TF_bot30/stage05_start-remote.txt
-time python3 extract_mbfl_features.py --subject zlib_ng_TF_bot30 --experiment-name TF_bot30 --target-set-name prerequisite_data --trial trial1 --parallel-cnt 3 --dont-terminate-leftovers --version-limit 240 --remain-one-bug-per-line > ../timer/zlib_ng_TF_bot30/stage05.log
-date > ../timer/zlib_ng_TF_bot30/stage05_end-remote.txt
+# date > ../timer/zlib_ng_TF_bot30/stage05_start-remote.txt
+# time python3 extract_mbfl_features.py --subject zlib_ng_TF_bot30 --experiment-name TF_bot30 --target-set-name prerequisite_data --trial trial1 --parallel-cnt 3 --dont-terminate-leftovers --version-limit 240 --remain-one-bug-per-line > ../timer/zlib_ng_TF_bot30/stage05.log
+# date > ../timer/zlib_ng_TF_bot30/stage05_end-remote.txt
 
 
 # Number of tasks (assigned_works): 240
-# Number of tasks (works): 167
+# Number of tasks (works): 180
 # Number of tasks (repo): 240
 # Number of tasks (configurations): 30
 # Number of tasks (src): 30
 # Number of tasks (tools): 30
 # Number of tasks (configurations): 30
 
-# sec: 244.33251810073853
-# min: 4.072208635012308
-# hour: 0.06787014391687181
+# sec: 12556.776431798935
+# min: 209.27960719664893
+# hour: 3.487993453277482
 
 
-# extracted 148 valid MBFL features
+# extracted 180 valid MBFL features
 
 
-# python3 validator.py --subject zlib_ng_TF_top30 --experiment-name TF_top30 --validation-criteria 0
-# python3 analyzer.py --subject zlib_ng_TF_top30 --experiment-name TF_top30 --analysis-criteria 1
-# python3 analyzer.py --subject zlib_ng_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name 
+# python3 validator.py --subject zlib_ng_TF_bot30 --experiment-name TF_bot30 --validation-criteria 0
+# python3 analyzer.py --subject zlib_ng_TF_bot30 --experiment-name TF_bot30 --analysis-criteria 1
+# python3 analyzer.py --subject zlib_ng_TF_bot30 --experiment-name TF_bot30 --analysis-criteria 2 --type-name 

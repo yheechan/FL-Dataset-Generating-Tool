@@ -5,33 +5,40 @@ from ml.postprocessor import Postprocessor
 from ml.trainer import Trainer
 from ml.inference import Inference
 
-def handle_postprocess(args):
-        if len(args.subject2setname_pair) == 0:
-            print("Error: No subject2setname pair is provided.")
-            print("Example: --subject2setname-pair jsoncpp:FL-dataset-jsoncpp-240803-v2 libxml2:FL-dataset-libxml2")
-            exit(1)
-        pair_list = [pair.split(":") for pair in args.subject2setname_pair]
-        
-        for subject, set_name in pair_list:
-            print(f"Postprocessing FL features for {subject}...")
-            postprocessor = Postprocessor(subject, set_name)
-            postprocessor.run()
-            print()
+MBFL_METHOD = "for_random_mbfl"
+# MBFL_METHOD = "for_sbfl_ranked_mbfl_desc"
+MAX_LINES_FOR_RANDOM = 50
+SBFL_RANKED_RATE = 0.30
+SBFL_STANDARD = "gp13"
+MUT_CNT_CONFIG = [2, 4, 6, 8, 10]
+EXPERIMENT_REPEAT = 5
+INCLUDE_CCT = False
+APPLY_HEURISTIC = True
+VERSIONS_TO_REMOVE = []
+
+def handle_feature_preparation(args):
+    postprocessor = Postprocessor(
+        args.subject, args.experiment_name,
+        MBFL_METHOD,
+        MUT_CNT_CONFIG[-1],
+        include_cct=INCLUDE_CCT
+    )
+    postprocessor.run()
 
 def handle_train(args):
-        # Target dataset
-        if len(args.subject2setname_pair) == 0:
-            print("Error: No subject2setname pair is provided.")
-            print("Example: --subject2setname-pair jsoncpp:FL-dataset-jsoncpp-240803-v2 libxml2:FL-dataset-libxml2")
-            exit(1)
-        pair_list = [pair.split(":") for pair in args.subject2setname_pair]
+        # # Target dataset
+        # if len(args.subject2setname_pair) == 0:
+        #     print("Error: No subject2setname pair is provided.")
+        #     print("Example: --subject2setname-pair jsoncpp:FL-dataset-jsoncpp-240803-v2 libxml2:FL-dataset-libxml2")
+        #     exit(1)
+        # pair_list = [pair.split(":") for pair in args.subject2setname_pair]
 
-        # Project name
-        if args.project_name == None:
-            print("Error: Project name is not provided.")
-            print("Example: --project-name FL-model-240803-v1")
-            exit(1)
-        project_name = args.project_name
+        # # Project name
+        # if args.project_name == None:
+        #     print("Error: Project name is not provided.")
+        #     print("Example: --project-name FL-model-240803-v1")
+        #     exit(1)
+        # project_name = args.project_name
 
         # Train, validate, test ratio
         train_ratio, validate_ratio, test_ratio = args.train_validate_test_ratio
@@ -45,9 +52,12 @@ def handle_train(args):
         if torch.cuda.is_available() and args.device == "cpu":
             device = "cuda"
         
+        subject_name = args.subject
+        experiment_name = args.experiment_name
+
         trainer = Trainer(
             # config param
-            project_name, pair_list,
+            subject_name, experiment_name,
             train_ratio, validate_ratio, test_ratio,
             random_seed=args.random_seed,
             # training param
@@ -98,21 +108,31 @@ def main():
     parser = make_parser()
     args = parser.parse_args()
 
-    if args.postprocess_fl_features == True:
-        handle_postprocess(args)
-    elif args.train == True:
+    if args.prepare_fl_features:
+        handle_feature_preparation(args)
+    elif args.train:
         handle_train(args)
-    elif args.inference == True:
-         handle_inference(args)
+
+    # if args.postprocess_fl_features == True:
+    #     handle_postprocess(args)
+    # elif args.train == True:
+    #     handle_train(args)
+    # elif args.inference == True:
+    #      handle_inference(args)
         
         
 
 def make_parser():
     parser = argparse.ArgumentParser(description="Copy subject to working directory")
-    parser.add_argument("--subject2setname-pair", type=str, nargs="+", help="Subject name and its FL dataset directory file name pair(s). EX: jsoncpp:FL-dataset-jsoncpp-240803-v2 libxml2:FL-dataset-libxml2", required=True)
 
-    # 1. Postprocess FL features
-    parser.add_argument("--postprocess-fl-features", action="store_true", help="Formulate FL dataset with features for machine learning.")
+    parser.add_argument("--subject", type=str, help="Subject name", required=True)
+    parser.add_argument("--experiment-name", type=str, help="Experiment name", required=True)
+
+    
+    # parser.add_argument("--subject2setname-pair", type=str, nargs="+", help="Subject name and its FL dataset directory file name pair(s). EX: jsoncpp:FL-dataset-jsoncpp-240803-v2 libxml2:FL-dataset-libxml2", required=True)
+
+    # 1. Prepare FL features
+    parser.add_argument("--prepare-fl-features", action="store_true", help="Prepare FL features.")
 
     # 2. Train the model
     parser.add_argument("--train", action="store_true", help="Train the model.")
