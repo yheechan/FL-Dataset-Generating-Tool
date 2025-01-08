@@ -4,7 +4,7 @@ from lib.utils import *
 
 class Experiment():
     def __init__(self):
-        self.experiment_config = self.read_experiment_config()
+        self.experiment_config = self.read_experiment_config("config.json")
         self.use_distributed_machines = self.experiment_config["use_distributed_machines"]
 
         # self.machines format: [(machine_name, core_idx, homedirectory)]
@@ -21,9 +21,9 @@ class Experiment():
             machineCores_dict[machine_name].append((core_idx, homedirectory))
         return machineCores_dict
     
-    def read_experiment_config(self):
+    def read_experiment_config(self, config_file):
         configs = None
-        config_json = configs_dir / "config.json"
+        config_json = configs_dir / config_file
         
         with config_json.open() as f:
             configs = json.load(f)
@@ -69,3 +69,6 @@ class Experiment():
         print(f"Number of machines: {len(self.machineCores_list)}")
         for machine in self.machineCores_list:
             print(f"\t{machine}")
+
+    def init_analysis_config(self):
+        self.analysis_config = self.read_experiment_config("analysis_config.json")

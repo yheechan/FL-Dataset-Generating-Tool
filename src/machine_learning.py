@@ -15,13 +15,11 @@ EXPERIMENT_REPEAT = 5
 INCLUDE_CCT = False
 APPLY_HEURISTIC = True
 VERSIONS_TO_REMOVE = []
+DELIBERATE_INCLUSION = True
 
 def handle_feature_preparation(args):
     postprocessor = Postprocessor(
-        args.subject, args.experiment_name,
-        MBFL_METHOD,
-        MUT_CNT_CONFIG[-1],
-        include_cct=INCLUDE_CCT
+        args.subject, args.experiment_name
     )
     postprocessor.run()
 
