@@ -88,8 +88,8 @@ class Trainer(EngineBase):
 
 
     def run(self):
-        # # 0. Save Parameter as json
-        # self.write_parameter_file(self.project_out_dir, self.params)
+        # 0. Save Parameter as json
+        self.write_parameter_file(self.project_out_dir, self.params)
 
         # 0. get target buggy version list
         buggy_version_list = get_target_buggy_version_list(

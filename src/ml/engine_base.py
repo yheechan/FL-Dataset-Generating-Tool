@@ -197,6 +197,7 @@ class EngineBase:
     # ===============================
     def get_project_dir(self, subject_name, project_name):
         project_dir = out_dir / subject_name / "analysis/ml" / project_name
+        print(project_dir)
         if not project_dir.exists():
             return None
         return project_dir
@@ -230,7 +231,7 @@ class EngineBase:
         return model
 
     def initialize_test_dirs(self, project_out_dir, inference_name):
-        project_out_dir = project_out_dir / inference_name
+        project_out_dir = project_out_dir / "inference" / inference_name
 
         test_line_susp_score_dir = project_out_dir / "test_line_susp_score"
         test_line_susp_score_dir.mkdir(parents=True, exist_ok=True)

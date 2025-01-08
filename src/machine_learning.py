@@ -54,20 +54,6 @@ def handle_train(args):
         trainer.run()
 
 def handle_inference(args):
-    # Target dataset
-    if len(args.subject2setname_pair) == 0:
-        print("Error: No subject2setname pair is provided.")
-        print("Example: --subject2setname-pair jsoncpp:FL-dataset-jsoncpp-240803-v2 libxml2:FL-dataset-libxml2")
-        exit(1)
-    pair_list = [pair.split(":") for pair in args.subject2setname_pair]
-
-    # Project name
-    if args.project_name == None:
-        print("Error: Project name is not provided.")
-        print("Example: --project-name FL-model-240803-v1")
-        exit(1)
-    project_name = args.project_name
-
     # device
     device = args.device
     if torch.cuda.is_available() and args.device == "cpu":
@@ -81,7 +67,8 @@ def handle_inference(args):
     
     inference = Inference(
         # config param
-        project_name, pair_list,
+        args.subject, args.experiment_name,
+        args.model_name,
         device, args.inference_name
     )
     inference.run()
@@ -94,6 +81,8 @@ def main():
         handle_feature_preparation(args)
     elif args.train:
         handle_train(args)
+    elif args.inference:
+        handle_inference(args)
 
     # if args.postprocess_fl_features == True:
     #     handle_postprocess(args)
@@ -133,6 +122,7 @@ def make_parser():
 
     # 3. Inference the model
     parser.add_argument("--inference", action="store_true", help="Inference the model.")
+    parser.add_argument("--model-name", type=str, help="Model name.")
     parser.add_argument("--inference-name", type=str, help="Inference name.")
 
 

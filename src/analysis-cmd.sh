@@ -69,3 +69,9 @@
 # echo "analyzing zlib_ng_TF_bot30 rand50-exclude_cct-applyHeuristics"
 # time python3 analyzer.py --subject zlib_ng_TF_bot30 --experiment-name TF_bot30 --analysis-criteria 2 --type-name rand50-exclude_cct-applyHeuristics
 # 141
+
+
+
+
+python3 machine_learning.py --prepare-fl-features --subject zlib_ng_TF_bot30 --experiment-name TF_bot30
+python3 machine_learning.py --subject zlib_ng_TF_top30 --experiment-name TF_top30 --train --project-name test1 --train-validate-test-ratio 6 2 2 --random-seed 42 --epoch 3 --batch-size 12 --device cuda --dropout 0.2 --model-shape 35 512 12 1
