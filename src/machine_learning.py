@@ -24,20 +24,6 @@ def handle_feature_preparation(args):
     postprocessor.run()
 
 def handle_train(args):
-        # # Target dataset
-        # if len(args.subject2setname_pair) == 0:
-        #     print("Error: No subject2setname pair is provided.")
-        #     print("Example: --subject2setname-pair jsoncpp:FL-dataset-jsoncpp-240803-v2 libxml2:FL-dataset-libxml2")
-        #     exit(1)
-        # pair_list = [pair.split(":") for pair in args.subject2setname_pair]
-
-        # # Project name
-        # if args.project_name == None:
-        #     print("Error: Project name is not provided.")
-        #     print("Example: --project-name FL-model-240803-v1")
-        #     exit(1)
-        # project_name = args.project_name
-
         # Train, validate, test ratio
         train_ratio, validate_ratio, test_ratio = args.train_validate_test_ratio
         if train_ratio + validate_ratio + test_ratio != 10:
@@ -49,13 +35,11 @@ def handle_train(args):
         device = args.device
         if torch.cuda.is_available() and args.device == "cpu":
             device = "cuda"
-        
-        subject_name = args.subject
-        experiment_name = args.experiment_name
+
 
         trainer = Trainer(
             # config param
-            subject_name, experiment_name,
+            args.subject, args.experiment_name, args.project_name,
             train_ratio, validate_ratio, test_ratio,
             random_seed=args.random_seed,
             # training param
@@ -134,8 +118,8 @@ def make_parser():
 
     # 2. Train the model
     parser.add_argument("--train", action="store_true", help="Train the model.")
-    # config param
     parser.add_argument("--project-name", type=str, help="Project name.")
+    # config param
     parser.add_argument("--train-validate-test-ratio", type=int, nargs=3, help="Train, validate, test ratio. EX: 6 2 2")
     parser.add_argument("--random-seed", type=int, default=42, help="Random seed. Default is 42.")
     # training param

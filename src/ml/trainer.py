@@ -16,11 +16,12 @@ from ml.engine_base import EngineBase
 from lib.experiment import Experiment
 from lib.database import CRUD
 from lib.susp_score_formula import *
+from analysis.analysis_utils import *
 
 class Trainer(EngineBase):
     def __init__(self, 
                  # config param
-                 subject_name, experiment_name,
+                 subject_name, experiment_name, project_name,
                  train_ratio, validate_ratio, test_ratio,
                  random_seed=42,
                  # training param
@@ -31,10 +32,14 @@ class Trainer(EngineBase):
     ):
         super().__init__()
 
+        self.subject_name = subject_name
+        self.experiment_name = experiment_name
+
         self.params = {
             "config_param": {
                 "subject_name": subject_name,
                 "experiment_name": experiment_name,
+                "project_name": project_name,
                 "train_ratio": train_ratio,
                 "validate_ratio": validate_ratio,
                 "test_ratio": test_ratio,
@@ -55,7 +60,17 @@ class Trainer(EngineBase):
         # set random seed
         self.set_random_seed(self.params["config_param"]["random_seed"])
 
+        self.project_name = project_name
+        self.project_out_dir = self.get_project_dir(self.subject_name, self.project_name)
+        assert self.project_out_dir == None, f"Project {self.project_name} already exists."
+        
+        self.project_out_dir, \
+        self.model_line_susp_score_dir, \
+        self.model_function_susp_score_dir, \
+        self.bug_keys_dir = self.initialize_project_directory(self.subject_name, self.project_name)
+
         self.experiment = Experiment()
+        self.experiment.init_analysis_config()
         # Settings for database
         self.host = self.experiment.experiment_config["database"]["host"]
         self.port = self.experiment.experiment_config["database"]["port"]
@@ -73,23 +88,33 @@ class Trainer(EngineBase):
 
 
     def run(self):
-        # 0. Save Parameter as json
-        self.write_parameter_file(self.project_out_dir, self.params)
+        # # 0. Save Parameter as json
+        # self.write_parameter_file(self.project_out_dir, self.params)
+
+        # 0. get target buggy version list
+        buggy_version_list = get_target_buggy_version_list(
+            self.params["config_param"]["subject_name"],
+            self.params["config_param"]["experiment_name"],
+            "mbfl",
+            self.db
+        )
+
 
         # 1. Dataset Splitting
-        self.raw_dataset = self.load_raw_dataset(
-            self.params["config_param"]["dataset_pair_list"],
-            self.bug_keys_dir
-        )
+        self.raw_dataset, self.bug_key_map = self.load_raw_dataset(buggy_version_list, self.db)
+        print(f"Loaded raw dataset: {len(self.raw_dataset)}")
+
         self.raw_train_set, \
         self.raw_val_set, \
         self.raw_test_set = self.split_dataset(
-            self.project_out_dir,
             self.raw_dataset,
             self.params["config_param"]["train_ratio"],
             self.params["config_param"]["validate_ratio"],
             self.params["config_param"]["test_ratio"]
         )
+        print(f"\tTrain: {len(self.raw_train_set)}")
+        print(f"\tValidate: {len(self.raw_val_set)}")
+        print(f"\tTest: {len(self.raw_test_set)}")
 
         # 2. Dataset Making
         self.train_dataset = FL_Dataset("train", self.raw_train_set)
@@ -119,7 +144,8 @@ class Trainer(EngineBase):
 
         # 7. Testing
         self.start_testing(
-            self.project_name, self.project_out_dir,
+            self.subject_name, self.experiment_name, self.project_out_dir,
+            self.bug_key_map,
             self.raw_test_set, self.mlp_model,
             "test-accuracy.csv", self.params,
             self.model_line_susp_score_dir,
@@ -161,7 +187,7 @@ class Trainer(EngineBase):
         total_loss = 0.0
         total_train_loss = []
 
-        for i, (key, features, label) in enumerate(self.train_loader):
+        for i, (key, features, label, line_key) in enumerate(self.train_loader):
             # Load data to device
             features = features.to(self.params["training_param"]["device"])
             label = label.to(self.params["training_param"]["device"])
@@ -203,7 +229,7 @@ class Trainer(EngineBase):
         total_loss = 0.0
         total_validate_loss = []
 
-        for i, (key, features, label) in enumerate(self.validate_loader):
+        for i, (key, features, label, line_key) in enumerate(self.validate_loader):
             # Load data to device
             features = features.to(self.params["training_param"]["device"])
             label = label.to(self.params["training_param"]["device"])

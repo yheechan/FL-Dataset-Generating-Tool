@@ -11,6 +11,9 @@ from lib.utils import *
 from ml.mlp_model import MLP_Model
 from ml.dataset import FL_Dataset
 
+from lib.susp_score_formula import *
+from lib.database import CRUD
+
 
 class EngineBase:
     def __init__(
@@ -22,10 +25,10 @@ class EngineBase:
     # Infer with model
     # ===============================
     def start_testing(
-            self, project_name, project_out_dir, raw_test_set, model, filename, params,
+            self, subject_name, experiment_name, project_out_dir, bug_key_map, raw_test_set, model, filename, params,
             line_suspend_score_dir, function_susp_score_dir, bug_keys_dir
     ):
-        print(f"[{project_name}] Start Testing...")
+        print(f"[{subject_name}] Start Testing...")
         size = len(raw_test_set)
 
         acc_5 = []
@@ -33,11 +36,14 @@ class EngineBase:
         accuracy_results = {}
 
         # testing loop
-        for idx, (subject, feature_csv) in enumerate(raw_test_set):
-            target_name = f"{subject}-{feature_csv.name}"
+        for idx, bug_idx in enumerate(raw_test_set):
+            version_name = bug_key_map[bug_idx]["version"]
+            buggy_line_key = bug_key_map[bug_idx]["buggy_line_key"]
+            target_name = f"{subject_name}-{version_name}"
+
             print(f"\nTesting {target_name} ({idx+1}/{size})")
             rank = self.test_instr(
-                model, project_out_dir, subject, feature_csv, params,
+                model, subject_name, buggy_line_key, bug_idx, raw_test_set[bug_idx], params,
                 line_suspend_score_dir, function_susp_score_dir, bug_keys_dir
             )
             print(f"\tRank: {rank}")
@@ -45,9 +51,9 @@ class EngineBase:
             accuracy_results[target_name] = rank
 
             if int(rank) <= 5:
-                acc_5.append((subject, feature_csv.name))
+                acc_5.append((subject_name, version_name))
             if int(rank) <= 10:
-                acc_10.append((subject, feature_csv.name))
+                acc_10.append((subject_name, version_name))
 
         print(f"acc@5: {len(acc_5)}")
         print(f"acc@5 perc.: {len(acc_5)/size}")
@@ -61,15 +67,13 @@ class EngineBase:
         self.write_test_accuracy_to_txt(project_out_dir, acc_5, acc_10, size)
     
     def test_instr(
-            self, model, project_out_dir, subject, feature_csv, params,
+            self, model, subject_name, buggy_line_key, bug_idx, raw_test, params,
             line_suspend_score_dir, function_susp_score_dir, bug_keys_dir
         ):
-        bug_id = feature_csv.name.split(".")[0]
-        buggy_line_key = self.get_buggy_line_key(bug_keys_dir, subject, bug_id)
         # print(f"\tBuggy Line Key: {buggy_line_key}")
 
         # 1. Dataset Making
-        test_dataset = FL_Dataset("test", [(subject, feature_csv)])
+        test_dataset = FL_Dataset("test", {bug_idx: raw_test})
 
         # 2. DataLoader Making
         test_loader = DataLoader(
@@ -82,7 +86,7 @@ class EngineBase:
         # 4. write line_susp to csv
         # key: susp. score
         line_susp_file = self.write_line_susp_scores(
-            line_suspend_score_dir, line_susp, subject, bug_id
+            line_suspend_score_dir, line_susp, subject_name, bug_idx
         )
 
         # 5. get rank of buggy function
@@ -90,7 +94,7 @@ class EngineBase:
 
         # 6. write function_susp to csv
         # [function_name, {susp.: susp. score, rank: rank}]
-        self.write_function_susp_scores(function_susp_score_dir, function_susp, subject, bug_id)
+        self.write_function_susp_scores(function_susp_score_dir, function_susp, subject_name, bug_idx)
 
         # 7. get rank of buggy function
         rank = self.get_rank_of_buggy_function(function_susp, buggy_line_key)
@@ -102,7 +106,7 @@ class EngineBase:
         with torch.no_grad():
             line_susp = {}
 
-            for i, (key, features, label) in enumerate(dataset):
+            for i, (key, features, label, line_key) in enumerate(dataset):
                 features = features.to(device)
                 label = label.to(device)
 
@@ -110,7 +114,7 @@ class EngineBase:
 
                 output = model(features)
 
-                for k, y in zip(key, output):
+                for k, y in zip(line_key, output):
                     line_susp[k] = y.item()
         
         return line_susp
@@ -191,14 +195,14 @@ class EngineBase:
     # ===============================
     # get/read/initalize/load
     # ===============================
-    def get_project_dir(self, project_name):
-        project_dir = out_dir / project_name
+    def get_project_dir(self, subject_name, project_name):
+        project_dir = out_dir / subject_name / "analysis/ml" / project_name
         if not project_dir.exists():
             return None
         return project_dir
     
-    def initialize_project_directory(self, project_name):
-        project_dir = out_dir / project_name / "train"
+    def initialize_project_directory(self, subject_name, project_name):
+        project_dir = out_dir / subject_name / "analysis/ml" / project_name / "train"
         project_dir.mkdir(parents=True, exist_ok=True)
 
         model_line_susp_score_dir = project_dir / "model_line_susp_score"
@@ -241,7 +245,7 @@ class EngineBase:
     
     def load_model(self, params):
         model = MLP_Model(
-            params["model_shape"], # 2024-08-08
+            params["model_shape"],
             params["dropout"],
         )
         return model
@@ -317,52 +321,62 @@ class EngineBase:
     # ===============================
     # Related to dataset
     # ===============================
-    def load_raw_dataset(self, dataset_pair_list, bug_keys_dir):
-        raw_dataset = []
-
-        for subject, dataset_name in dataset_pair_list:
-            dataset_dir = out_dir / subject / dataset_name
-            pp_fl_features_dir = dataset_dir / "PP_FL_features_per_bug_version"
-
-            feature_csv_list = [
-                f for f in pp_fl_features_dir.iterdir() if not f.is_dir() and f.suffix == ".csv"
-            ]
-            feature_csv_list = sorted(
-                feature_csv_list, key=lambda x: int(x.name.split(".")[0][3:])
+    def load_raw_dataset(self, buggy_version_list, db: CRUD):
+        raw_dataset = {}
+        sbfl_forms = [form.lower().replace("+", "_") for form in pp_sbfl_formulas]
+        columns = sbfl_forms + ["muse_score", "met_score"] + ["is_buggy_line"] + ["file", "function", "lineno"]
+        col_str = ", ".join(columns)
+        bug_key_map = {}
+        for bug_data in buggy_version_list:
+            bug_idx = bug_data[0]
+            version = bug_data[1]
+            buggy_file = bug_data[2]
+            buggy_function = bug_data[3]
+            buggy_lineno = bug_data[4]
+            bug_key_map[bug_idx] = {
+                "version": bug_data[1],
+                "buggy_line_key": f"{buggy_file}#{buggy_function}#{buggy_lineno}"
+            }
+            lines = db.read(
+                "line_info",
+                columns=col_str,
+                conditions={"bug_idx": bug_idx}
             )
-
-            for feature_csv in feature_csv_list:
-                self.copy_buggy_keys(subject, dataset_dir, feature_csv, bug_keys_dir)
-                raw_dataset.append((subject, feature_csv))
-        
-        random.shuffle(raw_dataset)
-        return raw_dataset
-    
-    def copy_buggy_keys(self, subject, dataset_dir, feature_csv, bug_keys_dir):
-        bug_id = feature_csv.name.split(".")[0]
-        buggy_line_key_txt = dataset_dir / "buggy_line_key_per_bug_version" / f"{bug_id}.buggy_line_key.txt"
-        assert buggy_line_key_txt.exists(), f"Error: {buggy_line_key_txt} does not exist."
-
-        assert bug_keys_dir.exists(), f"Error: {bug_keys_dir} does not exist."
-
-        buggy_keys_csv = bug_keys_dir / f"{subject}-{buggy_line_key_txt.name}"
-        shutil.copy(buggy_line_key_txt, buggy_keys_csv)
+            assert bug_idx not in raw_dataset, f"Error: {bug_idx} already exists in raw_dataset."
+            raw_dataset[bug_idx] = []
+            for single_line_info in lines:
+                line_data = {}
+                for index, feature_name in enumerate(columns):
+                    line_data[feature_name] = single_line_info[index]
+                raw_dataset[bug_idx].append(line_data)
+                
+        return raw_dataset, bug_key_map
     
     def split_dataset(
-            self, project_out_dir, dataset, train_ratio, val_ratio, test_ratio
+            self, dataset, train_ratio, val_ratio, test_ratio
     ):
-        total_size = len(dataset)
+        total_size = len(dataset.keys())
         train_size = int(total_size * (train_ratio/10))
         val_size = int(total_size * (val_ratio/10))
         test_size = int(total_size * (test_ratio/10))
 
-        raw_train_set = dataset[:train_size]
-        raw_val_set = dataset[train_size:train_size+val_size]
-        raw_test_set = dataset[train_size+val_size:]
+        keys = list(dataset.keys())
+        random.shuffle(keys)
 
-        self.save_split_dataset(project_out_dir, raw_train_set, "train")
-        self.save_split_dataset(project_out_dir, raw_val_set, "val")
-        self.save_split_dataset(project_out_dir, raw_test_set, "test")
+        train_keys = keys[:train_size]
+        val_keys = keys[train_size:train_size+val_size]
+        test_keys = keys[train_size+val_size:]
+
+        raw_train_set = {}
+        raw_val_set = {}
+        raw_test_set = {}
+
+        for key in train_keys:
+            raw_train_set[key] = dataset[key]
+        for key in val_keys:
+            raw_val_set[key] = dataset[key]
+        for key in test_keys:
+            raw_test_set[key] = dataset[key]
 
         return raw_train_set, raw_val_set, raw_test_set
     

@@ -9,41 +9,48 @@ class FL_Dataset(Dataset):
     def __init__(self, name, raw_data_list):
         self.name = name
         self.raw_data_list = raw_data_list
-        self.feature_names = pp_sbfl_formulas + ["metallaxis", "muse"]
+        sbfl_forms = [form.lower().replace("+", "_") for form in pp_sbfl_formulas]
+        self.feature_names = sbfl_forms + ["muse_score", "met_score"]
         self.data_list = self.make_data_list()
     
     def __len__(self):
         return len(self.data_list)
     
     def __getitem__(self, idx):
-        key, features, label = self.data_list[idx]
-        return key, features, label
+        key, features, label, line_key = self.data_list[idx]
+        return key, features, label, line_key
 
     def make_data_list(self):
         data_list = []
-        for subject, feature_csv in self.raw_data_list:
-            data = self.load_data(feature_csv)
+        for bug_idx, lines_data_list in self.raw_data_list.items():
+            data = self.load_data(bug_idx, lines_data_list)
             data_list.extend(data)
         return data_list
 
-    def load_data(self, feature_csv):
+    def load_data(self, bug_idx, lines_data_list):
         data = []
         bug = 0
         nonBug = 0
-        with open(feature_csv, "r") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                key = row["key"]
-                features = [float(row[form]) for form in self.feature_names]
-                features = torch.tensor(np.array(features), dtype=torch.float32)
-                if row["bug"] == "1":
-                    bug += 1
-                else:
-                    nonBug += 1
-                label = torch.tensor(np.array(int(row["bug"])), dtype=torch.float32)
+
+        for line_features in lines_data_list:
+            key = bug_idx
+            features = [float(line_features[form]) for form in self.feature_names]
+            features = torch.tensor(np.array(features), dtype=torch.float32)
+            if line_features["is_buggy_line"] == True:
+                bug += 1
+            else:
+                nonBug += 1
+
+            label_val = 1 if line_features["is_buggy_line"] == True else 0
+            label = torch.tensor(np.array(label_val), dtype=torch.float32)
+
+            file = line_features["file"]
+            function = line_features["function"]
+            lineno = line_features["lineno"]
+            line_key = f"{file}#{function}#{lineno}"
         
-                data.append((key, features, label))
-        
+            data.append((key, features, label, line_key))
+
         weight_bug = (bug + nonBug) / (bug * 2)
         weight_nonBug = (bug + nonBug) / (nonBug * 2)        
         self.weight = [weight_nonBug, weight_bug]
