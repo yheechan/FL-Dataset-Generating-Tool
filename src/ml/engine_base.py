@@ -197,7 +197,6 @@ class EngineBase:
     # ===============================
     def get_project_dir(self, subject_name, project_name):
         project_dir = out_dir / subject_name / "analysis/ml" / project_name
-        print(project_dir)
         if not project_dir.exists():
             return None
         return project_dir
@@ -322,11 +321,11 @@ class EngineBase:
     # ===============================
     # Related to dataset
     # ===============================
-    def load_raw_dataset(self, buggy_version_list, db: CRUD):
+    def load_raw_dataset(self, buggy_version_list, features_dir):
         raw_dataset = {}
         sbfl_forms = [form.lower().replace("+", "_") for form in pp_sbfl_formulas]
-        columns = sbfl_forms + ["muse_score", "met_score"] + ["is_buggy_line"] + ["file", "function", "lineno"]
-        col_str = ", ".join(columns)
+        columns = ["file", "function", "lineno", "is_buggy_line"] + sbfl_forms + ["muse_score", "met_score"]
+
         bug_key_map = {}
         for bug_data in buggy_version_list:
             bug_idx = bug_data[0]
@@ -338,18 +337,19 @@ class EngineBase:
                 "version": bug_data[1],
                 "buggy_line_key": f"{buggy_file}#{buggy_function}#{buggy_lineno}"
             }
-            lines = db.read(
-                "line_info",
-                columns=col_str,
-                conditions={"bug_idx": bug_idx}
-            )
-            assert bug_idx not in raw_dataset, f"Error: {bug_idx} already exists in raw_dataset."
-            raw_dataset[bug_idx] = []
-            for single_line_info in lines:
-                line_data = {}
-                for index, feature_name in enumerate(columns):
-                    line_data[feature_name] = single_line_info[index]
-                raw_dataset[bug_idx].append(line_data)
+
+            csv_file = features_dir / f"{version}.csv"
+            assert csv_file.exists(), f"Error: {csv_file} does not exist."
+            with open(csv_file, "r") as f:
+                reader = csv.reader(f)
+                next(reader)
+                for line in reader:
+                    line_data = {}
+                    for index, feature_name in enumerate(columns):
+                        line_data[feature_name] = line[index]
+                    if bug_idx not in raw_dataset:
+                        raw_dataset[bug_idx] = []
+                    raw_dataset[bug_idx].append(line_data)
                 
         return raw_dataset, bug_key_map
     

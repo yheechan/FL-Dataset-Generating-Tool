@@ -36,12 +36,12 @@ class FL_Dataset(Dataset):
             key = bug_idx
             features = [float(line_features[form]) for form in self.feature_names]
             features = torch.tensor(np.array(features), dtype=torch.float32)
-            if line_features["is_buggy_line"] == True:
+            if line_features["is_buggy_line"] == "True":
                 bug += 1
             else:
                 nonBug += 1
 
-            label_val = 1 if line_features["is_buggy_line"] == True else 0
+            label_val = 1 if line_features["is_buggy_line"] == "True" else 0
             label = torch.tensor(np.array(label_val), dtype=torch.float32)
 
             file = line_features["file"]

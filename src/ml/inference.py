@@ -12,6 +12,7 @@ from lib.database import CRUD
 class Inference(EngineBase):
     def __init__(
             self, subject_name, experiment_name,
+            targeting_experiment_name,
             model_name,
             device, inference_name
     ):
@@ -19,6 +20,7 @@ class Inference(EngineBase):
 
         self.subject_name = subject_name
         self.experiment_name = experiment_name
+        self.targeting_experiment_name = targeting_experiment_name
 
         self.inference_name = inference_name
         self.model_subject_name = model_name.split("::")[0]
@@ -29,6 +31,7 @@ class Inference(EngineBase):
         self.params = self.read_parameter_file(self.project_out_dir / "train")
         self.params["config_param"]["target_subject_name"] = self.subject_name
         self.params["config_param"]["target_experiment_name"] = self.experiment_name
+        self.params["config_param"]["targeting_experiment_name"] = self.targeting_experiment_name
         self.params["training_param"]["device"] = device
 
         # set random seed
@@ -66,10 +69,14 @@ class Inference(EngineBase):
 
         print(f"Got buggy version list: {len(buggy_version_list)}")
 
+        target_features_dir = out_dir / self.params["config_param"]["target_subject_name"] / "analysis" / self.params["config_param"]["targeting_experiment_name"] / "fl_features"
+        assert target_features_dir.exists(), f"Features directory does not exist: {target_features_dir}"
+
         # 1. Load raw dataset
         self.raw_test_dataset, self.bug_key_map = self.load_raw_dataset(
-            buggy_version_list, self.db
+            buggy_version_list, target_features_dir
         )
+        print(f"Loaded raw dataset: {len(self.raw_test_dataset)}")
 
         # 3. Load Model
         self.mlp_model = self.load_model(self.params["model_param"])

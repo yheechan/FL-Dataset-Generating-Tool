@@ -22,7 +22,8 @@ from analysis.analysis_utils import *
 class Trainer(EngineBase):
     def __init__(self, 
                  # config param
-                 subject_name, experiment_name, project_name,
+                 subject_name, experiment_name,
+                 targeting_experiment_name, project_name,
                  train_ratio, validate_ratio, test_ratio,
                  random_seed=42,
                  # training param
@@ -35,6 +36,7 @@ class Trainer(EngineBase):
 
         self.subject_name = subject_name
         self.experiment_name = experiment_name
+        self.targeting_experiment_name = targeting_experiment_name
 
         self.params = {
             "config_param": {
@@ -86,6 +88,9 @@ class Trainer(EngineBase):
             database=self.database
         )
 
+        self.features_dir = out_dir / self.subject_name / "analysis" / self.targeting_experiment_name / "fl_features"
+        assert self.features_dir.exists(), f"Features directory does not exist: {self.features_dir}"
+
 
     def run(self):
         # 0. Save Parameter as json
@@ -101,7 +106,7 @@ class Trainer(EngineBase):
 
 
         # 1. Dataset Splitting
-        self.raw_dataset, self.bug_key_map = self.load_raw_dataset(buggy_version_list, self.db)
+        self.raw_dataset, self.bug_key_map = self.load_raw_dataset(buggy_version_list, self.features_dir)
         print(f"Loaded raw dataset: {len(self.raw_dataset)}")
 
         self.raw_train_set, \

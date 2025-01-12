@@ -28,7 +28,8 @@ def handle_train(args):
 
         trainer = Trainer(
             # config param
-            args.subject, args.experiment_name, args.project_name,
+            args.subject, args.experiment_name,
+            args.targeting_experiment_name, args.project_name,
             train_ratio, validate_ratio, test_ratio,
             random_seed=args.random_seed,
             # training param
@@ -57,6 +58,7 @@ def handle_inference(args):
     inference = Inference(
         # config param
         args.subject, args.experiment_name,
+        args.targeting_experiment_name,
         args.model_name,
         device, args.inference_name
     )
@@ -90,6 +92,7 @@ def make_parser():
 
     # 2. Train the model
     parser.add_argument("--train", action="store_true", help="Train the model.")
+    parser.add_argument("--targeting-experiment-name", type=str, help="Targeting experiment name.")
     parser.add_argument("--project-name", type=str, help="Project name.")
     # config param
     parser.add_argument("--train-validate-test-ratio", type=int, nargs=3, help="Train, validate, test ratio. EX: 6 2 2")
