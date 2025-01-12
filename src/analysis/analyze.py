@@ -46,9 +46,6 @@ class Analyze:
             database=self.database
         )
 
-        self.subject_out_dir = out_dir / self.subject_name
-        self.analysis_dir = self.subject_out_dir / "analysis"
-        self.analysis_dir.mkdir(exist_ok=True, parents=True)
 
     def run(self, analysis_criteria, type_name=None):
         for ana_type in analysis_criteria:
@@ -174,8 +171,15 @@ class Analyze:
         [stage05] analyze02: Analyze MBFL results
             for all buggy versions resulting from MBFL feature extraction
         """
+        self.subject_out_dir = out_dir / self.subject_name
+        self.analysis_dir = self.subject_out_dir / "analysis"
+
         self.type_dir = self.analysis_dir / type_name
-        self.type_dir.mkdir(exist_ok=True, parents=True)
+        
+        self.features_dir = self.type_dir / "fl_features"
+        self.features_dir.mkdir(parents=True, exist_ok=True)
+
+
 
         # add muse_score, met_score on line_info table
         if not self.db.column_exists("line_info", "muse_score"):
@@ -192,13 +196,42 @@ class Analyze:
         mbfl_overal_data_json = self.type_dir / "mbfl_overall_data.json"
         if not mbfl_overal_data_json.exists():
             overall_data = {}
-            for mtc in self.experiment.analysis_config["mut_cnt_config"]:
-                overall_data[mtc] = {}
-                
+            for buggy_version in tqdm(target_buggy_version_list, desc=f"Analyzing buggy versions for MBFL ({type_name})"):
+                bug_idx = buggy_version[0]
+                num_total_lines = buggy_version[9]
 
-                for buggy_version in tqdm(target_buggy_version_list, desc=f"Analyzing buggy versions for mtc={mtc}"):
+                # Get lines that we target to analyze for MBFL
+                if self.experiment.analysis_config["mbfl_method"] == "for_random_mbfl":
+                    max_lines_for_random = self.experiment.analysis_config["max_lines_for_random"]
+                    target_line_idx = self.db.read(
+                        "line_info",
+                        columns="line_idx, file, function, lineno",
+                        conditions={
+                            "bug_idx": bug_idx,
+                            self.experiment.analysis_config["mbfl_method"]: True
+                        },
+                        special=f"ORDER BY RANDOM() LIMIT {max_lines_for_random}"
+                    )
+                else:
+                    num_lines_for_random = int(num_total_lines * self.experiment.analysis_config["sbfl_ranked_rate"])
+                    sbfl_standard = self.experiment.analysis_config["sbfl_standard"]
+                    target_line_idx = self.db.read(
+                        "line_info",
+                        columns="line_idx, file, function, lineno",
+                        conditions={
+                            "bug_idx": bug_idx,
+                            self.experiment.analysis_config["mbfl_method"]: True
+                        },
+                        special=f"ORDER BY {sbfl_standard} LIMIT {num_lines_for_random}"
+                    )
+                target_line_idx_copied = deepcopy(target_line_idx)
+
+                for mtc in self.experiment.analysis_config["mut_cnt_config"]:
+                    if mtc not in overall_data:
+                        overall_data[mtc] = {}
+
                     for iter_num in range(self.experiment.analysis_config["experiment_repeat"]):
-                        version_data = self.analyze_bug_version_for_mbfl(buggy_version, mtc)
+                        version_data = self.analyze_bug_version_for_mbfl(buggy_version, target_line_idx_copied, mtc, iter_num)
                         if version_data["version"] not in overall_data[mtc]:
                             overall_data[mtc][version_data["version"]] = []
                         overall_data[mtc][version_data["version"]].append(version_data)
@@ -365,7 +398,7 @@ class Analyze:
     # +++++++++++++++++++++++
     # HELPER FUNCTIONS FOR ANALYZE02
     # +++++++++++++++++++++++
-    def analyze_bug_version_for_mbfl(self, buggy_version, mtc):
+    def analyze_bug_version_for_mbfl(self, buggy_version, target_line_idx_copied, mtc, iter_num):
         """
         Analyze a single buggy version for MBFL
         """
@@ -384,30 +417,7 @@ class Analyze:
         debug_print(self.verbose, f">> Analyzing {bug_idx} {version} ({buggy_file}::{buggy_function}::{buggy_lineno})")
         debug_print(self.verbose, f">> Total number of failing test cases: {total_num_of_failing_tcs}")
 
-        # Get lines that we target to analyze for MBFL
-        if self.experiment.analysis_config["mbfl_method"] == "for_random_mbfl":
-            max_lines_for_random = self.experiment.analysis_config["max_lines_for_random"]
-            target_line_idx = self.db.read(
-                "line_info",
-                columns="line_idx, file, function, lineno",
-                conditions={
-                    "bug_idx": bug_idx,
-                    self.experiment.analysis_config["mbfl_method"]: True
-                },
-                special=f"ORDER BY RANDOM() LIMIT {max_lines_for_random}"
-            )
-        else:
-            num_lines_for_random = int(num_total_lines * self.experiment.analysis_config["sbfl_ranked_rate"])
-            sbfl_standard = self.experiment.analysis_config["sbfl_standard"]
-            target_line_idx = self.db.read(
-                "line_info",
-                columns="line_idx, file, function, lineno",
-                conditions={
-                    "bug_idx": bug_idx,
-                    self.experiment.analysis_config["mbfl_method"]: True
-                },
-                special=f"ORDER BY {sbfl_standard} LIMIT {num_lines_for_random}"
-            )
+        target_line_idx = target_line_idx_copied
         
         debug_print(self.verbose, f">> Selected {len(target_line_idx)} lines for MBFL analysis")
         # print(f">> Selected {len(target_line_idx)} lines for MBFL analysis")
@@ -416,6 +426,8 @@ class Analyze:
             # Make sure to add buggy line to target_line_idx
             if buggy_line_idx not in [row[0] for row in target_line_idx]:
                 target_line_idx.append((buggy_line_idx, buggy_file, buggy_function, buggy_lineno))
+            #     print(f">>> Added buggy line to target_line_idx: {buggy_line_idx}")
+            # print(f">>> buggy line already in target_line_idx: {buggy_line_idx}")
         
         # map line_idx to line_info map
         line_idx2line_info = {}
@@ -433,18 +445,6 @@ class Analyze:
         lines_idx2mutant_idx = get_mutations_on_target_lines(bug_idx, line_idx2line_info, self.db)
         debug_print(self.verbose, f">> Found {len(lines_idx2mutant_idx)} mutants on target lines")
 
-        if self.experiment.analysis_config["apply_heuristic"] and mtc == self.experiment.analysis_config["mut_cnt_config"][-1]:
-            buggy_line_f2p = 0
-            if buggy_line_idx not in lines_idx2mutant_idx:
-                if version not in self.experiment.analysis_config["versions_to_remove"]:
-                    self.experiment.analysis_config["versions_to_remove"].append(version)
-            else:
-                for buggy_line_mutants in lines_idx2mutant_idx[buggy_line_idx]:
-                    buggy_line_f2p += buggy_line_mutants["f2p"]
-                if buggy_line_f2p == 0:
-                    if version not in self.experiment.analysis_config["versions_to_remove"]:
-                        self.experiment.analysis_config["versions_to_remove"].append(version)
-
         # Measure MBFL score for targetted lines
         mtc_version_data = measure_mbfl_scores(
             line_idx2line_info,
@@ -458,6 +458,30 @@ class Analyze:
         # Update line_info table with met_score, muse_score
         update_line_info_table_with_mbfl_scores(bug_idx, line_idx2line_info, lines_idx2mutant_idx, self.db)
 
+        # This means the last iteration of the last mtc
+        if mtc == self.experiment.analysis_config["mut_cnt_config"][-1] \
+            and iter_num == self.experiment.analysis_config["experiment_repeat"] - 1:
+            
+            if self.experiment.analysis_config["apply_heuristic"]:
+                buggy_line_f2p = 0
+                if buggy_line_idx not in lines_idx2mutant_idx:
+                    if version not in self.experiment.analysis_config["versions_to_remove"]:
+                        self.experiment.analysis_config["versions_to_remove"].append(version)
+                else:
+                    for buggy_line_mutants in lines_idx2mutant_idx[buggy_line_idx]:
+                        buggy_line_f2p += buggy_line_mutants["f2p"]
+                    if buggy_line_f2p == 0:
+                        if version not in self.experiment.analysis_config["versions_to_remove"]:
+                            self.experiment.analysis_config["versions_to_remove"].append(version)
+            
+            # write sbfl suspiciousness to line_info table
+            line2spectrum = get_spectrum(bug_idx, self.db)
+            line2sbfl = measure_sbfl_scores(line2spectrum, num_failing_tcs, num_passing_tcs, num_ccts, self.experiment.analysis_config["include_cct"])
+            update_line_info_table_with_sbfl_scores(bug_idx, line2sbfl, self.db)
+            
+            # Save all the fl features to csv file within self.features_dir
+            self.save_fl_features_to_csv(bug_idx, version)
+
         # Measure rank of buggy line
         rank_data = self.measure_buggy_line_rank(bug_idx, buggy_file, buggy_function)
 
@@ -470,6 +494,26 @@ class Analyze:
         }
         total_data = {**version_data, **mtc_version_data, **rank_data}
         return total_data
+
+    def save_fl_features_to_csv(self, bug_idx, version):
+        """
+        Save FL features to csv file
+        """
+        sbfl_forms = [form.lower().replace("+", "_") for form in pp_sbfl_formulas]
+        features = ["file", "function", "lineno", "is_buggy_line"] + sbfl_forms + ["muse_score", "met_score"]
+        features_str = ", ".join(features)
+
+        rows = self.db.read(
+            "line_info",
+            columns=features_str,
+            conditions={"bug_idx": bug_idx}
+        )
+
+        with open(self.features_dir / f"{version}.csv", "w") as f:
+            writer = csv.writer(f)
+            writer.writerow(features)
+            for row in rows:
+                writer.writerow(row)
     
     def measure_buggy_line_rank(self, bug_idx, buggy_file, buggy_function):
         """
@@ -566,6 +610,12 @@ class Analyze:
                     },
                     special=f"ORDER BY {sbfl_standard} LIMIT {num_lines_for_random}"
                 )
+            
+            if self.experiment.analysis_config["deliberate_inclusion"]:
+                # Make sure to add buggy line to target_line_idx
+                if buggy_line_idx not in [row[0] for row in target_line_idx]:
+                    target_line_idx.append((buggy_line_idx, buggy_file, buggy_function, buggy_lineno))
+
             top_line_idx_list = [line_idx[0] for line_idx in target_line_idx]
 
             if buggy_line_idx in top_line_idx_list:

@@ -6,6 +6,7 @@ import numpy as np
 import json
 import torch.nn as nn
 import pandas as pd
+import time
 
 from lib.utils import *
 import lib.config as config
@@ -70,7 +71,6 @@ class Trainer(EngineBase):
         self.bug_keys_dir = self.initialize_project_directory(self.subject_name, self.project_name)
 
         self.experiment = Experiment()
-        self.experiment.init_analysis_config()
         # Settings for database
         self.host = self.experiment.experiment_config["database"]["host"]
         self.port = self.experiment.experiment_config["database"]["port"]
@@ -140,7 +140,12 @@ class Trainer(EngineBase):
         # self.optimizer = torch.optim.Adam(self.mlp_model.parameters(), lr=self.params["training_param"]["learning_rate"])
 
         # 6. Training
+        train_start_time = time.time()
         self.start_training()
+        train_duration = time.time() - train_start_time
+        with open(f"{self.project_out_dir}/train_duration.txt", "w") as f:
+            f.write(str(train_duration))
+        
 
         # 7. Testing
         self.start_testing(

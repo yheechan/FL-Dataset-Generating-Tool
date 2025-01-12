@@ -11,13 +11,14 @@ from lib.database import CRUD
 
 class Postprocessor:
     def __init__(
-        self, subject_name, experiment_name,
+        self, subject_name, experiment_name, type_name
     ):
         self.subject_name = subject_name
         self.experiment_name = experiment_name
+        self.type_name = type_name
 
         self.experiment = Experiment()
-        self.experiment.init_analysis_config()
+        self.experiment.set_analysis_config(self.subject_name, self.type_name)
         # Settings for database
         self.host = self.experiment.experiment_config["database"]["host"]
         self.port = self.experiment.experiment_config["database"]["port"]

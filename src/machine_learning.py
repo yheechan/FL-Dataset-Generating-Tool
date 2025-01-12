@@ -5,21 +5,10 @@ from ml.postprocessor import Postprocessor
 from ml.trainer import Trainer
 from ml.inference import Inference
 
-MBFL_METHOD = "for_random_mbfl"
-# MBFL_METHOD = "for_sbfl_ranked_mbfl_desc"
-MAX_LINES_FOR_RANDOM = 50
-SBFL_RANKED_RATE = 0.30
-SBFL_STANDARD = "gp13"
-MUT_CNT_CONFIG = [2, 4, 6, 8, 10]
-EXPERIMENT_REPEAT = 5
-INCLUDE_CCT = False
-APPLY_HEURISTIC = True
-VERSIONS_TO_REMOVE = []
-DELIBERATE_INCLUSION = True
 
 def handle_feature_preparation(args):
     postprocessor = Postprocessor(
-        args.subject, args.experiment_name
+        args.subject, args.experiment_name, args.type_name,
     )
     postprocessor.run()
 
@@ -83,13 +72,6 @@ def main():
         handle_train(args)
     elif args.inference:
         handle_inference(args)
-
-    # if args.postprocess_fl_features == True:
-    #     handle_postprocess(args)
-    # elif args.train == True:
-    #     handle_train(args)
-    # elif args.inference == True:
-    #      handle_inference(args)
         
         
 
@@ -104,6 +86,7 @@ def make_parser():
 
     # 1. Prepare FL features
     parser.add_argument("--prepare-fl-features", action="store_true", help="Prepare FL features.")
+    parser.add_argument("--type-name", type=str, help="Type name.")
 
     # 2. Train the model
     parser.add_argument("--train", action="store_true", help="Train the model.")

@@ -21,8 +21,8 @@ class Inference(EngineBase):
         self.experiment_name = experiment_name
 
         self.inference_name = inference_name
-        self.model_subject_name = model_name.split("-")[0]
-        self.model_name = model_name.split("-")[-1]
+        self.model_subject_name = model_name.split("::")[0]
+        self.model_name = model_name.split("::")[-1]
         self.project_out_dir = self.get_project_dir(self.model_subject_name, self.model_name)
         assert self.project_out_dir != None, f"Project {model_name} does not exist."
 
@@ -40,7 +40,6 @@ class Inference(EngineBase):
         self.test_bug_keys_dir = self.initialize_test_dirs(self.project_out_dir, self.inference_name)
 
         self.experiment = Experiment()
-        self.experiment.init_analysis_config()
         # Settings for database
         self.host = self.experiment.experiment_config["database"]["host"]
         self.port = self.experiment.experiment_config["database"]["port"]

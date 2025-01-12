@@ -97,7 +97,11 @@ def measure_mbfl_scores(line_idx2line_info, lines_idx2mutant_idx, total_num_of_f
         line_idx2line_info[line_idx]["met_score"] = met_data["met_score"]
         line_idx2line_info[line_idx]["muse_score"] = muse_data["muse_score"]
     
-    mtc_version_data = {"total_num_of_utilized_mutants": total_num_of_utilized_mutants}
+    mtc_version_data = {
+        "total_num_of_utilized_mutants": total_num_of_utilized_mutants,
+        "total_build_time": total_build_time,
+        "total_tc_execution_time": total_tc_execution_time
+    }
 
     return  mtc_version_data
 

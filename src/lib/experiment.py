@@ -72,3 +72,15 @@ class Experiment():
 
     def init_analysis_config(self):
         self.analysis_config = self.read_experiment_config("analysis_config.json")
+    
+    def set_analysis_config(self, subject_name, type_name):
+        configs = None
+        config_json = out_dir / subject_name / "analysis" / type_name / "parameters.json"
+
+        with config_json.open() as f:
+            configs = json.load(f)
+
+        if configs is None:
+            raise Exception("Configurations are not loaded")
+        
+        self.analysis_config = configs
