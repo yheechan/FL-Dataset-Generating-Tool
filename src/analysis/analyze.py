@@ -574,6 +574,7 @@ class Analyze:
 
         # For each buggy version with MBFL feature
         buggy_lines_selected_cnt = 0
+        number_of_lines_selected = []
         for buggy_version in tqdm(target_buggy_version_list, desc="Analyzing buggy versions for MBFL"):
             bug_idx = buggy_version[0]
             version = buggy_version[1]
@@ -621,8 +622,13 @@ class Analyze:
             if buggy_line_idx in top_line_idx_list:
                 buggy_lines_selected_cnt += 1
             
+            number_of_lines_selected.append(len(top_line_idx_list))
+            
         probability_within_top = buggy_lines_selected_cnt / len(target_buggy_version_list)
 
         rate = self.experiment.analysis_config["sbfl_ranked_rate"] * 100
         print(f"Probability that buggy line is within top-{rate}%: {probability_within_top}")
+
+        avg_number_of_lines_selected = sum(number_of_lines_selected) / len(number_of_lines_selected)
+        print(f"Average number of lines selected: {avg_number_of_lines_selected}")
 
