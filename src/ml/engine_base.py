@@ -323,8 +323,12 @@ class EngineBase:
     # ===============================
     def load_raw_dataset(self, buggy_version_list, features_dir):
         raw_dataset = {}
-        sbfl_forms = [form.lower().replace("+", "_") for form in pp_sbfl_formulas]
-        columns = ["file", "function", "lineno", "is_buggy_line"] + sbfl_forms + ["muse_score", "met_score"]
+        fl_features = ["ep", "ef", "np", "nf"]
+        for sbfl_form, sub_form_list in final_sbfl_formulas.items():
+            fl_features.extend(sub_form_list)
+        for mbfl_form, sub_form_list in final_mbfl_formulas.items():
+            fl_features.extend(sub_form_list)
+        columns = ["file", "function", "lineno", "is_buggy_line"] + fl_features
 
         bug_key_map = {}
         for bug_data in buggy_version_list:

@@ -486,12 +486,10 @@ class Validate:
     def val08(self):
         """
         [stage05] val08: Validate the following columns in line_info table for all bug_idx in bug_info with mbfl IS TRUE:
-            1. for_sbfl_ranked_mbfl_asc is TRUE
-            2. for_sbfl_ranked_mbfl_desc is TRUE
-            3. for_random_mbfl is TRUE
+            1. selected_for_mbfl is TRUE
         """
         # Step 1: Fetch line_info data for buggy line for the relevant bug_idx
-        columns = ["l.bug_idx", "l.for_sbfl_ranked_mbfl_asc", "l.for_sbfl_ranked_mbfl_desc", "l.for_random_mbfl"]
+        columns = ["l.bug_idx", "l.selected_for_mbfl"]
         col_str = ", ".join(columns)
 
         special_str = f"""
@@ -511,13 +509,10 @@ class Validate:
         # Step 2: Validate the values
         for row in line_info_res:
             bug_idx = row[0]
-            for_sbfl_ranked_mbfl_asc = row[1]
-            for_sbfl_ranked_mbfl_desc = row[2]
-            for_random_mbfl = row[3]
+            selected_for_mbfl = row[1]
 
             # assert for_sbfl_ranked_mbfl_asc is True, f"for_sbfl_ranked_mbfl_asc is not TRUE for bug_idx {bug_idx}"
-            assert for_sbfl_ranked_mbfl_desc is True, f"for_sbfl_ranked_mbfl_desc is not TRUE for bug_idx {bug_idx}"
-            assert for_random_mbfl is True, f"for_random_mbfl is not TRUE for bug_idx {bug_idx}"
+            assert selected_for_mbfl is True, f"selected_for_mbfl is not TRUE for bug_idx {bug_idx}"
 
         print(f"[stage05-VAL08] {len(line_info_res)} buggy lines with mbfl=TRUE is targetd for all types (sbfl asc, desc, and random mbfl) of mbfl extraction method")
 

@@ -86,13 +86,8 @@ class MBFLExtraction(Subject):
             
     
     def init_tables(self,):
-        # Add for_sbfl_ranked_mbfl, for_random_mbfl column to line_info table
-        if not self.db.column_exists("line_info", "for_sbfl_ranked_mbfl_asc"):
-            self.db.add_column("line_info", "for_sbfl_ranked_mbfl_asc BOOLEAN DEFAULT NULL")
-        if not self.db.column_exists("line_info", "for_sbfl_ranked_mbfl_desc"):
-            self.db.add_column("line_info", "for_sbfl_ranked_mbfl_desc BOOLEAN DEFAULT NULL")
-        if not self.db.column_exists("line_info", "for_random_mbfl"):
-            self.db.add_column("line_info", "for_random_mbfl BOOLEAN DEFAULT NULL")
+        if not self.db.column_exists("line_info", "selected_for_mbfl"):
+            self.db.add_column("line_info", "selected_for_mbfl BOOLEAN DEFAULT NULL")
         
         if not self.db.table_exists("mutation_info"):
             cols = [

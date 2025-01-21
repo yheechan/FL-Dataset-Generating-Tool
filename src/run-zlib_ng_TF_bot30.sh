@@ -96,9 +96,9 @@
 
 # 5. Extract MBFL features
 
-# date > ../timer/zlib_ng_TF_bot30/stage05_start-remote.txt
-# time python3 extract_mbfl_features.py --subject zlib_ng_TF_bot30 --experiment-name TF_bot30 --target-set-name prerequisite_data --trial trial1 --parallel-cnt 3 --dont-terminate-leftovers --version-limit 240 --remain-one-bug-per-line > ../timer/zlib_ng_TF_bot30/stage05.log
-# date > ../timer/zlib_ng_TF_bot30/stage05_end-remote.txt
+date > ../timer/zlib_ng_TF_bot30/stage05_start-remote.txt
+time python3 extract_mbfl_features.py --subject zlib_ng_TF_bot30 --experiment-name TF_bot30 --target-set-name prerequisite_data --trial trial1 --parallel-cnt 3 --dont-terminate-leftovers --version-limit 240 --remain-one-bug-per-line > ../timer/zlib_ng_TF_bot30/stage05.log
+date > ../timer/zlib_ng_TF_bot30/stage05_end-remote.txt
 
 
 # Number of tasks (assigned_works): 240

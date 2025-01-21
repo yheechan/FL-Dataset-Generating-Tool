@@ -77,6 +77,8 @@ def measure_mbfl_scores(line_idx2line_info, lines_idx2mutant_idx, total_num_of_f
     """
     # Select mtc mutants per line at random
     utilizing_line_idx2mutants, total_num_of_utilized_mutants = select_random_mtc_mutants_per_line(lines_idx2mutant_idx, mtc)
+    # print(f"Total number of utilized mutants: {total_num_of_utilized_mutants}")
+    # print(f"utilizing_line_idx2mutants: {len(utilizing_line_idx2mutants)}")
 
     # Calculate total information
     total_p2f, total_f2p, \
@@ -94,8 +96,12 @@ def measure_mbfl_scores(line_idx2line_info, lines_idx2mutant_idx, total_num_of_f
         # print(f"\tMetallaxis score: {met_score}")
         # print(f"\tMUSE score: {muse_score}")
 
-        line_idx2line_info[line_idx]["met_score"] = met_data["met_score"]
-        line_idx2line_info[line_idx]["muse_score"] = muse_data["muse_score"]
+        for mbfl_form, sub_form_list in final_mbfl_formulas.items():
+            for sub_form in sub_form_list:
+                if "met" in mbfl_form:
+                    line_idx2line_info[line_idx][sub_form] = met_data[sub_form]
+                elif "muse" in mbfl_form:
+                    line_idx2line_info[line_idx][sub_form] = muse_data[sub_form]
     
     mtc_version_data = {
         "total_num_of_utilized_mutants": total_num_of_utilized_mutants,
@@ -152,32 +158,45 @@ def measure_metallaxis(mutants, total_num_of_failing_tcs, include_cct=False):
     """
     Measure Metallaxis score
     """
-    met_score_list = []
 
+    met_2_score_list = []
+    met_3_score_list = []
+    f2p_list = []
     for mutant in mutants:
         f2p = mutant["f2p"]
+        f2p_list.append(f2p)
         p2f = mutant["p2f"]
         if include_cct:
             p2f += mutant["p2f_cct"]
         
-        score = 0.0
+        met_2_score = 0.0
+        met_3_score = 0.0
         if f2p + p2f == 0.0:
-            score = 0.0
+            met_2_score = 0.0
+            met_3_score = 0.0
         else:
-            score = ((f2p) / math.sqrt(total_num_of_failing_tcs * (f2p + p2f)))
+            met_2_score = (1 / math.sqrt(f2p + p2f))
+            met_3_score = ((f2p) / math.sqrt(total_num_of_failing_tcs * (f2p + p2f)))
         
-        met_score_list.append(score)
+        met_2_score_list.append(met_2_score)
+        met_3_score_list.append(met_3_score)
     
-    if len(met_score_list) == 0:
+    if len(met_3_score_list) == 0:
         return {
             "total_num_of_failing_tcs": total_num_of_failing_tcs,
-            "met_score": 0.0
+            "met_1": -10.0,
+            "met_2": -10.0,
+            "met_3": -10.0
         }
 
-    final_met_score = max(met_score_list)
+    met_1 = max(f2p_list)
+    met_2 = max(met_2_score_list)
+    met_3 = max(met_3_score_list)
     met_data = {
         "total_num_of_failing_tcs": total_num_of_failing_tcs,
-        "met_score": final_met_score
+        "met_1": met_1,
+        "met_2": met_2,
+        "met_3": met_3,
     }
     return met_data
 
@@ -198,13 +217,15 @@ def measure_muse(mutants, total_p2f, total_f2p, include_cct=False):
         if include_cct:
             line_total_p2f += mutant["p2f_cct"]
     
-    muse_1 = (1 / ((utilized_mutant_cnt + 1) * (total_f2p + 1)))
-    muse_2 = (1 / ((utilized_mutant_cnt + 1) * (total_p2f + 1)))
+    muse_1 = 1 / (utilized_mutant_cnt + 1)
 
-    muse_3 = muse_1 * line_total_f2p
-    muse_4 = muse_2 * line_total_p2f
+    muse_2 = line_total_f2p
+    muse_3 = line_total_p2f
 
-    final_muse_score = muse_3 - muse_4
+    muse_4 = (1 / ((utilized_mutant_cnt + 1) * (total_f2p + 1))) * line_total_f2p
+    muse_5 = (1 / ((utilized_mutant_cnt + 1) * (total_p2f + 1))) * line_total_p2f
+
+    muse_6 = muse_4 - muse_5
 
     muse_data = {
         "utilized_mutant_cnt": utilized_mutant_cnt,
@@ -216,7 +237,8 @@ def measure_muse(mutants, total_p2f, total_f2p, include_cct=False):
         "muse_2": muse_2,
         "muse_3": muse_3,
         "muse_4": muse_4,
-        "muse_score": final_muse_score
+        "muse_5": muse_5,
+        "muse_6": muse_6,
     }
 
     return muse_data
@@ -230,16 +252,14 @@ def update_line_info_table_with_mbfl_scores(bug_idx, line_idx2line_info, lines_i
         if line_idx not in lines_idx2mutant_idx:
             continue
 
-        met_score = line_info["met_score"]
-        muse_score = line_info["muse_score"]
-        # print(f"BUG: {bug_idx}, Line {line_idx} - Metallaxis: {met_score}, MUSE: {muse_score}")
+        values = {}
+        for mbfl_form, sub_form_list in final_mbfl_formulas.items():
+            for sub_form in sub_form_list:
+                values[sub_form] = line_info[sub_form]
         
         db.update(
             "line_info",
-            set_values={
-                "met_score": met_score,
-                "muse_score": muse_score
-            },
+            set_values=values,
             conditions={
                 "bug_idx": bug_idx,
                 "line_idx": line_idx
@@ -272,7 +292,7 @@ def measure_sbfl_scores(line2spectrum, num_failing_tcs, num_passing_tcs, num_cct
     """
     line2sbfl = {}
     for line_idx, spectrum in line2spectrum.items():
-        for sbfl_formula in pp_sbfl_formulas:
+        for sbfl_formula, sub_form_list in final_sbfl_formulas.items():
             ep, np, ef, nf = spectrum["ep"], spectrum["np"], spectrum["ef"], spectrum["nf"]
             total_fails = num_failing_tcs
             total_passes = num_passing_tcs
@@ -282,19 +302,19 @@ def measure_sbfl_scores(line2spectrum, num_failing_tcs, num_passing_tcs, num_cct
                 np += cct_np
                 total_passes += num_ccts
             
+            for sub_form in sub_form_list:
+                sbfl_score = sbfl(
+                    ep, ef, np, nf,
+                    formula=sub_form,
+                    fails=total_fails, passes=total_passes
+                )
 
-            sbfl_score = sbfl(
-                ep, ef, np, nf,
-                formula=sbfl_formula,
-                fails=total_fails, passes=total_passes
-            )
-
-            if line_idx not in line2sbfl:
-                line2sbfl[line_idx] = {}
-            sbfl_formula_str = sbfl_formula.lower()
-            sbfl_formula_str = sbfl_formula_str.replace("+", "_")
-            assert sbfl_formula_str not in line2sbfl[line_idx], f"Error: {sbfl_formula_str} already exists in line2sbfl[{line_idx}]"
-            line2sbfl[line_idx][sbfl_formula_str] = sbfl_score
+                if line_idx not in line2sbfl:
+                    line2sbfl[line_idx] = {}
+                sub_form_str = sub_form.lower()
+                sub_form_str = sub_form_str.replace("+", "_")
+                assert sub_form_str not in line2sbfl[line_idx], f"Error: {sub_form_str} already exists in line2sbfl[{line_idx}]"
+                line2sbfl[line_idx][sub_form_str] = sbfl_score
 
     return line2sbfl
 

@@ -25,9 +25,7 @@ help_for_validation_criteria = \
             3. ef + nf = num_failing_tcs in bug_info.
             4. cct_ep + cct_np = num_ccts in bug_info.
     8: [stage05] Validate the following columns in line_info table for all bug_idx in bug_info with mbfl IS TRUE:
-            1. for_sbfl_ranked_mbfl_asc is TRUE
-            2. for_sbfl_ranked_mbfl_desc is TRUE
-            3. for_random_mbfl is TRUE
+            1. selected_for_mbfl is TRUE
     9: [stage05] Validate number of mutations generated on buggy line is greater than 0 for all bug_idx in bug_info with mbfl IS TRUE
     10: [stage05] Validate the following for all bug_idx in bug_info with mbfl IS TRUE:
             1. Columns f2p, p2f, f2f, p2p, p2f_cct, and p2p_cct in mutation_info are not NULL.

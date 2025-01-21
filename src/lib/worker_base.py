@@ -46,8 +46,6 @@ class Worker:
         self.experiment = Experiment()
         self.max_mutants = self.experiment.experiment_config["max_mutants"]
         self.number_of_lines_to_mutation_test = self.experiment.experiment_config["number_of_lines_to_mutation_test"]
-        self.sbfl_rank_based_perc = self.experiment.experiment_config["sbfl_rank_based_perc"]
-        self.sbfl_rank_based_formula = self.experiment.experiment_config["sbfl_rank_based_formula"]
 
         self.gcovr_exec = Path(self.experiment.experiment_config["abs_path_to_gcovr_executable"]).expanduser()
 
@@ -315,13 +313,14 @@ class Worker:
                 filename = target_file.split("/")[-1]
             else:
                 filename = target_file
-            filename = target_file
             executed_lines[filename] = {}
         
         if key_type == 0:
             buggy_filename = target_code_file.split("/")[-1]
-        else:
+        elif "zlib_ng" in self.name:
             buggy_filename = "/".join(target_code_file.split("/")[1:])
+        else:
+            buggy_filename = target_code_file
         
         executed_buggy_line = False
         for key, tcs_list in lines_executed_by_failing_tc_json.items():

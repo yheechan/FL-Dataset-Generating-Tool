@@ -9,44 +9,35 @@
 
 # mbfl results
 # cp ../configs/exp1.json ../configs/analysis_config.json
-# echo "analyzing opencv_features2d_TF_top30 rand50-excludeCCT-noHeuristics-delibIncl"
-# time python3 analyzer.py --subject opencv_features2d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name rand50-excludeCCT-noHeuristics-delibIncl
-# echo "analyzing opencv_features2d_TF_bot30 rand50-excludeCCT-noHeuristics-delibIncl"
-# time python3 analyzer.py --subject opencv_features2d_TF_bot30 --experiment-name TF_bot30 --analysis-criteria 2 --type-name rand50-excludeCCT-noHeuristics-delibIncl
-# echo "analyzing zlib_ng_TF_top30 rand50-excludeCCT-noHeuristics-delibIncl"
-# time python3 analyzer.py --subject zlib_ng_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name rand50-excludeCCT-noHeuristics-delibIncl
-# echo "analyzing zlib_ng_TF_bot30 rand50-excludeCCT-noHeuristics-delibIncl"
-# time python3 analyzer.py --subject zlib_ng_TF_bot30 --experiment-name TF_bot30 --analysis-criteria 2 --type-name rand50-excludeCCT-noHeuristics-delibIncl
+# echo "analyzing opencv_features2d_TF_top30 allfails-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_features2d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name allfails-excludeCCT-noHeuristics
+# echo "analyzing opencv_features2d_TF_bot30 allfails-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_features2d_TF_bot30 --experiment-name TF_bot30 --analysis-criteria 2 --type-name allfails-excludeCCT-noHeuristics
+# echo "analyzing zlib_ng_TF_top30 allfails-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject zlib_ng_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name allfails-excludeCCT-noHeuristics
+# echo "analyzing zlib_ng_TF_bot30 allfails-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject zlib_ng_TF_bot30 --experiment-name TF_bot30 --analysis-criteria 2 --type-name allfails-excludeCCT-noHeuristics
 
 # cp ../configs/exp2.json ../configs/analysis_config.json
-# echo "analyzing opencv_features2d_TF_top30 rand50-excludeCCT-noHeuristics-noDelibIncl"
-# time python3 analyzer.py --subject opencv_features2d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name rand50-excludeCCT-noHeuristics-noDelibIncl
-# echo "analyzing opencv_features2d_TF_bot30 rand50-excludeCCT-noHeuristics-noDelibIncl"
-# time python3 analyzer.py --subject opencv_features2d_TF_bot30 --experiment-name TF_bot30 --analysis-criteria 2 --type-name rand50-excludeCCT-noHeuristics-noDelibIncl
-# echo "analyzing zlib_ng_TF_top30 rand50-excludeCCT-noHeuristics-noDelibIncl"
-# time python3 analyzer.py --subject zlib_ng_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name rand50-excludeCCT-noHeuristics-noDelibIncl
-# echo "analyzing zlib_ng_TF_bot30 rand50-excludeCCT-noHeuristics-noDelibIncl"
-# time python3 analyzer.py --subject zlib_ng_TF_bot30 --experiment-name TF_bot30 --analysis-criteria 2 --type-name rand50-excludeCCT-noHeuristics-noDelibIncl
+# echo "analyzing opencv_features2d_TF_top30 rand20-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_features2d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name rand20-excludeCCT-noHeuristics
+# echo "analyzing opencv_features2d_TF_bot30 rand20-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_features2d_TF_bot30 --experiment-name TF_bot30 --analysis-criteria 2 --type-name rand20-excludeCCT-noHeuristics
+# echo "analyzing zlib_ng_TF_top30 rand20-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject zlib_ng_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name rand20-excludeCCT-noHeuristics
+# echo "analyzing zlib_ng_TF_bot30 rand20-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject zlib_ng_TF_bot30 --experiment-name TF_bot30 --analysis-criteria 2 --type-name rand20-excludeCCT-noHeuristics
 
 # cp ../configs/exp3.json ../configs/analysis_config.json
-# echo "analyzing opencv_features2d_TF_top30 sbflgp13-excludeCCT-noHeuristics-delibIncl"
-# time python3 analyzer.py --subject opencv_features2d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflgp13-excludeCCT-noHeuristics-delibIncl
-# echo "analyzing opencv_features2d_TF_bot30 sbflgp13-excludeCCT-noHeuristics-delibIncl"
-# time python3 analyzer.py --subject opencv_features2d_TF_bot30 --experiment-name TF_bot30 --analysis-criteria 2 --type-name sbflgp13-excludeCCT-noHeuristics-delibIncl
-# echo "analyzing zlib_ng_TF_top30 sbflgp13-excludeCCT-noHeuristics-delibIncl"
-# time python3 analyzer.py --subject zlib_ng_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflgp13-excludeCCT-noHeuristics-delibIncl
-# echo "analyzing zlib_ng_TF_bot30 sbflgp13-excludeCCT-noHeuristics-delibIncl"
-# time python3 analyzer.py --subject zlib_ng_TF_bot30 --experiment-name TF_bot30 --analysis-criteria 2 --type-name sbflgp13-excludeCCT-noHeuristics-delibIncl
+# echo "analyzing opencv_features2d_TF_top30 sbflnaish220-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_features2d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish220-excludeCCT-noHeuristics
+# echo "analyzing opencv_features2d_TF_bot30 sbflnaish220-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_features2d_TF_bot30 --experiment-name TF_bot30 --analysis-criteria 2 --type-name sbflnaish220-excludeCCT-noHeuristics
+# echo "analyzing zlib_ng_TF_top30 sbflnaish220-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject zlib_ng_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish220-excludeCCT-noHeuristics
+# echo "analyzing zlib_ng_TF_bot30 sbflnaish220-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject zlib_ng_TF_bot30 --experiment-name TF_bot30 --analysis-criteria 2 --type-name sbflnaish220-excludeCCT-noHeuristics
 
-# cp ../configs/exp4.json ../configs/analysis_config.json
-# echo "analyzing opencv_features2d_TF_top30 sbflgp13-excludeCCT-noHeuristics-noDelibIncl"
-# time python3 analyzer.py --subject opencv_features2d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflgp13-excludeCCT-noHeuristics-noDelibIncl
-# echo "analyzing opencv_features2d_TF_bot30 sbflgp13-excludeCCT-noHeuristics-noDelibIncl"
-# time python3 analyzer.py --subject opencv_features2d_TF_bot30 --experiment-name TF_bot30 --analysis-criteria 2 --type-name sbflgp13-excludeCCT-noHeuristics-noDelibIncl
-# echo "analyzing zlib_ng_TF_top30 sbflgp13-excludeCCT-noHeuristics-noDelibIncl"
-# time python3 analyzer.py --subject zlib_ng_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflgp13-excludeCCT-noHeuristics-noDelibIncl
-# echo "analyzing zlib_ng_TF_bot30 sbflgp13-excludeCCT-noHeuristics-noDelibIncl"
-# time python3 analyzer.py --subject zlib_ng_TF_bot30 --experiment-name TF_bot30 --analysis-criteria 2 --type-name sbflgp13-excludeCCT-noHeuristics-noDelibIncl
 
 
 
@@ -65,8 +56,8 @@
 # time python3 machine_learning.py \
 #     --subject opencv_features2d_TF_top30 \
 #     --experiment-name TF_top30 \
-#     --targeting-experiment-name rand50-excludeCCT-noHeuristics-delibIncl \
-#     --project-name rand50-excludeCCT-noHeuristics-delibIncl-train2 \
+#     --targeting-experiment-name allfails-excludeCCT-noHeuristics \
+#     --project-name allfails-excludeCCT-noHeuristics-t1 \
 #     --train \
 #     --train-validate-test-ratio 8 1 1 \
 #     --random-seed 42 \
@@ -74,16 +65,25 @@
 #     --batch-size 256 \
 #     --device cuda \
 #     --dropout 0.2 \
-#     --model-shape 35 64 64 32 1
+#     --model-shape 36 64 64 32 1
 
-
-# ================== M2 ==================
-# train model: M2
 # time python3 machine_learning.py \
 #     --subject opencv_features2d_TF_top30 \
 #     --experiment-name TF_top30 \
-#     --targeting-experiment-name rand50-excludeCCT-noHeuristics-noDelibIncl \
-#     --project-name rand50-excludeCCT-noHeuristics-noDelibIncl-train1 \
+#     --targeting-experiment-name allfails-excludeCCT-noHeuristics \
+#     --inference-name self-D1 \
+#     --inference \
+#     --model-name opencv_features2d_TF_top30::allfails-excludeCCT-noHeuristics-t1 \
+#     --device cuda
+
+
+# ================== M2 ==================
+# # train model: M2
+# time python3 machine_learning.py \
+#     --subject opencv_features2d_TF_top30 \
+#     --experiment-name TF_top30 \
+#     --targeting-experiment-name rand20-excludeCCT-noHeuristics \
+#     --project-name rand20-excludeCCT-noHeuristics-train1 \
 #     --train \
 #     --train-validate-test-ratio 8 1 1 \
 #     --random-seed 42 \
@@ -255,7 +255,7 @@
 #     --model-name zlib_ng_TF_top30::sbflgp13-excludeCCT-noHeuristics-noDelibIncl-train1 \
 #     --device cuda
 
-python3 ML_analysis_script.py \
-    --model-name zlib_ng_TF_top30::sbflgp13-excludeCCT-noHeuristics-noDelibIncl-train1 \
-    --model-id D8
+# python3 ML_analysis_script.py \
+#     --model-name zlib_ng_TF_top30::sbflgp13-excludeCCT-noHeuristics-noDelibIncl-train1 \
+#     --model-id D8
 

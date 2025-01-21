@@ -120,38 +120,99 @@ pp_sbfl_formulas = [
     "Ochiai2", "Zoltar"
 ]
 
+final_mbfl_formulas = {
+    "met": ["met_1", "met_2", "met_3"],
+    "muse": ["muse_1", "muse_2", "muse_3", "muse_4", "muse_5", "muse_6"]
+}
+
+final_sbfl_formulas = {
+    "binary": ["binary_1"],
+    "gp13": ["gp13_1", "gp13_2", "gp13_3", "gp13_4"],
+    "jaccard": ["jaccard_1", "jaccard_2", "jaccard_3"],
+    "naish1": ["naish1_1", "naish1_2"],
+    "naish2": ["naish2_1", "naish2_2", "naish2_3", "naish2_4", "naish2_5"],
+    "ochiai": ["ochiai_1", "ochiai_2", "ochiai_3", "ochiai_4"],
+    "russel_rao": ["russel_rao_1", "russel_rao_2", "russel_rao_3"],
+    "wong1": ["wong1_1"]
+}
+
 def sbfl(e_p, e_f, n_p, n_f, formula="Ochiai", fails=0, passes=0):
-    if formula == "Jaccard":
+    if formula == "Jaccard" or formula == "jaccard_3":
         denominator = e_f + n_f + e_p
         if denominator == 0:
             return 0
         return e_f / denominator
-    elif formula == "Binary":
+    elif formula == "jaccard_1":
+        return e_f
+    elif formula == "jaccard_2":
+        denominator = e_f + n_f + e_p
+        return 1 / denominator
+    elif formula == "Binary" or formula == "binary_1":
         if 0 < n_f:
             return 0
         elif n_f == 0:
             return 1
-    elif formula == "GP13":
-        denominator = 2*e_p + e_f
+    elif formula == "GP13" or formula == "gp13_4":
+        denominator = (2*e_p) + e_f
         if denominator == 0:
             return 0
         return e_f + (e_f / denominator)
-    elif formula == "Naish1":
+    elif formula == "gp13_1":
+        return e_f
+    elif formula == "gp13_2":
+        denominator = (2*e_p) + e_f
+        if denominator == 0:
+            return 0
+        return (1 / denominator)
+    elif formula == "gp13_3":
+        denominator = (2*e_p) + e_f
+        if denominator == 0:
+            return 0
+        return e_f / denominator
+    elif formula == "Naish1" or formula == "naish1_2":
         if 0 < n_f:
             return -1
         elif 0 == n_f:
             return n_p
-    elif formula == "Naish2":
+    elif formula == "naish1_1":
+        return n_p
+    elif formula == "Naish2" or formula == "naish2_5":
         x = e_p / (e_p + n_p + 1)
         return e_f - x
-    elif formula == "Ochiai":
+    elif formula == "naish2_1":
+        return e_f
+    elif formula == "naish2_2":
+        return e_p
+    elif formula == "naish2_3":
+        denominator = e_p + n_p + 1
+        return 1 / denominator
+    elif formula == "naish2_4":
+        denominator = e_p + n_p + 1
+        return e_p / denominator
+    elif formula == "Ochiai" or formula == "ochiai_4":
         denominator = math.sqrt((e_f + n_f) * (e_f + e_p))
         if denominator == 0:
             return 0
         return e_f / denominator
-    elif formula == "Russel+Rao":
+    elif formula == "ochiai_1":
+        return e_f
+    elif formula == "ochiai_2":
+        denominator = math.sqrt(e_f + n_f)
+        if denominator == 0:
+            return 0
+        return 1 / denominator
+    elif formula == "ochiai_3":
+        denominator = math.sqrt(e_f + e_p)
+        if denominator == 0:
+            return 0
+        return 1 / denominator
+    elif formula == "Russel+Rao" or formula == "russel_rao_3":
         return e_f/(e_p + n_p + e_f + n_f)
-    elif formula == "Wong1":
+    elif formula == "russel_rao_1":
+        return e_f
+    elif formula == "russel_rao_2":
+        return 1 / (e_p + n_p + e_f + n_f)
+    elif formula == "Wong1" or formula == "wong1_1":
         return e_f
     elif formula == "ER1a":
         if n_f > 0:

@@ -9,8 +9,12 @@ class FL_Dataset(Dataset):
     def __init__(self, name, raw_data_list):
         self.name = name
         self.raw_data_list = raw_data_list
-        sbfl_forms = [form.lower().replace("+", "_") for form in pp_sbfl_formulas]
-        self.feature_names = sbfl_forms + ["muse_score", "met_score"]
+        fl_features = ["ep", "ef", "np", "nf"]
+        for sbfl_form, sub_form_list in final_sbfl_formulas.items():
+            fl_features.extend(sub_form_list)
+        for mbfl_form, sub_form_list in final_mbfl_formulas.items():
+            fl_features.extend(sub_form_list)
+        self.feature_names = fl_features
         self.data_list = self.make_data_list()
     
     def __len__(self):
