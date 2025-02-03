@@ -93,9 +93,17 @@ class WorkerStage03(Worker):
         self.postprocess_coverage()
 
         # 4. Save the version to self.prerequisite_data_dir
-        self.save_version(self.bug_idx, "prerequisites")
-        print_command(["cp", "-r", self.version_dir, self.prerequisite_data_dir], self.verbose)
-        sp.check_call(["cp", "-r", self.version_dir, self.prerequisite_data_dir])
+        self.coverage_summary["num_lines_executed_by_failing_tcs"] = len(self.lines_execed_by_failing_tc)
+        self.coverage_summary["num_lines_executed_by_passing_tcs"] = len(self.lines_execed_by_passing_tc)
+
+        if self.coverage_summary["num_lines_executed_by_passing_tcs"] == 0 \
+            or self.coverage_summary["num_lines_executed_by_failing_tcs"] == 0:
+            print(f"num of pass and fail is {self.coverage_summary['num_lines_executed_by_passing_tcs']} and {self.coverage_summary['num_lines_executed_by_failing_tcs']}")
+            self.set_false(self.bug_idx, "prerequisites")
+        else:
+            self.save_version(self.bug_idx, "prerequisites")
+            print_command(["cp", "-r", self.version_dir, self.prerequisite_data_dir], self.verbose)
+            sp.check_call(["cp", "-r", self.version_dir, self.prerequisite_data_dir])
 
         # 5. delete the coverage directory
         sp.check_call(["rm", "-rf", self.cov_dir])

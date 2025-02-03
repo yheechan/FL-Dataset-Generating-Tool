@@ -68,7 +68,7 @@ class Subject:
             target_code_file = row[2]
             buggy_code_file = row[3]
 
-            target_file_mutant_dir_name = target_code_file.replace("/", "-")
+            target_file_mutant_dir_name = target_code_file.replace("/", "#")
             target_file_mutant_dir = generated_mutants_dir / target_file_mutant_dir_name
 
             if version_type == "real_world":

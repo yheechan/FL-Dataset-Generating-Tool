@@ -142,11 +142,12 @@ class EngineBase:
             target_file = key.split("#")[0].split("/")[-1]
             function_name = key.split("#")[1]
             lineno = int(key.split("#")[-1])
+            file_func_key = f"{target_file}#{function_name}"
 
-            if function_name not in function_susp:
-                function_susp[function_name] = {"susp.": susp}
+            if file_func_key not in function_susp:
+                function_susp[file_func_key] = {"susp.": susp}
             else:
-                function_susp[function_name]["susp."] = max(function_susp[function_name]["susp."], susp)
+                function_susp[file_func_key]["susp."] = max(function_susp[file_func_key]["susp."], susp)
         
         function_susp = sorted(
             function_susp.items(),
@@ -154,7 +155,7 @@ class EngineBase:
         )
 
         function_susp = [
-            (function_name, susp_dict["susp."]) for function_name, susp_dict in function_susp
+            (file_func_key, susp_dict["susp."]) for file_func_key, susp_dict in function_susp
         ]
         function_susp = pd.DataFrame(
             function_susp, columns=["function", "susp."]
@@ -167,8 +168,8 @@ class EngineBase:
         ).astype(int)
 
         function_susp = [
-            (function_name, {"susp.": susp, "rank": rank})
-            for function_name, susp, rank in zip(
+            (file_func_key, {"susp.": susp, "rank": rank})
+            for file_func_key, susp, rank in zip(
                 function_susp["function"],
                 function_susp["susp."],
                 function_susp["rank"]
@@ -182,11 +183,13 @@ class EngineBase:
         buggy_function_name = buggy_line_key.split("#")[1]
         buggy_lineno = int(buggy_line_key.split("#")[-1])
 
-        for i, (function_name, susp_dict) in enumerate(function_susp):
-            if function_name == buggy_function_name:
+        buggy_file_func_key = f"{buggy_target_file}#{buggy_function_name}"
+
+        for i, (file_func_key, susp_dict) in enumerate(function_susp):
+            if file_func_key == buggy_file_func_key:
                 rank = susp_dict["rank"]
                 return rank
-        print(f"Error: {buggy_function_name} not found in function_susp.")
+        print(f"Error: {buggy_file_func_key} not found in function_susp.")
         return None
 
     def set_random_seed(self, seed):
@@ -271,9 +274,9 @@ class EngineBase:
         function_susp_file = function_susp_dir / f"{subject}-{bug_id}.function_susp_score.csv"
         with open(function_susp_file, "w") as f:
             writer = csv.writer(f)
-            writer.writerow(["function", "suspiciousness", "rank"])
-            for function_name, susp_dict in function_susp:
-                writer.writerow([function_name, susp_dict["susp."], susp_dict["rank"]])
+            writer.writerow(["file_function_key", "suspiciousness", "rank"])
+            for file_func_key, susp_dict in function_susp:
+                writer.writerow([file_func_key, susp_dict["susp."], susp_dict["rank"]])
         return function_susp_file
 
     def draw_loss_graph(self, project_out_dir, train_loss, validate_loss):

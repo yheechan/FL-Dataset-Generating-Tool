@@ -54,6 +54,8 @@ class FL_Dataset(Dataset):
             line_key = f"{file}#{function}#{lineno}"
         
             data.append((key, features, label, line_key))
+        
+        assert bug == 1, f"Bug: {bug}, NonBug: {nonBug}"
 
         weight_bug = (bug + nonBug) / (bug * 2)
         weight_nonBug = (bug + nonBug) / (nonBug * 2)        

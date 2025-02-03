@@ -1011,6 +1011,10 @@ class WorkerStage05(Worker):
 
             # get number of lines executed by failing test cases
             filename = target_file_str
+            if "libxml2" in self.name:
+                filename = target_file.name
+            # elif "zlib_ng" in self.name:
+            #     filename = "/".join(target_file_str.split("/")[1:]) MAY NOT BE NEEDED
             if filename in self.lines_executed_by_failing_tcs:
                 total_num_lines_executed += len(self.lines_executed_by_failing_tcs[filename])
 
@@ -1019,6 +1023,8 @@ class WorkerStage05(Worker):
         print(f">> Total number of lines executed by failing test cases: {total_num_lines_executed}")
         print(f">> Mutants per file:")
         for target_file_str, num_mutants in mutant_cnt_per_file.items():
+            if "libxml2" in self.name:
+                target_file_str = target_file_str.split("/")[-1]
             print(f"\t >> {target_file_str}: {num_mutants} mutants, {len(self.lines_executed_by_failing_tcs[target_file_str])} lines executed by failing test cases")
     
     def print_selected_mutants_stats(self):

@@ -5,6 +5,7 @@ import subprocess as sp
 from lib.utils import *
 from lib.subject_base import Subject
 from lib.file_manager import FileManager
+from lib.susp_score_formula import *
 
 class SBFLExtraction(Subject):
     def __init__(
@@ -48,18 +49,12 @@ class SBFLExtraction(Subject):
             "cct_ep INT DEFAULT NULL",
             "cct_np INT DEFAULT NULL"
         ]
-        sbfl_list = [
-            "GP13 FLOAT4 DEFAULT NULL",
-            "Jaccard FLOAT4 DEFAULT NULL",
-            "Naish1 FLOAT4 DEFAULT NULL",
-            "Naish2 FLOAT4 DEFAULT NULL",
-            "Ochiai FLOAT4 DEFAULT NULL",
-            "GP13_cct FLOAT4 DEFAULT NULL",
-            "Jaccard_cct FLOAT4 DEFAULT NULL",
-            "Naish1_cct FLOAT4 DEFAULT NULL",
-            "Naish2_cct FLOAT4 DEFAULT NULL",
-            "Ochiai_cct FLOAT4 DEFAULT NULL"
-        ]
+
+        sbfl_list = []
+        for form, sub_form_list in final_sbfl_formulas.items():
+            for sub_form in sub_form_list:
+                sbfl_list.append(f"{sub_form} FLOAT4 DEFAULT NULL")
+
         for col in new_cols + sbfl_list:
             col_name = col.split(" ")[0].lower()
             if not self.db.column_exists("line_info", col_name):

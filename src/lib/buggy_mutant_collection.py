@@ -405,7 +405,7 @@ class BuggyMutantCollection(Subject):
             '-o', str(mutant_dir),
             # '-ll', '1',
             # '-l', '2',
-            '-ll', '10', # limit on line
+            '-ll', '1', # limit on line
             '-l', '20', # limit on mutant operator
             '-d', unused_ops,
             '-p', str(self.compile_command_file)
@@ -426,7 +426,7 @@ class BuggyMutantCollection(Subject):
             target_file_path = self.work / target_file
             assert target_file_path.exists(), f'{target_file_path} does not exist'
 
-            target_file_name = target_file.replace('/', '-')
+            target_file_name = target_file.replace('/', '#')
             single_file_mutant_dir = self.mutants_dir / f"{target_file_name}"
             single_file_mutant_dir.mkdir(exist_ok=True)
 
@@ -445,7 +445,7 @@ class BuggyMutantCollection(Subject):
 
         mutants_list = []
         for target_mutants_dir in self.mutants_dir.iterdir():
-            target_file = target_mutants_dir.name.replace('-', '/')
+            target_file = target_mutants_dir.name.replace('#', '/')
             # TEMPORARY
             # if "HTMLparser.c" not in target_file:
             #     continue
@@ -467,7 +467,7 @@ class BuggyMutantCollection(Subject):
     def get_mutants_info(self):
         mut_info = {}
         for target_mutants_dir in self.mutants_dir.iterdir():
-            target_file = target_mutants_dir.name.replace('-', '/')
+            target_file = target_mutants_dir.name.replace('#', '/')
             target_file_source_filename = ".".join(target_file.split('/')[-1].split(".")[:-1])
             mut_db_file = target_mutants_dir / f"{target_file_source_filename}_mut_db.csv"
             assert mut_db_file.exists(), f"{mut_db_file} doesn't exists"
@@ -518,173 +518,3 @@ class BuggyMutantCollection(Subject):
         print(f">> Assigned {len(self.mutants_list)} mutants to {len(self.mutant_assignments)} cores")
         for machine_core, mutants in self.mutant_assignments.items():
             print(f'>> {machine_core} has {len(mutants)} mutants')
-
-    # 2024-09-19 might not need this part
-    # ++++++++++++++++++++++++++++++++++++++++ # 2024-08-09 save-crashed-buggy-mutants
-    # ++++++ Save Crashed Buggy Mutants ++++++
-    # ++++++++++++++++++++++++++++++++++++++++
-    def save_crashed_buggy_mutants(self):
-        self.subject_out_dir = out_dir / self.name
-        self.crashed_buggy_mutants_dir = self.subject_out_dir / "crashed_buggy_mutants"
-        assert self.crashed_buggy_mutants_dir.exists(), f"{self.crashed_buggy_mutants_dir.name} doesn't exists"
-
-        # self.saved_crashed_buggy_mutants_dir = self.subject_out_dir / "saved_crashed_buggy_mutants"
-        # self.saved_crashed_buggy_mutants_dir.mkdir(exist_ok=True, parents=True) # 2024-08-09 save-crashed-buggy-mutants
-
-        self.source2mutDir_dict = self.get_source2smutDir_dict()
-
-        self.crashed_mutant_info = self.get_crash_mutant_info(self.crashed_buggy_mutants_dir)
-        self.mbfl_source2lineno = self.get_mbfl_extracted_mutant_info(self.subject_out_dir / "mbfl_features")
-        
-        # This is how the dictionary looks like
-        # {
-        #     "source_name": source_name, # ns_app.c
-        #     "taget_code_file": target_code_file, # NSFW_c_frw/NSFW/src/frw/ns_app.c
-        #     "mut_dir_name": mut_dir_name, # NSFW_c_frw-NSFW-src-frw-ns_app.c
-        #     "mutant_dir_Path": mut_info["mut_dir_Path"],
-        #     "mutant_file_Path": mut_info["mut_file_Path"],
-        #     "mutant_db_csv_Path": mut_info["db_csv_Path"],
-        #     "mutant_lineno": mut_info["lineno"],
-        # }
-        self.notUsed_crashed_mutant_info = self.get_notUsed_crashed_mutant_info(self.crashed_mutant_info, self.mbfl_source2lineno)
-
-        print(f"len of origin crashed: {len(self.crashed_mutant_info)}")
-        print(f"len of notUsed crashed: {len(self.notUsed_crashed_mutant_info)}")
-
-        # 1. Read configurations and initialize working directory: self.work
-        # self.initialize_working_directory()
-
-        # 5. Get mutants: self.mutants_list
-        # self.mutant_list format: [(target_file, mutant)]
-        self.mutants_list = [(self.notUsed_crashed_mutant_info[mutant]["taget_code_file"], self.notUsed_crashed_mutant_info[mutant]["mutant_file_Path"]) for mutant in self.notUsed_crashed_mutant_info]
-        print(f"len b4 assignment: {len(self.mutants_list)}")
-        # self.print_number_of_mutants()
-
-        # 6. Assign mutants to cores
-        # mutant_assignments format: {machine_core: [(target_file, mutant)]}
-        self.mutant_assignments = self.assign_works_to_machines(self.mutants_list)
-        self.print_mutant_assignments()
-
-        # # 7. Prepare for mutation testing
-        # self.prepare_for_mutation_testing()
-
-        # # 8. Test mutants
-        # self.test_mutants()
-    
-    def get_crash_mutant_info(self, crash_dir):
-        crashed_info = {}
-        for csv_file in crash_dir.iterdir():
-            info = csv_file.name.split("-")
-            mutant_name = info[0] # info 1
-            error_type = info[1]
-            step = info[2]
-            
-            splitted_name = mutant_name.split(".")
-            source_name = splitted_name[0] + "." + splitted_name[-1] # info 2
-
-            # source_file_path = self.get_source_file_path(mutant_name, source_name)
-            assert source_name in self.source2mutDir_dict, f"{source_name} not in source2mutDir_dict"
-            target_code_file = self.source2mutDir_dict[source_name]["target_code_file"] # info 3
-            mut_dir_name = self.source2mutDir_dict[source_name]["mut_dir_name"] # info 4
-
-            mut_info = self.get_mut_info(mut_dir_name, mutant_name, source_name) # info 5
-
-            if error_type == "crash":
-                assert mutant_name not in crashed_info, f"{mutant_name} already in crashed_info dict"
-                crashed_info[mutant_name] = {
-                    "source_name": source_name, # ns_app.c
-                    "taget_code_file": target_code_file, # NSFW_c_frw/NSFW/src/frw/ns_app.c
-                    "mut_dir_name": mut_dir_name, # NSFW_c_frw-NSFW-src-frw-ns_app.c
-                    "mutant_dir_Path": mut_info["mut_dir_Path"],
-                    "mutant_file_Path": mut_info["mut_file_Path"],
-                    "mutant_db_csv_Path": mut_info["db_csv_Path"],
-                    "mutant_lineno": mut_info["lineno"],
-                }
-        return crashed_info
-    
-    def get_mbfl_extracted_mutant_info(self, mbfl_dir):
-        source2lineno = {}
-        for mbfl_mut_dir in mbfl_dir.iterdir():
-            mutant_name = mbfl_mut_dir.name
-            splitted_name = mutant_name.split(".")
-            source_name = splitted_name[0] + "." + splitted_name[-1]
-
-            mut_dir_name = self.source2mutDir_dict[source_name]["mut_dir_name"]
-            mut_info = self.get_mut_info(mut_dir_name, mutant_name, source_name)
-
-            lineno = mut_info["lineno"]
-            if source_name not in source2lineno:
-                source2lineno[source_name] = []
-            assert lineno not in source2lineno[source_name], f"{lineno} coexists..."
-
-            source2lineno[source_name].append(lineno)
-            
-        return source2lineno
-    
-    def get_notUsed_crashed_mutant_info(self, crashed_mutants, mbfl_source2lineno):
-        notUsed = {}
-        for crashed in crashed_mutants.keys():
-            crashed_source_name = crashed_mutants[crashed]["source_name"]
-            crashed_lineno = crashed_mutants[crashed]["mutant_lineno"]
-
-            # this still allows duplice bug within a line from crashed
-            if crashed_source_name not in mbfl_source2lineno:
-                mbfl_source2lineno[crashed_source_name] = []
-
-            if crashed_lineno not in mbfl_source2lineno[crashed_source_name]:
-                assert crashed not in notUsed, f"{crashed} weirdly is already in notUsed"
-                notUsed[crashed] = crashed_mutants[crashed]
-                # mbfl_source2lineno[crashed_source_name].append(crashed_lineno) # this comment dis-allows duplicate bug within a line from crashed
-        return notUsed
-
-            
-    def get_mut_info(self, mut_dir_name, mutant_name, source_name):
-        mut_dir = self.mutants_dir / mut_dir_name
-        assert mut_dir.exists(), f"{mut_dir} doesn't exists"
-
-        mut_file = mut_dir / mutant_name
-        assert mut_file.exists(), f"{mut_file} doesn't exists"
-
-        filename = source_name.split(".")[0]
-        db_csv = mut_dir / f"{filename}_mut_db.csv"
-        assert db_csv.exists(), f"{db_csv} doesn't exists"
-
-        lineno = self.get_lineno_of_mut(mutant_name, db_csv)
-        assert lineno != None, f"Lineno of {mutant_name} is not found in {db_csv}"
-
-        info = {
-            "mut_dir_Path": mut_dir,
-            "mut_file_Path": mut_file,
-            "db_csv_Path": db_csv,
-            "lineno": lineno
-        }
-
-        return info
-    
-    def get_lineno_of_mut(self, mut_name, db_csv):
-        with open(db_csv, "r") as fp:
-            lines = fp.readlines()
-            for line in lines[2:]:
-                info = line.strip().split(",")
-                csv_mut_name = info[0]
-                csv_op = info[1]
-                csv_lineno = int(info[2])
-
-                if csv_mut_name == mut_name:
-                    return csv_lineno
-        return None
-
-    
-    def get_source2smutDir_dict(self,):
-        return_dict = {}
-        for mut_dir in self.mutants_dir.iterdir():
-            dirname = mut_dir.name
-            source_file_name = dirname.split("-")[-1]
-            target_code_file = dirname.replace("-","/")
-            mut_dir_name = dirname
-
-            return_dict[source_file_name] = {
-                "target_code_file": target_code_file,
-                "mut_dir_name": dirname
-            }
-        return return_dict

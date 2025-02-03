@@ -277,7 +277,7 @@ class Worker:
 
         if len(model_file.split("/")) == 1:
             filename = target_code_file.split("/")[-1]
-        elif for_buggy_line_key:
+        elif for_buggy_line_key and "zlib_ng" in self.name:
             filename = "/".join(target_code_file.split("/")[1:])
         else:
             filename = target_code_file
@@ -539,6 +539,14 @@ class Worker:
         self.db.update(
             "bug_info",
             set_values={col_key: True},
+            conditions={"bug_idx": bug_idx}
+        )
+    
+    def set_false(self, bug_idx, col_key):
+        print(f">> Setting {col_key} to False")
+        self.db.update(
+            "bug_info",
+            set_values={col_key: False},
             conditions={"bug_idx": bug_idx}
         )
 

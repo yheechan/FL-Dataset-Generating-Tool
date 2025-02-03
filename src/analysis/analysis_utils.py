@@ -9,7 +9,7 @@ def get_target_buggy_version_list(subject_name, experiment_name, stage, db):
     """
     columns = [
         "bug_idx", "version", "buggy_file", "buggy_function", "buggy_lineno", "buggy_line_idx",
-        "num_failing_tcs", "num_passing_tcs", "num_ccts", "num_total_lines"
+        "num_failing_tcs", "num_passing_tcs", "num_ccts", "num_total_lines", "num_lines_executed_by_failing_tcs"
     ]
     col_str = ", ".join(columns)
     return db.read(

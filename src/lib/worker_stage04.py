@@ -124,7 +124,10 @@ class WorkerStage04(Worker):
     
     def measure_total_sbfl(self):
         # sbfl_list = sbfl_formulas
-        sbfl_list = ["GP13", "Jaccard", "Naish1", "Naish2", "Ochiai"]
+        sbfl_list = []
+        for form, sub_form_list in final_sbfl_formulas.items():
+            sbfl_list.extend(sub_form_list)
+
         for line_info in self.line_data:
             file = line_info["file"]
             func = line_info["function"]
@@ -141,10 +144,10 @@ class WorkerStage04(Worker):
                 sbfl_value = sbfl(ep, ef, np, nf, sbfl_formula)
                 line_info["sbfl_data"][sbfl_formula] = sbfl_value
             
-            for sbfl_formula in sbfl_list:
-                sbfl_value = sbfl(ep+cct_ep, np+cct_np, np, nf, sbfl_formula)
-                form_name = f"{sbfl_formula}_cct"
-                line_info["sbfl_data"][form_name] = sbfl_value
+            # for sbfl_formula in sbfl_list:
+            #     sbfl_value = sbfl(ep+cct_ep, np+cct_np, np, nf, sbfl_formula)
+            #     form_name = f"{sbfl_formula}_cct"
+            #     line_info["sbfl_data"][form_name] = sbfl_value
         
     
     def write_sbfl_features(self, batch_size=250):
