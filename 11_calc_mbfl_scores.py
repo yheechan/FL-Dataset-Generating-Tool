@@ -1,5 +1,6 @@
 from pathlib import Path
 import json
+from matplotlib import pyplot as plt
 
 curr_file = Path(__file__).resolve()
 main_dir = curr_file.parent
@@ -96,3 +97,56 @@ with open(out_file, "w") as f:
                 data['muse_acc10'] = round((data['muse_acc10'])*100, 2)
                 f.write(f"{subject},{analysis_type},{key},{data['avg_time_duration']},{data['met_acc5']},{data['met_acc10']},{data['muse_acc5']},{data['muse_acc10']}\n")
 
+
+# analysis_types = [
+#     "allfails-excludeCCT-noHeuristics",
+#     "rand50-excludeCCT-noHeuristics",
+#     "sbflnaish250-excludeCCT-noHeuristics",
+# ]
+
+# plot a bar chart where
+# y-axis is Avg. time duration for MBFL extraction in hours
+# x axis is subject, each subject has 3 bars for each analysis type
+# all the bars on analysis type must be the same color
+
+# first make the dictionary for the data
+time_data = {}
+for subject in subjects:
+    subject_name = "_".join(subject.split("_")[:2])
+    if subject_name == "opencv_calib3d":
+        subject_name = "*opencv_calib3d"
+
+    time_data[subject_name] = {}
+    for analysis_type in analysis_types:
+        analysis_type_name = ""
+        if analysis_type == "allfails-excludeCCT-noHeuristics":
+            analysis_type_name = "all-lines"
+        elif analysis_type == "rand50-excludeCCT-noHeuristics":
+            analysis_type_name = "random"
+        elif analysis_type == "sbflnaish250-excludeCCT-noHeuristics":
+            analysis_type_name = "sbfl-based"
+        
+        time_data[subject_name][analysis_type_name] = results[subject][analysis_type]["10"]["avg_time_duration"]
+
+# plot the bar chart
+fig, ax = plt.subplots()
+
+bar_width = 0.2
+index = range(len(subjects))
+colors = ['dimgray', 'silver', 'lime']
+
+for i, analysis_type in enumerate(["all-lines", "random", "sbfl-based"]):
+    avg_time_durations = [time_data[subject][analysis_type] for subject in time_data]
+    ax.bar([p + bar_width * i for p in index], avg_time_durations, bar_width, label=analysis_type, color=colors[i])
+
+ax.set_xlabel('Subject')
+ax.set_ylabel('Avg. time taken (hours)')
+ax.set_title('Avg. time taken for MBFL extraction by each line selection method')
+ax.set_xticks([p + bar_width for p in index])
+ax.set_xticklabels(time_data, rotation=45, ha="right")
+ax.legend()
+
+plt.tight_layout()
+
+# save to file
+plt.savefig(main_dir / "mbfl_time_duration.png")
