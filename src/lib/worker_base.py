@@ -274,7 +274,7 @@ class Worker:
             if self.subject_lang == "C":
                 # get filename without extension
                 # remember the filename can be x.y.cpp
-                filename = ".".join(target_file.split(".")[:-1])
+                filename = ".".join(target_file.split(".")[:-1]) + "*"
             else:
                 filename = ".".join(target_file.split(".")[:-1]) + ".cpp"
             gcno_file = "*" + filename + ".gcno"

@@ -9,7 +9,9 @@
 5. [스펙트럼기반 (SBFL: Spectrum-Based) 데이터셋 추출](#65-5단계-스펙트럼기반-sbfl-spectrum-based-데이터셋-추출)
 6. [변이기반과 스펙트럼기반 데이터 병합하여 최종 결함위치탐지 데이터셋 완성](#66-6단계-변이기반과-스펙트럼기반-데이터-병합하여-최종-결함위치탐지-데이터셋-완성)
 
-해당 문서는 결함위치탐지 데이터셋 생성 도구의 사용법을 설명한다.
+___
+* 해당 문서는 결함위치탐지 데이터셋 생성 도구의 사용법을 설명한다.
+* 해당 문서에서 ``./``의 위치는 ``FL-Dataset-Generating-Tool`` 폴더를 의미한다.
 
 # 1. 목차
 * [0. 소개](#0-소개)
@@ -165,7 +167,7 @@
 서브젝트에 해당되는 모든 정보 (서브젝트 리포지토리, 서브젝트 configurations, etc.)는 ``./subjects/`` 디렉토리에 위치 시킨다. 그러므로 사용자는 가장 먼저 ``./subjects/`` 디렉토리를 생성해야 한다. 서브젝트에 대한 configuration 설정하는 방법은 [5.2.1장](#521-서브젝트의-가장-상위-디렉토리-설정) 부터 자세하게 설명한다 (설명은 ``libxml2`` 서브젝트 기준으로 예를 보인다).
 
 ### 5.2.1 서브젝트의 가장 상위 디렉토리 설정
-  1. ``./subject/`` 디렉토리와 서브젝트 디렉토리 생성
+  1. ``./subjects/`` 디렉토리와 서브젝트 디렉토리 생성
       ```
       $ mkdir -p ./subjects/libxml2/
       ```
@@ -177,7 +179,7 @@
       ```
 
 #### 5.2.2 서브젝트의 실제 버그 (real-world bug) 버전 설정 방법
-  3. ``./subjects/libxml2/`` 위치에 ``real_world_buggy_versions`` 이름의 디렉토리를 생성한다. 이 디렉토리는 실제 버그 버전들에 디렉토리로 구성되며 각 버전의 디렉토리가 해당 되는 버전에대한 정보를 담는다.
+  3. ``./subjects/libxml2/`` 위치에 ``real_world_buggy_versions`` 이름의 디렉토리를 생성한다. 이 디렉토리는 실제 버그 버전들의 디렉토리로 구성되며 각 버전의 디렉토리가 해당 되는 버전에대한 정보를 담는다.
       ```
       $ cd ./subjects/libxml2
       $ mkdir real_world_buggy_versions
@@ -204,9 +206,10 @@
           * ``target_code_file``: 서브젝트의 리포지토리 디렉토리부터 타깃 소스코드 파일의 상대 경로 (ex. ``libxml2/HTMLparser.c``)
           * ``buggy_code_file``: ``./real_world_buggy_versions/buggy_code_file/``에 저장한 ``<source-file>``의 이름.
           * ``buggy_lineno``: ``<source-file>``에 버기 라인이 위차하고 있는 라인 번호.
+      * 서브젝트의 실제 버그 버전들은 결함위치탐지 데이터셋 추출하는데 있어 필수로 필요한 사항이 아니다.
 
 #### 5.2.3 서브젝트의 configurations 설정
-  4. ``./configs/libxml2/configurations.json`` 파일은 서브젝트에 대한 configuration을 설정하는 파일이며 다음과 같은 형식으로 설정.
+  4. ``./subjects/libxml2/configurations.json`` 파일은 서브젝트에 대한 configuration을 설정하는 파일이며 다음과 같은 형식으로 설정.
       ```
       {
           "subject_name": "libxml2",
@@ -247,6 +250,7 @@
       }
       ```
       * ``subject_name``: 서브젝트의 이름.
+        * (참고 사항) [5.2.1장](#521-서브젝트의-가장-상위-디렉토리-설정)의 과정을 수행하여, ``configurations.json`` 설정 전에 ``./subjects/<subject-name>`` 디렉토리를 먼저 생성해야한다.
       * ``configuration_script_working_directory``: 서브젝트 configure 명령 실행 스크립트(``configure_no_cov_script.sh``와 ``configure_yes_cov_script.sh``)의 실행 위치를 서브젝트 리포지토리로부터의 상대 경로로 설정한다.
       * ``build_script_working_directory``: 서브젝트의 빌드 명령 실행 스크립트(``build_script.sh``)의 실행 위치를 서브젝트 리포지토리로부터의 상대 경로로 설정한다.
       * ``compile_command_path``: 서브젝트 빌드 후 생성 되는 ``compile_commands.json`` 파일의 위치를 서브젝트 리포지토리로부터의 상대 경로로 설정한다.
@@ -309,9 +313,9 @@
 ## 6.1 [1단계] 변이기반 버그 버전 생성
 ### 6.1.1 [1단계]에서 수행되는 작업
   1. **변이 생성**:
-      * ``./subjects/libxml2/configuration.json`` 설정 파일의 ``target_files`` 변수에 설정된 타깃 파일들의 대해 변이들을 **생성** 한다. 생성된 변이 파일들은 ``./out/<subject-name>/generated_mutants/`` 디렉토리에 저장한다.
+      * ``./subjects/<subject-name>/configuration.json`` 설정 파일의 ``target_files`` 변수에 설정된 타깃 파일들의 대해 변이들을 **생성** 한다. 생성된 변이 파일들은 ``./out/<subject-name>/generated_mutants/`` 디렉토리에 저장한다.
   2. **변이 버전 테스트**:
-      * ``./subjects/libxml2/configuration.json`` 설정 파일의 ``test_case_directory`` 변수에 설정된 디렉토리 경로에 저장된 테스트 케이스 실행 스크립트들을 각 변이 버전에 실행 한다.
+      * ``./subjects/<subject-name>/configuration.json`` 설정 파일의 ``test_case_directory`` 변수에 설정된 디렉토리 경로에 저장된 테스트 케이스 실행 스크립트들을 각 변이 버전에 실행 한다.
   3. **변이 버그 버전 저장**:
       * 각 변이 버전에서 테스트 케이스를 실행하여 1개 이상의 실패하는 테스트 케이스와 1개 이상의 패싱하는 테스트 케이스가 존재하는 경우, 해당 버전을 ``./out/<subject-names>/buggy_mutants/`` 디렉토리에 저장한다.
 
@@ -333,7 +337,7 @@
   2. **실패 테스트 케이스 검증**:
       * 선택된 각 변이 버그 버전 별로 실패하는 테스트 케이스들을 실행하여 커버리즈 정보를 추출한다.
   3. **검증된 버그 버전 저장**:
-      * 각 변이 버그 버전의 실패하는 테스트 케이스들의 커버리지 정보를 확인하여 사용가능 여부가 검증되면 ``./out/<subject-name>/usable_buggy_mutants/`` 디렉토리에 저장한다.
+      * 각 변이 버그 버전의 실패하는 테스트 케이스들의 커버리지 정보를 확인하여 사용가능 여부가 검증되면 ``./out/<subject-name>/usable_buggy_versions/`` 디렉토리에 저장한다.
       * **검증 조건**은 다음과 같다:
         * 모든 실패하는 테스트 케이스는 버기 라인을 실행한다.
         * 변이 버그 버전은 1개 이상의 실패하는 테스트 케이스와 1개 이상의 패싱하는 테스트 케이스를 보유한다.
@@ -352,7 +356,7 @@
   $ python3 validator.py --subject <subject-name> --set-name <usable_buggy_versions-directory> --validate-usable-buggy-versions
   ```
 
-* ``<usable_buggy_versions-directory>`` (입력: ``usable_buggy_mutants``) 디렉토리에 속한 각 변이 버그 버전의 결과물에 대해 다음 조건들을 만족하는지 검증한다.
+* ``<usable_buggy_versions-directory>`` (입력: ``usable_buggy_versions``) 디렉토리에 속한 각 변이 버그 버전의 결과물에 대해 다음 조건들을 만족하는지 검증한다.
 * **검증 조건**:
   * 버그 버전의 기본 정보(``target_code_file``,``buggy_code_file``,``buggy_lineno``)를 담는 csv 파일(``bug_info.csv``)의 생성 여부 검증.
   * 실패와 패싱 테스트 케이스들의 목록 파일을 포함한 디렉토리(``testsuite_info/``)의 생성 여부 검증.
@@ -362,8 +366,8 @@
 ## 6.3 [3단계] 결함위치탐지 데이터셋 생성에 필요한 사전 데이터 추출
 ### 6.3.1 [3단계]에서 수행되는 작업
   1. **사전 데이터 추출**:
-      * ``./out/<subject-name>/usable_buggy_mutants/`` 디렉토리에 저장된 각 버그 버전에 대해 사전 데이터를 추출하여 ``./out/<subject-name>/prerequisite_data/`` 디렉토리에 저장한다. 
-      * 또한, ``/subjects/libxml2/configuration.json``의 ``real_world_buggy_versions`` 변수에 설정 된 값에 따라, ``true`` 값으로 설정 되어있을 시 ``./subjects/libxml2/real_world_buggy_versions/`` 디렉토리에 저장된 실제 버그 버전도 포함하여 사전 데이터를 추출하여 저장한다.
+      * ``./out/<subject-name>/usable_buggy_versions/`` 디렉토리에 저장된 각 버그 버전에 대해 사전 데이터를 추출하여 ``./out/<subject-name>/prerequisite_data/`` 디렉토리에 저장한다. 
+      * 또한, ``/subjects/<subject-name>/configuration.json``의 ``real_world_buggy_versions`` 변수에 설정 된 값에 따라, ``true`` 값으로 설정 되어있을 시 ``./subjects/<subject-name>/real_world_buggy_versions/`` 디렉토리에 저장된 실제 버그 버전도 포함하여 사전 데이터를 추출하여 저장한다.
       * 사전 데이터는 다음과 같은 정보를 의미한다:
         * 후처리 된 커버리지 정보 (CSV format)
         * 라인-함수 매핑 정보 (JSON format)
@@ -489,7 +493,7 @@
 ## 6.6 [6단계] 변이기반과 스펙트럼기반 데이터 병합하여 최종 결함위치탐지 데이터셋 완성
 ### 6.6.1 [6단계]에서 수행되는 작업
   1. **최종 결함위치탐지 데이터셋 완성**:
-      * 변이기반과 스펙트럼기반 데이터셋을 병합하여 최종 결함위치탐지 데이터셋을 생성하고 ``./out/<subject-name>/FL-dataset-<subject-name/`` 디렉토리에 저장한다.
+      * 변이기반과 스펙트럼기반 데이터셋을 병합하여 최종 결함위치탐지 데이터셋을 생성하고 ``./out/<subject-name>/FL-dataset-<subject-name>/`` 디렉토리에 저장한다.
 
 ### 6.6.2 [6단계] 실행 방법
 * **실행 명령어**:
