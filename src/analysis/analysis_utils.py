@@ -31,6 +31,7 @@ def get_mutations_on_target_lines(bug_idx, line_idx2line_info, db):
     """
     columns = [
         "line_idx", "mutant_idx", "build_result",
+        "targetting_file", "mutant_filename", "mut_op",
         "f2p", "p2f", "f2f", "p2p", "p2f_cct", "p2p_cct",
         "build_time_duration", "tc_execution_time_duration", "ccts_execution_time_duration"
     ]
@@ -57,15 +58,18 @@ def get_mutations_on_target_lines(bug_idx, line_idx2line_info, db):
             {
                 "mutant_idx": row[1],
                 "build_result": row[2],
-                "f2p": row[3],
-                "p2f": row[4],
-                "f2f": row[5],
-                "p2p": row[6],
-                "p2f_cct": row[7],
-                "p2p_cct": row[8],
-                "build_time_duration": row[9],
-                "tc_execution_time_duration": row[10],
-                "ccts_execution_time_duration": row[11]
+                "targetting_file": row[3],
+                "mutant_filename": row[4],
+                "mut_op": row[5],
+                "f2p": row[6],
+                "p2f": row[7],
+                "f2f": row[8],
+                "p2p": row[9],
+                "p2f_cct": row[10],
+                "p2p_cct": row[11],
+                "build_time_duration": row[12],
+                "tc_execution_time_duration": row[13],
+                "ccts_execution_time_duration": row[14]
             }
         )
     
@@ -76,9 +80,20 @@ def measure_mbfl_scores(line_idx2line_info, lines_idx2mutant_idx, total_num_of_f
     Measure MBFL scores for a given number of mutants
     """
     # Select mtc mutants per line at random
-    utilizing_line_idx2mutants, total_num_of_utilized_mutants = select_random_mtc_mutants_per_line(lines_idx2mutant_idx, mtc)
+    utilizing_line_idx2mutants, total_num_of_utilized_mutants = select_random_mtc_mutants_per_line(
+        line_idx2line_info, lines_idx2mutant_idx, mtc, analysis_config
+    )
     # print(f"Total number of utilized mutants: {total_num_of_utilized_mutants}")
     # print(f"utilizing_line_idx2mutants: {len(utilizing_line_idx2mutants)}")
+    # for line_idx, line_info in line_idx2line_info.items():  --> this is to check whether # of mutation per line method works properly
+    #     sbfl_score = line_info[analysis_config['sbfl_standard']]
+    #     if not line_idx in utilizing_line_idx2mutants:
+    #         print(f"{line_idx} - {sbfl_score} - NONE")
+    #         continue
+    #     mutant_len = len(utilizing_line_idx2mutants[line_idx])
+    #     print(f"{line_idx} - {sbfl_score} - {mutant_len}")
+    # exit()
+
 
     # Calculate total information
     total_p2f, total_f2p, \
@@ -109,25 +124,76 @@ def measure_mbfl_scores(line_idx2line_info, lines_idx2mutant_idx, total_num_of_f
         "total_tc_execution_time": total_tc_execution_time
     }
 
-    return  mtc_version_data
+    return mtc_version_data, utilizing_line_idx2mutants
 
-def select_random_mtc_mutants_per_line(lines_idx2mutant_idx, mtc):
+def select_random_mtc_mutants_per_line(line_idx2line_info, lines_idx2mutant_idx, mtc, analysis_config):
     """
     Select mtc mutants per line at random
     """
     selected_mutants = {}
     total_num_of_utilized_mutants = 0
+
+    mutant_num_method = analysis_config["mutant_num_method"]
+    mutant_num_std = analysis_config["mutant_num_std"]
+    avg_mutant_num = int(sum(mutant_num_std) / len(mutant_num_std))
+
+    # print(mutant_num_method)
+    # print(mutant_num_std)
+    # print(avg_mutant_num)
+
+    if mutant_num_method == "sbfl":
+        group_line_idx = {
+            "high": [],
+            "medium": [],
+            "low": []
+        }
+        # assign line_idx to each group equal amount in ordered of dict
+        for i, line_idx in enumerate(line_idx2line_info):
+            i += 1
+            x = i / len(line_idx2line_info)
+            if x < 0.33:
+                group_line_idx["high"].append(line_idx)
+            elif x < 0.66:
+                group_line_idx["medium"].append(line_idx)
+            else:
+                group_line_idx["low"].append(line_idx)
+
     for line_idx in lines_idx2mutant_idx:
         mutants = lines_idx2mutant_idx[line_idx]
         random.shuffle(mutants)
         selected_mutants[line_idx] = []
-        for mutant in mutants:
-            if len(selected_mutants[line_idx]) == mtc:
-                break
-            if mutant["build_result"] == False:
-                continue
-            selected_mutants[line_idx].append(mutant)
-            total_num_of_utilized_mutants += 1
+
+        if mutant_num_method == "all_fails":
+            for mutant in mutants:
+                if len(selected_mutants[line_idx]) == mtc:
+                    break
+                if mutant["build_result"] == False:
+                    continue
+                selected_mutants[line_idx].append(mutant)
+                total_num_of_utilized_mutants += 1
+        elif mutant_num_method == "reduced_num_mut":
+            for mutant in mutants:
+                if len(selected_mutants[line_idx]) == avg_mutant_num:
+                    break
+                if mutant["build_result"] == False:
+                    continue
+                selected_mutants[line_idx].append(mutant)
+                total_num_of_utilized_mutants += 1
+        elif mutant_num_method == "sbfl":
+            if line_idx in group_line_idx["high"]:
+                mtc_per_line = mutant_num_std[0]
+            elif line_idx in group_line_idx["medium"]:
+                mtc_per_line = mutant_num_std[1]
+            else:
+                mtc_per_line = mutant_num_std[2]
+            for mutant in mutants:
+                if len(selected_mutants[line_idx]) == mtc_per_line:
+                    break
+                if mutant["build_result"] == False:
+                    continue
+                selected_mutants[line_idx].append(mutant)
+                total_num_of_utilized_mutants += 1
+
     return selected_mutants, total_num_of_utilized_mutants
 
 

@@ -122,3 +122,15 @@
 # python3 validator.py --subject libxml2_TF_top30 --experiment-name TF_top30 --validation-criteria 8,9,10
 # python3 analyzer.py --subject libxml2_TF_top30 --experiment-name TF_top30 --analysis-criteria 1
 # python3 analyzer.py --subject libxml2_TF_top30 --experiment-name TF_top30 --analysis-criteria 4
+
+
+# ===============================
+
+echo "analyzing libxml2_TF_top30 sbflnaish250-noReduced-excludeCCT-noHeuristics"
+time python3 analyzer.py --subject libxml2_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-noReduced-excludeCCT-noHeuristics
+
+# echo "analyzing libxml2_TF_top30 sbflnaish250-reduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject libxml2_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced-excludeCCT-noHeuristics
+
+# echo "analyzing libxml2_TF_top30 sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject libxml2_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics

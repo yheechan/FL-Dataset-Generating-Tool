@@ -123,6 +123,49 @@
 # echo "analyzing opencv_calib3d_TF_top30 mut10-sbflnaish250-excludeCCT-noHeuristics"
 # time python3 analyzer.py --subject opencv_calib3d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name mut10-sbflnaish250-excludeCCT-noHeuristics
 
+# ******************************************
+
+# cp ../configs/mut_num_00.json ../configs/analysis_config.json
+# echo "analyzing zlib_ng_TF_top30 sbflnaish250-noReduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject zlib_ng_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-noReduced-excludeCCT-noHeuristics
+# echo "analyzing libxml2_TF_top30 sbflnaish250-noReduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject libxml2_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-noReduced-excludeCCT-noHeuristics
+# echo "analyzing opencv_features2d_TF_top30 sbflnaish250-noReduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_features2d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-noReduced-excludeCCT-noHeuristics
+# echo "analyzing opencv_imgproc_TF_top30 sbflnaish250-noReduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_imgproc_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-noReduced-excludeCCT-noHeuristics
+# echo "analyzing opencv_core_TF_top30 sbflnaish250-noReduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_core_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-noReduced-excludeCCT-noHeuristics
+# echo "analyzing opencv_calib3d_TF_top30 sbflnaish250-noReduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_calib3d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-noReduced-excludeCCT-noHeuristics
+
+# cp ../configs/mut_num_01.json ../configs/analysis_config.json
+# echo "analyzing zlib_ng_TF_top30 sbflnaish250-reduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject zlib_ng_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced-excludeCCT-noHeuristics
+# echo "analyzing libxml2_TF_top30 sbflnaish250-reduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject libxml2_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced-excludeCCT-noHeuristics
+# echo "analyzing opencv_features2d_TF_top30 sbflnaish250-reduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_features2d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced-excludeCCT-noHeuristics
+# echo "analyzing opencv_imgproc_TF_top30 sbflnaish250-reduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_imgproc_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced-excludeCCT-noHeuristics
+# echo "analyzing opencv_core_TF_top30 sbflnaish250-reduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_core_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced-excludeCCT-noHeuristics
+# echo "analyzing opencv_calib3d_TF_top30 sbflnaish250-reduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_calib3d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced-excludeCCT-noHeuristics
+
+# cp ../configs/mut_num_02.json ../configs/analysis_config.json
+# echo "analyzing zlib_ng_TF_top30 sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject zlib_ng_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics
+# echo "analyzing libxml2_TF_top30 sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject libxml2_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics
+# echo "analyzing opencv_features2d_TF_top30 sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_features2d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics
+# echo "analyzing opencv_imgproc_TF_top30 sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_imgproc_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics
+# echo "analyzing opencv_core_TF_top30 sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_core_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics
+# echo "analyzing opencv_calib3d_TF_top30 sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_calib3d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics
 
 
 # # 3. analyze rate of buggy line being selectd as one of the top 50% sbfl ranked lines

@@ -12,8 +12,12 @@ help_for_analysis_criteria = \
 
 *** Validation criteria:
     1: [stage03] Analyze test cases and coverage statistics for all buggy versions resulting from prerequisite data preparation
-    2: [stage05] Analyze MBFL results for all buggy versions resulting from MBFL feature extraction
+    2: [stage05] Analyze MBFL results for all buggy versions resulting from MBFL feature extraction and save the final results to file system for ML learning
     3: [stage05] Analyze probability that buggy line is within top-k percent based on sbfl suspiciousness scores
+    4: [stage05] SBFL rank of buggy lines for all buggy versions resulting from MBFL feature extraction
+    5: [stage05] Download SBFL features for all buggy versions
+    6: [stage05] Generate figures for mbfl score and MBFL feature extraction time for subjects and analysis types below
+    7: [stage05] Write the statistical numbers of mutations
 """
 
 # This script is to test mutants (of subject)

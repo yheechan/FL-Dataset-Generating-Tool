@@ -63,6 +63,15 @@ class Analyze:
                 self.analyze04()
             elif ana_type == 5:
                 self.analyze05()
+            elif ana_type == 6:
+                self.analyze06()
+            elif ana_type == 7:
+                if type_name is None:
+                    print("Please provide type_name for analysis criteria 2")
+                    return
+                self.analyze07(type_name)
+            elif ana_type == 8:
+                self.analyze08()
 
 
 
@@ -178,6 +187,7 @@ class Analyze:
         """
         [stage05] analyze02: Analyze MBFL results
             for all buggy versions resulting from MBFL feature extraction
+            and save the final results to file system for ML learning
         """
         self.subject_out_dir = out_dir / self.subject_name
         self.analysis_dir = self.subject_out_dir / "analysis"
@@ -185,7 +195,14 @@ class Analyze:
         self.type_dir = self.analysis_dir / type_name
         
         self.features_dir = self.type_dir / "fl_features"
+        if self.features_dir.exists():
+            shutil.rmtree(self.features_dir)
         self.features_dir.mkdir(parents=True, exist_ok=True)
+
+        self.utilized_mutation_info_dir = self.type_dir / "utilized_mutation_info"
+        if self.utilized_mutation_info_dir.exists():
+            shutil.rmtree(self.utilized_mutation_info_dir)
+        self.utilized_mutation_info_dir.mkdir(parents=True, exist_ok=True)
 
 
         # add muse_score, met_score on line_info table
@@ -228,19 +245,21 @@ class Analyze:
                 target_line_idx = self.get_target_line_idx(
                     bug_idx, num_total_lines,
                     self.experiment.analysis_config["line_selection_rate"],
-                    self.experiment.analysis_config["mbfl_method"],
+                    self.experiment.analysis_config["line_selection_method"],
                     num_lines_executed_by_failing_tcs
                 )
                 target_line_idx_copied = deepcopy(target_line_idx)
 
                 # map line_idx to line_info map
+                sbfl_standard = self.experiment.analysis_config["sbfl_standard"]
                 line_idx2line_info = {}
                 for row in target_line_idx_copied:
                     line_idx = row[0]
                     line_idx2line_info[line_idx] = {
                         "file": row[1],
                         "function": row[2],
-                        "lineno": row[3]
+                        "lineno": row[3],
+                        sbfl_standard: row[4]
                     }
 
                 debug_print(self.verbose, f">> Selected {len(line_idx2line_info)} lines for MBFL analysis")
@@ -261,7 +280,8 @@ class Analyze:
                             line_idx2line_info[line_idx] = {
                                 "file": row[1],
                                 "function": row[2],
-                                "lineno": row[3]
+                                "lineno": row[3],
+                                sbfl_standard: row[4]
                             }
 
                         version_data = self.analyze_bug_version_for_mbfl(
@@ -435,11 +455,11 @@ class Analyze:
     # +++++++++++++++++++++++
     # HELPER FUNCTIONS FOR ANALYZE02
     # +++++++++++++++++++++++
-    def get_target_line_idx(self, bug_idx, num_total_lines, line_selection_rate, mbfl_method, num_lines_executed_by_failing_tcs):
+    def get_target_line_idx(self, bug_idx, num_total_lines, line_selection_rate, line_selection_method, num_lines_executed_by_failing_tcs):
         """
         Get target line index for MBFL analysis
         """
-        if mbfl_method == "all_fails":
+        if line_selection_method == "all_fails":
             target_line_idx = self.db.read(
                 "line_info",
                 columns="line_idx, file, function, lineno",
@@ -448,7 +468,7 @@ class Analyze:
                     "selected_for_mbfl": True
                 }
             )
-        elif mbfl_method == "rand":
+        elif line_selection_method == "rand":
             rand_num = int(num_lines_executed_by_failing_tcs * line_selection_rate)
             target_line_idx = self.db.read(
                 "line_info",
@@ -459,19 +479,19 @@ class Analyze:
                 },
                 special=f"ORDER BY RANDOM() LIMIT {rand_num}"
             )
-        elif mbfl_method == "sbfl":
+        elif line_selection_method == "sbfl":
             sbfl_num = int(num_lines_executed_by_failing_tcs * line_selection_rate)
             sbfl_standard = self.experiment.analysis_config["sbfl_standard"]
             target_line_idx = self.db.read(
                 "line_info",
-                columns="line_idx, file, function, lineno",
+                columns=f"line_idx, file, function, lineno, {sbfl_standard}",
                 conditions={
                     "bug_idx": bug_idx,
                     "selected_for_mbfl": True
                 },
                 special=f"ORDER BY {sbfl_standard} DESC LIMIT {sbfl_num}"
             )
-        elif mbfl_method == "sbfl-test":
+        elif line_selection_method == "sbfl-test":
             target_line_idx = self.db.read(
                 "line_info",
                 columns="line_idx, file, function, lineno",
@@ -511,7 +531,7 @@ class Analyze:
         
 
         # Measure MBFL score for targetted lines
-        mtc_version_data = measure_mbfl_scores(
+        mtc_version_data, utilizing_line_idx2mutants = measure_mbfl_scores(
             line_idx2line_info,
             lines_idx2mutant_idx,
             total_num_of_failing_tcs,
@@ -540,7 +560,7 @@ class Analyze:
                             self.experiment.analysis_config["versions_to_remove"].append(version)
                 
             # save fl features to csv
-            self.save_fl_features_to_csv(bug_idx, version)
+            self.save_fl_features_to_csv(bug_idx, version, line_idx2line_info, utilizing_line_idx2mutants)
         
         # Measure rank of buggy line
         rank_data = self.measure_buggy_line_rank(bug_idx, buggy_file, buggy_function)
@@ -573,7 +593,7 @@ class Analyze:
             }
         )
 
-    def save_fl_features_to_csv(self, bug_idx, version):
+    def save_fl_features_to_csv(self, bug_idx, version, line_idx2line_info, utilizing_line_idx2mutants):
         """
         Save FL features to csv file
         """
@@ -609,6 +629,28 @@ class Analyze:
             writer.writerow(features)
             for row in rows:
                 writer.writerow(row)
+        
+        with open(self.utilized_mutation_info_dir / f"{version}.json", "w") as f:
+            
+            line_mut_info = {}
+
+            sbfl_standard = self.experiment.analysis_config["sbfl_standard"]
+
+            for line_idx, line_info in line_idx2line_info.items():
+                assert line_idx not in line_mut_info
+                line_mut_info[line_idx] = {
+                    "file": line_info["file"],
+                    "function": line_info["function"],
+                    "lineno": line_info["lineno"],
+                    "sbfl_score": line_info[sbfl_standard],
+                    "mutants": []
+                }
+                if line_idx in utilizing_line_idx2mutants:
+                    line_mut_info[line_idx]["mutants"] = utilizing_line_idx2mutants[line_idx]
+
+            json.dump(line_mut_info, f)
+
+
     
     def measure_buggy_line_rank(self, bug_idx, buggy_file, buggy_function):
         """
@@ -668,7 +710,7 @@ class Analyze:
 
     def analyze03(self):
         """
-        [stage06] analyze03: Analyze probability that buggy line
+        [stage05] analyze03: Analyze probability that buggy line
             is within top-k percent based on sbfl suspiciousness
         """
 
@@ -697,14 +739,46 @@ class Analyze:
             target_line_idx = self.get_target_line_idx(
                 bug_idx, num_total_lines,
                 self.experiment.analysis_config["line_selection_rate"],
-                self.experiment.analysis_config["mbfl_method"],
+                self.experiment.analysis_config["line_selection_method"],
                 num_lines_executed_by_failing_tcs
             )
+
+            if self.experiment.analysis_config["line_selection_method"] == "sbfl":
+                line_idx2line_info = {}
+                for row in target_line_idx:
+                    line_idx = row[0]
+                    line_idx2line_info[line_idx] = {
+                        "file": row[1],
+                        "function": row[2],
+                        "lineno": row[3],
+                        "sbfl_score": row[4]
+                    }
+                
+                # for line_idx, file, function, lineno, sbfl_score in target_line_idx:
+                #     print(f"{file}::{function}::{lineno} - {sbfl_score}")
+                
+                # for line_idx, line_info in line_idx2line_info.items():
+                #     print(f"{line_idx} - {line_info['sbfl_score']}")
+
+                grouped_lineidx = {
+                    "high": [],
+                    "medium": [],
+                    "low": []
+                }
+                lineidx_len = len(line_idx2line_info)
+                for idx, line_idx in enumerate(line_idx2line_info):
+                    if idx < lineidx_len / 3:
+                        grouped_lineidx["high"].append(line_idx)
+                    elif idx < 2 * lineidx_len / 3:
+                        grouped_lineidx["medium"].append(line_idx)
+                    else:
+                        grouped_lineidx["low"].append(line_idx)
+            exit()
 
             top_line_idx_list = [line_idx[0] for line_idx in target_line_idx]
 
             # Get top-k percent of lines based on sbfl suspiciousness
-            if self.experiment.analysis_config["mbfl_method"] == "sbfl-test":
+            if self.experiment.analysis_config["line_selection_method"] == "sbfl-test":
                 rank_no = top_line_idx_list.index(buggy_line_idx) + 1
                 rank_rate = (rank_no / len(top_line_idx_list)) * 100
                 sbfl_selected_rate.append(rank_rate)
@@ -723,11 +797,15 @@ class Analyze:
         avg_number_of_lines_selected = sum(number_of_lines_selected) / len(number_of_lines_selected)
         print(f"Average number of lines selected: {avg_number_of_lines_selected}")
 
-        if self.experiment.analysis_config["mbfl_method"] == "sbfl-test":
+        if self.experiment.analysis_config["line_selection_method"] == "sbfl-test":
             avg_sbfl_selected_rate = sum(sbfl_selected_rate) / len(sbfl_selected_rate)
             print(f"Average SBFL selected rate: {avg_sbfl_selected_rate}")
 
     def analyze04(self):
+        """
+        [stage05] analyze04: Analyze SBFL rank of buggy lines
+            for all buggy versions resulting from MBFL feature extraction
+        """
         # Step 1: retrieve list of bug_idx where mbfl is TRUE
         # "bug_idx, version, buggy_file, buggy_function, buggy_lineno, buggy_line_idx",
         target_buggy_version_list = get_target_buggy_version_list(self.subject_name, self.experiment_name, "mbfl", self.db)
@@ -813,8 +891,7 @@ class Analyze:
     
     def analyze05(self):
         """
-        [stage07] analyze05: Analyze SBFL statistics
-            for all buggy versions resulting from SBFL feature extraction
+        [stage05] analyze05: Download SBFL features for all buggy versions
         """
         subject_sbfl_stats_dir = self.subject_out_dir / "sbfl_stats"
         if subject_sbfl_stats_dir.exists():
@@ -846,9 +923,6 @@ class Analyze:
 
     def download_sbfl_stats(self, subject_sbfl_stats_dir, version, bug_idx,
                             buggy_file, buggy_function, buggy_lineno):
-        """
-        Download SBFL statistics for a single buggy version
-        """
         sbfl_standard = self.experiment.analysis_config["sbfl_standard"]
 
         # Step 1: getch relevant information
@@ -868,5 +942,305 @@ class Analyze:
 
         # save to csv
         df.to_csv(subject_sbfl_stats_dir / f"{version}.csv", index=False)
+
+
+    def analyze06(self):
+        """
+        [stage05] Analyze06: Generate figures for mbfl score and MBFL feature extraction time for subjects and analysis types below
+        """
+
+        subjects = [
+            "zlib_ng_TF_top30",
+            "libxml2_TF_top30",
+            "opencv_features2d_TF_top30",
+            "opencv_imgproc_TF_top30",
+            "opencv_core_TF_top30",
+            "opencv_calib3d_TF_top30"
+        ]
+
+        analysis_types = [
+            "allfails-excludeCCT-noHeuristics",
+            "rand50-excludeCCT-noHeuristics",
+            "sbflnaish250-excludeCCT-noHeuristics",
+        ]
+
+        results = {}
+
+        for subject in subjects:
+            analysis_dir = out_dir / subject / "analysis"
+
+            if subject not in results:
+                results[subject] = {}
+            
+            for analysis_type in analysis_types:
+                if analysis_type not in results[subject]:
+                    results[subject][analysis_type] = {}
+                
+                analysis_type_dir = analysis_dir / analysis_type
+
+                mbfl_overall_data_json = analysis_type_dir / "mbfl_overall_data.json"
+                mbfl_overall_data = json.loads(mbfl_overall_data_json.read_text())
+
+                # MUTATION # CONFIGURATION: 10
+                for key, data in mbfl_overall_data.items():
+                    met_acc5 = 0
+                    met_acc10 = 0
+                    muse_acc5 = 0
+                    muse_acc10 = 0
+
+                    list_time_duration = []
+
+                    # VERSION
+                    for version_name, version_data in data.items():
+                        met_rank = version_data[0]["met_rank"]
+                        muse_rank = version_data[0]["muse_rank"]
+
+                        tot_build_time = version_data[0]["total_build_time"]
+                        tot_tc_exec_time = version_data[0]["total_tc_execution_time"]
+                        total_time_duration = (tot_build_time + tot_tc_exec_time) / 3600
+                        list_time_duration.append(total_time_duration)
+
+                        if met_rank <= 5:
+                            met_acc5 += 1
+                        if met_rank <= 10:
+                            met_acc10 += 1
+                        if muse_rank <= 5:
+                            muse_acc5 += 1
+                        if muse_rank <= 10:
+                            muse_acc10 += 1
+
+                    met_acc5 /= len(data)
+                    met_acc10 /= len(data)
+                    muse_acc5 /= len(data)
+                    muse_acc10 /= len(data)
+                    avg_time_duration = sum(list_time_duration) / len(list_time_duration)
+
+                    results[subject][analysis_type][key] = {
+                        "met_acc5": met_acc5,
+                        "met_acc10": met_acc10,
+                        "muse_acc5": muse_acc5,
+                        "muse_acc10": muse_acc10,
+                        "avg_time_duration": avg_time_duration
+                    }
+
+        # write results to csv file
+        out_file = out_dir / "mbfl_scores.csv"
+        with open(out_file, "w") as f:
+            f.write("subject,analysis_type,num_mutants,avg. time duration,met_acc5,met_acc10,muse_acc5,muse_acc10\n")
+            for subject in subjects:
+                for analysis_type in analysis_types:
+                    for key, data in results[subject][analysis_type].items():
+                        # round to 2 decimal places
+                        data['met_acc5'] = round((data['met_acc5'])*100, 2)
+                        data['met_acc10'] = round((data['met_acc10'])*100, 2)
+                        data['muse_acc5'] = round((data['muse_acc5'])*100, 2)
+                        data['muse_acc10'] = round((data['muse_acc10'])*100, 2)
+                        f.write(f"{subject},{analysis_type},{key},{data['avg_time_duration']},{data['met_acc5']},{data['met_acc10']},{data['muse_acc5']},{data['muse_acc10']}\n")
+
+
+        # analysis_types = [
+        #     "allfails-excludeCCT-noHeuristics",
+        #     "rand50-excludeCCT-noHeuristics",
+        #     "sbflnaish250-excludeCCT-noHeuristics",
+        # ]
+
+        # plot a bar chart where
+        # y-axis is Avg. time duration for MBFL extraction in hours
+        # x axis is subject, each subject has 3 bars for each analysis type
+        # all the bars on analysis type must be the same color
+
+        # first make the dictionary for the data
+        time_data = {}
+        for subject in subjects:
+            subject_name = "_".join(subject.split("_")[:2])
+            if subject_name == "opencv_calib3d":
+                subject_name = "*opencv_calib3d"
+
+            time_data[subject_name] = {}
+            for analysis_type in analysis_types:
+                analysis_type_name = ""
+                if analysis_type == "allfails-excludeCCT-noHeuristics":
+                    analysis_type_name = "all-lines"
+                elif analysis_type == "rand50-excludeCCT-noHeuristics":
+                    analysis_type_name = "random"
+                elif analysis_type == "sbflnaish250-excludeCCT-noHeuristics":
+                    analysis_type_name = "sbfl-based"
+                
+                time_data[subject_name][analysis_type_name] = results[subject][analysis_type]["10"]["avg_time_duration"]
+
+        # plot the bar chart
+        fig, ax = plt.subplots()
+
+        bar_width = 0.2
+        index = range(len(subjects))
+        colors = ['dimgray', 'silver', 'lime']
+
+        for i, analysis_type in enumerate(["all-lines", "random", "sbfl-based"]):
+            avg_time_durations = [time_data[subject][analysis_type] for subject in time_data]
+            ax.bar([p + bar_width * i for p in index], avg_time_durations, bar_width, label=analysis_type, color=colors[i])
+
+        ax.set_xlabel('Subject')
+        ax.set_ylabel('Avg. time taken (hours)')
+        ax.set_title('Avg. time taken for MBFL extraction by each line selection method')
+        ax.set_xticks([p + bar_width for p in index])
+        ax.set_xticklabels(time_data, rotation=45, ha="right")
+        ax.legend()
+
+        plt.tight_layout()
+
+        # save to file
+        plt.savefig(out_dir / "mbfl_time_duration.png")
+
+    def analyze07(self, type_name):
+        """
+        [stage05] Analyze07: Write the statistical numbers of mutations
+        """
+
+        self.subject_out_dir = out_dir / self.subject_name
+        self.analysis_dir = self.subject_out_dir / "analysis"
+
+
+        # 1. First get buggy line information from db
+        bug_info_list = self.db.read(
+            "bug_info",
+            columns="bug_idx, version, buggy_file, buggy_function, buggy_lineno, num_lines_executed_by_failing_tcs",
+            conditions={
+                "subject": self.subject_name,
+                "experiment_name": self.experiment_name,
+                "mbfl": True
+            }
+        )
+
+        version2buggy_line_info = {}
+        for bug_info in bug_info_list:
+            version = bug_info[1]
+            buggy_line_info = {
+                "bug_idx": bug_info[0],
+                "buggy_file": bug_info[2],
+                "buggy_function": bug_info[3],
+                "buggy_lineno": bug_info[4],
+                "num_lines_executed_by_failing_tcs": bug_info[5]
+            }
+            version2buggy_line_info[version] = buggy_line_info
+        
+        # 2. Open type_dir and go through utilized mutation information
+        self.type_dir = self.analysis_dir / type_name
+        self.utilized_mutation_info_dir = self.type_dir / "utilized_mutation_info"
+
+        utilized_mut_info_csv_fp = open(self.type_dir / "utilized_mut_info.csv", "w")
+        utilized_mut_info_csv_fp.write("version,total_num_utilized_mutants,avg_num_utilized_mutants_per_line,buggy_line_tested,buggy_line_mut_cnt,buggy_line_f2p,buggy_line_p2f\n")
+        total_statics = {}
+        total_num_utilized_mutants_overall = 0
+        assert len(version2buggy_line_info) == len(list(self.utilized_mutation_info_dir.iterdir()))
+
+        for version_json_file in tqdm(self.utilized_mutation_info_dir.iterdir(), desc="Analyzing utilized mutation information"):
+            version_name = version_json_file.stem
+            assert version_name not in total_statics
+            total_statics[version_name] = {}
+
+            version_buggy_file = version2buggy_line_info[version_name]["buggy_file"]
+            version_buggy_function = version2buggy_line_info[version_name]["buggy_function"]
+            version_buggy_lineno = version2buggy_line_info[version_name]["buggy_lineno"]
+            version_num_lines_executed_by_failing_tcs = version2buggy_line_info[version_name]["num_lines_executed_by_failing_tcs"]
+
+            # get data: "file", "function", "lineno", "mutants"
+            mut_info_json = json.loads(version_json_file.read_text())
+
+            # record utilized mutation information
+            total_num_utilized_mutants = 0
+            buggy_line_tested = False
+            buggy_line_mut_info = {
+                "mut_cnt": 0,
+                "f2p": 0,
+                "p2f": 0,
+            }
+            for line, line_data in mut_info_json.items():
+
+                # save information specific for buggy line
+                if line_data["file"] == version_buggy_file \
+                    and line_data["function"] == version_buggy_function \
+                    and line_data["lineno"] == version_buggy_lineno:
+                    buggy_line_tested = True
+                    buggy_line_mut_info["mut_cnt"] = len(line_data["mutants"])
+                    for mut_dict in line_data["mutants"]:
+                        buggy_line_mut_info["f2p"] += mut_dict["f2p"]
+                        buggy_line_mut_info["p2f"] += mut_dict["p2f"]
+                
+                # save total information
+                if line not in total_statics[version_name]:
+                    total_statics[version_name][line] = {
+                        "mut_cnt": 0,
+                        "f2p": 0,
+                        "p2f": 0
+                    }
+
+                total_num_utilized_mutants += len(line_data["mutants"])
+                total_statics[version_name][line]["mut_cnt"] = len(line_data["mutants"])
+                for mut_dict in line_data["mutants"]:
+                    total_statics[version_name][line]["f2p"] += mut_dict["f2p"]
+                    total_statics[version_name][line]["p2f"] += mut_dict["p2f"]
+
+            total_num_utilized_mutants_overall += total_num_utilized_mutants
+            avg_num_utilized_mutants_per_line = total_num_utilized_mutants / len(mut_info_json)
+            utilized_mut_info_csv_fp.write(f"{version_name},{total_num_utilized_mutants},{avg_num_utilized_mutants_per_line},{buggy_line_tested},{buggy_line_mut_info['mut_cnt']},{buggy_line_mut_info['f2p']},{buggy_line_mut_info['p2f']}\n")
+
+
+        total_num_versions = len(version2buggy_line_info)
+        avg_num_utilized_mutants_overall = total_num_utilized_mutants_overall / len(version2buggy_line_info)
+        # write total_num_versions, total_num_utilized_mutants_overall, avg_num_utilized_mutants_overall
+        utilized_mut_info_csv_fp.write(f"total_num_versions,{total_num_versions}\n")
+        utilized_mut_info_csv_fp.write(f"total_num_utilized_mutants_overall,{total_num_utilized_mutants_overall}\n")
+        utilized_mut_info_csv_fp.write(f"avg_num_utilized_mutants_overall,{avg_num_utilized_mutants_overall}\n")
+
+        utilized_mut_info_csv_fp.close()
+
+    def analyze08(self):
+        """
+        [stage05] Analyze08: Conduct significance wilcoxon test on two types of a ML result data for a subeject
+        """
+        
+        self.subject_out_dir = out_dir / self.subject_name
+        self.analysis_dir = self.subject_out_dir / "analysis"
+        self.ml_dir = self.analysis_dir / "ml"
+
+        test_data_name = "opencv_calib3d-D0"
+        type_1 = "allfails-excludeCCT-noHeuristics-t2"
+        type_2 = "sbflnaish250-excludeCCT-noHeuristics-t5"
+
+        type_1_version2rank, type_1_rank_list = self.get_version_ranks(
+            self.ml_dir / type_1 / "inference" / test_data_name/ "inference-accuracy.csv")
+        type_2_version2rank, type_2_rank_list = self.get_version_ranks(
+            self.ml_dir / type_2 / "inference" / test_data_name / "inference-accuracy.csv")
+
+        # assert that all keys from type_1 and type_2 are the same
+        assert type_1_version2rank.keys() == type_2_version2rank.keys()
+
+        key_list = list(type_1_version2rank.keys())
+
+        # measure wilcoxon test
+        import scipy.stats as stats
+        wilcoxon_test_results = {}
+        # stats.wilcoxon(type_1_rank_list, type_2_rank_list)
+        statistics, pvalue = stats.wilcoxon(
+            type_1_rank_list, type_2_rank_list
+        )
+        print(statistics, pvalue)
+
+    
+    def get_version_ranks(self, csv_file):
+        """
+        Get version ranks from csv file
+        """
+        ranks = {}
+        rank_list = []
+        with open(csv_file, "r") as f:
+            reader = csv.reader(f)
+            next(reader)
+            for row in reader:
+                version = row[0].split("-")[1]
+                rank = int(row[1])
+                ranks[version] = rank
+                rank_list.append(rank)
+        return ranks, rank_list
 
 

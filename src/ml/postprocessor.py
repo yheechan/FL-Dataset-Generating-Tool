@@ -111,14 +111,14 @@ class Postprocessor:
 
 
         # Get lines that we target to analyze for MBFL
-        if self.experiment.analysis_config["mbfl_method"] == "for_random_mbfl":
+        if self.experiment.analysis_config["line_selection_method"] == "for_random_mbfl":
             max_lines_for_random = self.experiment.analysis_config["max_lines_for_random"]
             target_line_idx = self.db.read(
                 "line_info",
                 columns="line_idx, file, function, lineno",
                 conditions={
                     "bug_idx": bug_idx,
-                    self.experiment.analysis_config["mbfl_method"]: True
+                    self.experiment.analysis_config["line_selection_method"]: True
                 },
                 special=f"ORDER BY RANDOM() LIMIT {max_lines_for_random}"
             )
@@ -130,7 +130,7 @@ class Postprocessor:
                 columns="line_idx, file, function, lineno",
                 conditions={
                     "bug_idx": bug_idx,
-                    self.experiment.analysis_config["mbfl_method"]: True
+                    self.experiment.analysis_config["line_selection_method"]: True
                 },
                 special=f"ORDER BY {sbfl_standard} LIMIT {num_lines_for_random}"
             )

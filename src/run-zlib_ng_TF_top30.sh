@@ -94,9 +94,9 @@
 
 # 5. Extract MBFL features
 
-date > ../timer/zlib_ng_TF_top30/stage05_start-remote.txt
-time python3 extract_mbfl_features.py --subject zlib_ng_TF_top30 --experiment-name TF_top30 --target-set-name prerequisite_data --trial trial1 --parallel-cnt 3 --dont-terminate-leftovers --version-limit 240 --remain-one-bug-per-line > ../timer/zlib_ng_TF_top30/stage05.log
-date > ../timer/zlib_ng_TF_top30/stage05_end-remote.txt
+# date > ../timer/zlib_ng_TF_top30/stage05_start-remote.txt
+# time python3 extract_mbfl_features.py --subject zlib_ng_TF_top30 --experiment-name TF_top30 --target-set-name prerequisite_data --trial trial1 --parallel-cnt 3 --dont-terminate-leftovers --version-limit 240 --remain-one-bug-per-line > ../timer/zlib_ng_TF_top30/stage05.log
+# date > ../timer/zlib_ng_TF_top30/stage05_end-remote.txt
 
 # Number of tasks (assigned_works): 240
 # Number of tasks (works): 167
@@ -118,3 +118,15 @@ date > ../timer/zlib_ng_TF_top30/stage05_end-remote.txt
 # python3 analyzer.py --subject zlib_ng_TF_top30 --experiment-name TF_top30 --analysis-criteria 1
 # python3 analyzer.py --subject zlib_ng_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name 
 
+
+
+# ===============================
+
+echo "analyzing zlib_ng_TF_top30 sbflnaish250-noReduced-excludeCCT-noHeuristics"
+time python3 analyzer.py --subject zlib_ng_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-noReduced-excludeCCT-noHeuristics
+
+# echo "analyzing zlib_ng_TF_top30 sbflnaish250-reduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject zlib_ng_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced-excludeCCT-noHeuristics
+
+# echo "analyzing zlib_ng_TF_top30 sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject zlib_ng_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics
