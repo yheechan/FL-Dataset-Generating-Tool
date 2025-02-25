@@ -227,6 +227,8 @@ class EngineBase:
         return param_dict
     
     def get_model(self, project_out_dir, model, project_name):
+        if "/" in project_name:
+            project_name = project_name.replace("/", "-")
         model_file = project_out_dir / f"{project_name}.pth"
         assert model_file.exists(), f"Model file {model_file} does not exist."
         model.load_state_dict(torch.load(model_file))
@@ -309,6 +311,8 @@ class EngineBase:
         return accuracy_csv
     
     def save_model(self, project_out_dir, model, project_name):
+        if "/" in project_name:
+            project_name = project_name.replace("/", "-")
         model_file = project_out_dir / f"{project_name}.pth"
         torch.save(model.state_dict(), model_file)
     

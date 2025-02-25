@@ -48,7 +48,7 @@ class Analyze:
         )
 
 
-    def run(self, analysis_criteria, type_name=None):
+    def run(self, analysis_criteria, type_name=None, batch_size=None):
         for ana_type in analysis_criteria:
             if ana_type == 1:
                 self.analyze01()
@@ -72,6 +72,13 @@ class Analyze:
                 self.analyze07(type_name)
             elif ana_type == 8:
                 self.analyze08()
+            elif ana_type == 9:
+                if batch_size is None:
+                    print("Please provide batch_size for analysis criteria 9")
+                    return
+                self.analyze09(batch_size)
+            elif ana_type == 10:
+                self.analyze10()
 
 
 
@@ -459,10 +466,11 @@ class Analyze:
         """
         Get target line index for MBFL analysis
         """
+        sbfl_standard = self.experiment.analysis_config["sbfl_standard"]
         if line_selection_method == "all_fails":
             target_line_idx = self.db.read(
                 "line_info",
-                columns="line_idx, file, function, lineno",
+                columns=f"line_idx, file, function, lineno, {sbfl_standard}",
                 conditions={
                     "bug_idx": bug_idx,
                     "selected_for_mbfl": True
@@ -470,9 +478,11 @@ class Analyze:
             )
         elif line_selection_method == "rand":
             rand_num = int(num_lines_executed_by_failing_tcs * line_selection_rate)
+            if rand_num == 0:
+                rand_num = 1
             target_line_idx = self.db.read(
                 "line_info",
-                columns="line_idx, file, function, lineno",
+                columns=f"line_idx, file, function, lineno, {sbfl_standard}",
                 conditions={
                     "bug_idx": bug_idx,
                     "selected_for_mbfl": True
@@ -481,7 +491,8 @@ class Analyze:
             )
         elif line_selection_method == "sbfl":
             sbfl_num = int(num_lines_executed_by_failing_tcs * line_selection_rate)
-            sbfl_standard = self.experiment.analysis_config["sbfl_standard"]
+            if sbfl_num == 0:
+                sbfl_num = 1
             target_line_idx = self.db.read(
                 "line_info",
                 columns=f"line_idx, file, function, lineno, {sbfl_standard}",
@@ -494,7 +505,7 @@ class Analyze:
         elif line_selection_method == "sbfl-test":
             target_line_idx = self.db.read(
                 "line_info",
-                columns="line_idx, file, function, lineno",
+                columns=f"line_idx, file, function, lineno, {sbfl_standard}",
                 conditions={
                     "bug_idx": bug_idx,
                     "selected_for_mbfl": True
@@ -959,9 +970,11 @@ class Analyze:
         ]
 
         analysis_types = [
-            "allfails-excludeCCT-noHeuristics",
-            "rand50-excludeCCT-noHeuristics",
-            "sbflnaish250-excludeCCT-noHeuristics",
+            "allfails-noReduced-excludeCCT-noHeuristics",
+            "rand50-noReduced-excludeCCT-noHeuristics",
+            "sbflnaish250-noReduced-excludeCCT-noHeuristics",
+            # "sbflnaish250-reduced-excludeCCT-noHeuristics",
+            # "sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics",
         ]
 
         results = {}
@@ -1051,6 +1064,7 @@ class Analyze:
 
         # first make the dictionary for the data
         time_data = {}
+        analysis_names = []
         for subject in subjects:
             subject_name = "_".join(subject.split("_")[:2])
             if subject_name == "opencv_calib3d":
@@ -1059,13 +1073,20 @@ class Analyze:
             time_data[subject_name] = {}
             for analysis_type in analysis_types:
                 analysis_type_name = ""
-                if analysis_type == "allfails-excludeCCT-noHeuristics":
+                if analysis_type == "allfails-noReduced-excludeCCT-noHeuristics":
                     analysis_type_name = "all-lines"
-                elif analysis_type == "rand50-excludeCCT-noHeuristics":
+                elif analysis_type == "rand50-noReduced-excludeCCT-noHeuristics":
                     analysis_type_name = "random"
-                elif analysis_type == "sbflnaish250-excludeCCT-noHeuristics":
-                    analysis_type_name = "sbfl-based"
+                elif analysis_type == "sbflnaish250-noReduced-excludeCCT-noHeuristics":
+                    # analysis_type_name = "sbfl-based"
+                    analysis_type_name = "max_mutants"
+                elif analysis_type == "sbflnaish250-reduced-excludeCCT-noHeuristics":
+                    analysis_type_name = "reduced_mutants_average"
+                elif analysis_type == "sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics":
+                    analysis_type_name = "reduced_sbfl_based"
                 
+                if analysis_type_name not in analysis_names:
+                    analysis_names.append(analysis_type_name)
                 time_data[subject_name][analysis_type_name] = results[subject][analysis_type]["10"]["avg_time_duration"]
 
         # plot the bar chart
@@ -1075,7 +1096,7 @@ class Analyze:
         index = range(len(subjects))
         colors = ['dimgray', 'silver', 'lime']
 
-        for i, analysis_type in enumerate(["all-lines", "random", "sbfl-based"]):
+        for i, analysis_type in enumerate(analysis_names):
             avg_time_durations = [time_data[subject][analysis_type] for subject in time_data]
             ax.bar([p + bar_width * i for p in index], avg_time_durations, bar_width, label=analysis_type, color=colors[i])
 
@@ -1132,8 +1153,13 @@ class Analyze:
         total_statics = {}
         total_num_utilized_mutants_overall = 0
         assert len(version2buggy_line_info) == len(list(self.utilized_mutation_info_dir.iterdir()))
+        total_stats_on_buggy_line = {
+            "mut_cnt": 0,
+            "f2p": 0,
+            "p2f": 0
+        }
 
-        for version_json_file in tqdm(self.utilized_mutation_info_dir.iterdir(), desc="Analyzing utilized mutation information"):
+        for version_json_file in tqdm(list(self.utilized_mutation_info_dir.iterdir()), desc="Analyzing utilized mutation information"):
             version_name = version_json_file.stem
             assert version_name not in total_statics
             total_statics[version_name] = {}
@@ -1165,6 +1191,10 @@ class Analyze:
                     for mut_dict in line_data["mutants"]:
                         buggy_line_mut_info["f2p"] += mut_dict["f2p"]
                         buggy_line_mut_info["p2f"] += mut_dict["p2f"]
+                    
+                    total_stats_on_buggy_line["mut_cnt"] += buggy_line_mut_info["mut_cnt"]
+                    total_stats_on_buggy_line["f2p"] += buggy_line_mut_info["f2p"]
+                    total_stats_on_buggy_line["p2f"] += buggy_line_mut_info["p2f"]
                 
                 # save total information
                 if line not in total_statics[version_name]:
@@ -1192,39 +1222,62 @@ class Analyze:
         utilized_mut_info_csv_fp.write(f"total_num_utilized_mutants_overall,{total_num_utilized_mutants_overall}\n")
         utilized_mut_info_csv_fp.write(f"avg_num_utilized_mutants_overall,{avg_num_utilized_mutants_overall}\n")
 
+        print(f"Total number of versions: {total_num_versions}")
+        print(f"Total number of utilized mutants: {total_num_utilized_mutants_overall}")
+        print(f"Average number of utilized mutants per version: {avg_num_utilized_mutants_overall}")
+
+        avg_mut_cnt = total_stats_on_buggy_line["mut_cnt"] / total_num_versions
+        avg_f2p = total_stats_on_buggy_line["f2p"] / total_num_versions
+        avg_p2f = total_stats_on_buggy_line["p2f"] / total_num_versions
+        print(f"Average stats on buggy line (mut_cnt, f2p, p2f): {avg_mut_cnt}, {avg_f2p}, {avg_p2f}")
+
         utilized_mut_info_csv_fp.close()
 
     def analyze08(self):
         """
         [stage05] Analyze08: Conduct significance wilcoxon test on two types of a ML result data for a subeject
         """
+
+        shape = "shape1"
         
         self.subject_out_dir = out_dir / self.subject_name
         self.analysis_dir = self.subject_out_dir / "analysis"
         self.ml_dir = self.analysis_dir / "ml"
 
         test_data_name = "opencv_calib3d-D0"
-        type_1 = "allfails-excludeCCT-noHeuristics-t2"
-        type_2 = "sbflnaish250-excludeCCT-noHeuristics-t5"
+        # type_1 = f"HPexp/all-lines-{shape}"
+        # type_2 = f"HPexp/random-{shape}"
+        # type_3 = f"HPexp/sbfl-based-{shape}"
+
+        type_1 = f"MCexp/max_mutants-{shape}"
+        type_2 = f"MCexp/reduced_mutants_average-{shape}"
+        type_3 = f"MCexp/reduced_sbfl_based-{shape}"
 
         type_1_version2rank, type_1_rank_list = self.get_version_ranks(
             self.ml_dir / type_1 / "inference" / test_data_name/ "inference-accuracy.csv")
         type_2_version2rank, type_2_rank_list = self.get_version_ranks(
             self.ml_dir / type_2 / "inference" / test_data_name / "inference-accuracy.csv")
+        type_3_version2rank, type_3_rank_list = self.get_version_ranks(
+            self.ml_dir / type_3 / "inference" / test_data_name / "inference-accuracy.csv")
 
-        # assert that all keys from type_1 and type_2 are the same
+        # assert that all keys from each type are the same
         assert type_1_version2rank.keys() == type_2_version2rank.keys()
+        assert type_1_version2rank.keys() == type_3_version2rank.keys()
 
         key_list = list(type_1_version2rank.keys())
 
         # measure wilcoxon test
         import scipy.stats as stats
-        wilcoxon_test_results = {}
-        # stats.wilcoxon(type_1_rank_list, type_2_rank_list)
         statistics, pvalue = stats.wilcoxon(
-            type_1_rank_list, type_2_rank_list
+            type_1_rank_list, type_3_rank_list
         )
-        print(statistics, pvalue)
+        print("type1: ", statistics, pvalue)
+
+        statistics, pvalue = stats.wilcoxon(
+            type_2_rank_list, type_3_rank_list
+        )
+        print("type2: ", statistics, pvalue)
+
 
     
     def get_version_ranks(self, csv_file):
@@ -1244,3 +1297,274 @@ class Analyze:
         return ranks, rank_list
 
 
+    def analyze09(self, batch_size):
+        """
+        [stage05] Analyze09: Conduct experiments with various hyper-parameters of model
+        """
+
+        exp = "LSexp_v1"
+        epoch = "10"
+        batch_size = batch_size
+        dropout = "0.2"
+        shapes = [
+            [36, 32, 1],
+            [36, 64, 32, 1],
+            [36, 64, 64, 1],
+            [36, 64, 64, 32, 1],
+            [36, 64, 128, 64, 32, 1],
+            [36, 128, 128, 64, 32 ,1],
+            [36, 64, 128, 128, 32, 1],
+            [36, 64, 128, 128, 64, 32, 1],
+            [36, 64, 128, 256, 128, 64, 32, 1],
+            [36, 64, 128, 256, 256, 64, 32, 1],
+        ]
+
+        analysis_types = [
+            "allfails-noReduced-excludeCCT-noHeuristics",
+            "rand50-noReduced-excludeCCT-noHeuristics",
+            "sbflnaish250-noReduced-excludeCCT-noHeuristics",
+            # "sbflnaish250-reduced-excludeCCT-noHeuristics",
+            # "sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics",
+        ]
+
+        results = {}
+        experiment_dir = out_dir / self.subject_name / f"analysis/ml/{exp}"
+        if not experiment_dir.exists():
+            experiment_dir.mkdir(parents=True, exist_ok=True)
+
+        results_csv = experiment_dir / "results.csv"
+        if not results_csv.exists():
+            print("WONG ENTERING")
+            exit()
+            for analysis_type in analysis_types:
+                analysis_type_name = ""
+                if analysis_type == "allfails-noReduced-excludeCCT-noHeuristics":
+                    analysis_type_name = "all-lines"
+                elif analysis_type == "rand50-noReduced-excludeCCT-noHeuristics":
+                    analysis_type_name = "random"
+                elif analysis_type == "sbflnaish250-noReduced-excludeCCT-noHeuristics":
+                    # analysis_type_name = "sbfl-based"
+                    analysis_type_name = "max_mutants"
+                elif analysis_type == "sbflnaish250-reduced-excludeCCT-noHeuristics":
+                    analysis_type_name = "reduced_mutants_average"
+                elif analysis_type == "sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics":
+                    analysis_type_name = "reduced_sbfl_based"
+                
+                if analysis_type_name not in results:
+                    results[analysis_type_name] = {}
+                    results[analysis_type_name]["self"] = {"acc5": [], "acc10": []}
+                    results[analysis_type_name]["test"] = {"acc5": [], "acc10": []}
+
+                shape_cnt = 1
+                for shape in shapes:
+                    shape_name = f"shape{shape_cnt}"
+                    shape_cnt += 1
+
+                    project_name = f"{exp}/{analysis_type_name}-{shape_name}"
+                    project_out_dir = out_dir / self.subject_name / "analysis/ml" / project_name
+
+
+                    # train
+                    cmd = [
+                        "python3", "machine_learning.py",
+                        "--subject", self.subject_name,
+                        "--experiment-name", self.experiment_name,
+                        "--targeting-experiment-name", analysis_type,
+                        "--project-name", project_name,
+                        "--train",
+                        "--train-validate-test-ratio", "8", "1", "1",
+                        "--random-seed", "42",
+                        "--epoch", epoch,
+                        "--batch-size", batch_size,
+                        "--device", "cuda",
+                        "--dropout", dropout,
+                        "--model-shape", *map(str, shape),
+                    ]
+                    print(f">>> training {project_name} with {shape_cnt}-[{shape}]")
+                    sp.run(cmd, cwd=src_dir, check=True, stdout=sp.PIPE)
+
+                    # test self
+                    cmd = [
+                        "python3", "machine_learning.py",
+                        "--subject", self.subject_name,
+                        "--experiment-name", self.experiment_name,
+                        "--targeting-experiment-name", analysis_type,
+                        "--inference-name", "self",
+                        "--inference",
+                        "--model-name", f"{self.subject_name}::{project_name}",
+                        "--device", "cuda"
+                    ]
+                    print(f">>> testing on self {project_name} with {shape_cnt}-[{shape}]")
+                    sp.run(cmd, cwd=src_dir, check=True, stdout=sp.PIPE)
+
+                    acc5, acc10 = self.get_mlp_acc_results(project_out_dir, "self")
+                    results[analysis_type_name]["self"]["acc5"].append(acc5)
+                    results[analysis_type_name]["self"]["acc10"].append(acc10)
+
+                    # test opencv_calib3d_TF_top30
+                    cmd = [
+                        "python3", "machine_learning.py",
+                        "--subject", "opencv_calib3d_TF_top30",
+                        "--experiment-name", self.experiment_name,
+                        "--targeting-experiment-name", "allfails-noReduced-excludeCCT-noHeuristics",
+                        "--inference-name", "opencv_calib3d-D0",
+                        "--inference",
+                        "--model-name", f"{self.subject_name}::{project_name}",
+                        "--device", "cuda"
+                    ]
+                    print(f">>> testing on opencv_calib3d_TF_top30 {project_name} with {shape_cnt}-[{shape}]")
+                    sp.run(cmd, cwd=src_dir, check=True, stdout=sp.PIPE)
+
+                    acc5, acc10 = self.get_mlp_acc_results(project_out_dir, "opencv_calib3d-D0")
+                    results[analysis_type_name]["test"]["acc5"].append(acc5)
+                    results[analysis_type_name]["test"]["acc10"].append(acc10)
+        else:
+            with open(results_csv, "r") as f:
+                reader = csv.reader(f)
+                next(reader)
+                for row in reader:
+                    analysis_type_name = row[0]
+                    shape = row[1]
+                    test_acc5 = float(row[2])
+                    test_acc10 = float(row[3])
+                    self_acc5 = float(row[4])
+                    self_acc10 = float(row[5])
+
+                    if analysis_type_name not in results:
+                        results[analysis_type_name] = {}
+                        results[analysis_type_name]["self"] = {"acc5": [], "acc10": []}
+                        results[analysis_type_name]["test"] = {"acc5": [], "acc10": []}
+                    
+                    results[analysis_type_name]["self"]["acc5"].append(self_acc5)
+                    results[analysis_type_name]["self"]["acc10"].append(self_acc10)
+                    results[analysis_type_name]["test"]["acc5"].append(test_acc5)
+                    results[analysis_type_name]["test"]["acc10"].append(test_acc10)
+    
+        # draw a line graph where
+        # x-axis is the shape of the model in order
+        # y-axis is the accuracy of the model
+        # there is a line for acc5 and acc10 for test only on each analysis type
+        plt.figure(figsize=(8, 6))
+        plt.ylim(0.0, 1.0)
+        # x-axis names are the shapes
+        shape_names = [f"shape{i}" for i in range(1, len(shapes) + 1)]
+        plt.xticks(range(len(shape_names)), shape_names)
+        for analysis_type_name, data in results.items():
+            plt.plot(shape_names, data["test"]["acc5"], marker='o', label=f"{analysis_type_name} acc@5")
+        plt.xlabel('Model Shape')
+        plt.ylabel('Accuracy')
+        plt.title('Accuracy vs Model Shape (acc@5)')
+        plt.legend()
+        plt.grid(True)
+        plt.savefig(experiment_dir / "accuracy_vs_model_shape-acc5.png")
+        plt.show()
+
+        plt.figure(figsize=(8, 6))
+        plt.ylim(0.0, 1.0)
+        # x-axis names are the shapes
+        shape_names = [f"shape{i}" for i in range(1, len(shapes) + 1)]
+        plt.xticks(range(len(shape_names)), shape_names)
+        for analysis_type_name, data in results.items():
+            plt.plot(shape_names, data["test"]["acc10"], marker='o', label=f"{analysis_type_name} acc@10")
+        plt.xlabel('Model Shape')
+        plt.ylabel('Accuracy')
+        plt.title('Accuracy vs Model Shape (acc@10)')
+        plt.legend()
+        plt.grid(True)
+        plt.savefig(experiment_dir / "accuracy_vs_model_shape-acc10.png")
+        plt.show()
+
+        # Save the results in csv file
+        with open(experiment_dir / "results.csv", "w") as f:
+            f.write("analysis_type,shape,test-acc5,test-acc10,self-acc5,self-acc10\n")
+            for analysis_type_name, data in results.items():
+                for i, shape_name in enumerate(shape_names):
+                    f.write(f"{analysis_type_name},{shape_name},{data['test']['acc5'][i]},{data['test']['acc10'][i]},{data['self']['acc5'][i]},{data['self']['acc10'][i]}\n")
+
+
+    def get_mlp_acc_results(self, project_out_dir, inference_name):
+        """
+        Get MLP accuracy results
+        """
+        inference_dir = project_out_dir / "inference" / inference_name
+        fl_acc_txt = inference_dir / "fl_acc.txt"
+
+        with open(fl_acc_txt, "r") as f:
+            lines = f.readlines()
+            acc5 = float(lines[2].strip().split(": ")[-1])
+            acc10 = float(lines[4].strip().split(": ")[-1])
+        
+        return acc5, acc10
+
+
+    def analyze10(self):
+        """
+        [stage05] Analyze10: Measure average accuracy amongst MLP experiments
+        """
+
+        subjects = [
+            "zlib_ng_TF_top30",
+            "libxml2_TF_top30",
+            "opencv_features2d_TF_top30",
+            "opencv_imgproc_TF_top30",
+            "opencv_core_TF_top30",
+        ]
+
+        exp = "MCexp_v1"
+
+        analysis_types = [
+            # "allfails-noReduced-excludeCCT-noHeuristics",
+            # "rand50-noReduced-excludeCCT-noHeuristics",
+            "sbflnaish250-noReduced-excludeCCT-noHeuristics",
+            "sbflnaish250-reduced-excludeCCT-noHeuristics",
+            "sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics",
+        ]
+
+        results = {}
+        for subject in subjects:
+            results[subject] = {}
+            result_csv = out_dir / subject / "analysis/ml" / exp / "results.csv"
+            assert result_csv.exists()
+
+            with open(result_csv, "r") as f:
+                reader = csv.reader(f)
+                next(reader)
+                for row in reader:
+                    analysis_type = row[0]
+                    shape = row[1]
+                    test_acc5 = float(row[2])
+                    test_acc10 = float(row[3])
+                    self_acc5 = float(row[4])
+                    self_acc10 = float(row[5])
+
+                    if analysis_type not in results[subject]:
+                        results[subject][analysis_type] = {}
+                        results[subject][analysis_type]["self"] = {"acc5": [], "acc10": []}
+                        results[subject][analysis_type]["test"] = {"acc5": [], "acc10": []}
+                    
+                    results[subject][analysis_type]["self"]["acc5"].append(self_acc5)
+                    results[subject][analysis_type]["self"]["acc10"].append(self_acc10)
+                    results[subject][analysis_type]["test"]["acc5"].append(test_acc5)
+                    results[subject][analysis_type]["test"]["acc10"].append(test_acc10)
+        
+        with open(out_dir / f"{exp}_avg_results.csv", "w") as f:
+            f.write("subject,analysis_type,avg_test_acc5,avg_test_acc10,avg_self_acc5,avg_self_acc10\n")
+            for subject in subjects:
+                for analysis_type, data in results[subject].items():
+                    avg_test_acc5 = sum(data["test"]["acc5"]) / len(data["test"]["acc5"])
+                    avg_test_acc10 = sum(data["test"]["acc10"]) / len(data["test"]["acc10"])
+                    avg_self_acc5 = sum(data["self"]["acc5"]) / len(data["self"]["acc5"])
+                    avg_self_acc10 = sum(data["self"]["acc10"]) / len(data["self"]["acc10"])
+
+                    assert len(data["test"]["acc5"]) == 10
+                    assert len(data["test"]["acc10"]) == 10
+                    assert len(data["self"]["acc5"]) == 10
+                    assert len(data["self"]["acc10"]) == 10
+
+                    # write the acc in acc * 100 (until 2nd decimal point)
+                    avg_test_acc5 = round(avg_test_acc5 * 100, 2)
+                    avg_test_acc10 = round(avg_test_acc10 * 100, 2)
+                    avg_self_acc5 = round(avg_self_acc5 * 100, 2)
+                    avg_self_acc10 = round(avg_self_acc10 * 100, 2)
+                    
+                    f.write(f"{subject},{analysis_type},{avg_test_acc5},{avg_test_acc10},{avg_self_acc5},{avg_self_acc10}\n")

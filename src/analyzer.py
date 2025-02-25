@@ -32,7 +32,7 @@ def main():
 
     start_time = time.time()
     slack.send_message(f"Worker started at {start_time}")
-    analyzer.run(args.analysis_criteria, type_name=args.type_name)
+    analyzer.run(args.analysis_criteria, type_name=args.type_name, batch_size=args.batch_size)
 
     end_time = time.time()
 
@@ -53,6 +53,7 @@ def make_parser():
     parser.add_argument("--experiment-name", type=str, help="Experiment name", required=True)
     parser.add_argument("--analysis-criteria", type=list_of_ints, help=help_for_analysis_criteria, required=True)
     parser.add_argument("--type-name", type=str, help="Type name", required=False)
+    parser.add_argument("--batch-size", type=str, help="Batch size", required=False)
     parser.add_argument("--verbose", action="store_true", help="Verbose mode")
 
     return parser

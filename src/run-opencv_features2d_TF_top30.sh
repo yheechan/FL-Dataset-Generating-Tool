@@ -120,14 +120,49 @@
 
 
 
+# =============================== 50%
+# echo "analyzing opencv_features2d_TF_top30 allfails-noReduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_features2d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name allfails-noReduced-excludeCCT-noHeuristics
+
+# echo "analyzing opencv_features2d_TF_top30 rand50-noReduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_features2d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name rand50-noReduced-excludeCCT-noHeuristics
+
+# =============================== 30%
+
+# echo "analyzing opencv_features2d_TF_top30 rand30-noReduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_features2d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name rand30-noReduced-excludeCCT-noHeuristics
+
+# echo "analyzing opencv_features2d_TF_top30 sbflnaish230-noReduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_features2d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish230-noReduced-excludeCCT-noHeuristics
 
 # ===============================
 
-echo "analyzing opencv_features2d_TF_top30 sbflnaish250-noReduced-excludeCCT-noHeuristics"
-time python3 analyzer.py --subject opencv_features2d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-noReduced-excludeCCT-noHeuristics
+# echo "analyzing opencv_features2d_TF_top30 sbflnaish250-noReduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_features2d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-noReduced-excludeCCT-noHeuristics
 
 # echo "analyzing opencv_features2d_TF_top30 sbflnaish250-reduced-excludeCCT-noHeuristics"
 # time python3 analyzer.py --subject opencv_features2d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced-excludeCCT-noHeuristics
 
 # echo "analyzing opencv_features2d_TF_top30 sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics"
 # time python3 analyzer.py --subject opencv_features2d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics
+
+
+# ===============================
+
+time python3 analyzer.py \
+    --subject opencv_features2d_TF_top30 \
+    --experiment-name TF_top30 \
+    --analysis-criteria 9 \
+    --batch-size 512
+
+
+# time python3 analyzer.py \
+#     --subject opencv_features2d_TF_top30 \
+#     --experiment-name TF_top30 \
+#     --analysis-criteria 8
+
+# time python3 analyzer.py \
+#     --subject opencv_features2d_TF_top30 \
+#     --experiment-name TF_top30 \
+#     --analysis-criteria 9 \
+#     --batch-size 512

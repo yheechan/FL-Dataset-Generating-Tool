@@ -123,3 +123,35 @@
 # python3 validator.py --subject opencv_calib3d_TF_top30 --experiment-name TF_top30 --validation-criteria 8,9,10
 # python3 analyzer.py --subject opencv_calib3d_TF_top30 --experiment-name TF_top30 --analysis-criteria 1
 # python3 analyzer.py --subject opencv_calib3d_TF_top30 --experiment-name TF_top30 --analysis-criteria 4
+
+
+
+# =============================== 50%
+# echo "analyzing opencv_calib3d_TF_top30 allfails-noReduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_calib3d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name allfails-noReduced-excludeCCT-noHeuristics
+
+# echo "analyzing opencv_calib3d_TF_top30 rand50-noReduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_calib3d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name rand50-noReduced-excludeCCT-noHeuristics
+
+# =============================== 30%
+
+# echo "analyzing opencv_calib3d_TF_top30 rand30-noReduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_calib3d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name rand30-noReduced-excludeCCT-noHeuristics
+
+# echo "analyzing opencv_calib3d_TF_top30 sbflnaish230-noReduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_calib3d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish230-noReduced-excludeCCT-noHeuristics
+
+
+# ===============================
+
+# cp ../configs/mut_num_00.json ../configs/analysis_config.json
+# echo "analyzing opencv_calib3d_TF_top30 sbflnaish250-noReduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_calib3d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-noReduced-excludeCCT-noHeuristics
+
+# cp ../configs/mut_num_01.json ../configs/analysis_config.json
+# echo "analyzing opencv_calib3d_TF_top30 sbflnaish250-reduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_calib3d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced-excludeCCT-noHeuristics
+
+# cp ../configs/mut_num_02.json ../configs/analysis_config.json
+# echo "analyzing opencv_calib3d_TF_top30 sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_calib3d_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics
