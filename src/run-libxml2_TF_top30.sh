@@ -151,6 +151,14 @@
 # echo "analyzing libxml2_TF_top30 sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics"
 # time python3 analyzer.py --subject libxml2_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics
 
+# =============================== 30%
+
+# echo "analyzing libxml2_TF_top30 sbflnaish230-reduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject libxml2_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish230-reduced-excludeCCT-noHeuristics
+
+# echo "analyzing libxml2_TF_top30 sbflnaish230-reduced_sbflnaish2-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject libxml2_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish230-reduced_sbflnaish2-excludeCCT-noHeuristics
+
 
 # ===============================
 

@@ -136,6 +136,7 @@
 # echo "analyzing opencv_imgproc_TF_top30 rand30-noReduced-excludeCCT-noHeuristics"
 # time python3 analyzer.py --subject opencv_imgproc_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name rand30-noReduced-excludeCCT-noHeuristics
 
+# cp ../configs/line_sel_03.json ../configs/analysis_config.json
 # echo "analyzing opencv_imgproc_TF_top30 sbflnaish230-noReduced-excludeCCT-noHeuristics"
 # time python3 analyzer.py --subject opencv_imgproc_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish230-noReduced-excludeCCT-noHeuristics
 
@@ -150,6 +151,18 @@
 
 # echo "analyzing opencv_imgproc_TF_top30 sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics"
 # time python3 analyzer.py --subject opencv_imgproc_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics
+
+# =============================== 30%
+
+# cp ../configs/mut_num_03.json ../configs/analysis_config.json
+# echo "analyzing opencv_imgproc_TF_top30 sbflnaish230-reduced-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_imgproc_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish230-reduced-excludeCCT-noHeuristics
+
+# cp ../configs/mut_num_04.json ../configs/analysis_config.json
+# echo "analyzing opencv_imgproc_TF_top30 sbflnaish230-reduced_sbflnaish2-excludeCCT-noHeuristics"
+# time python3 analyzer.py --subject opencv_imgproc_TF_top30 --experiment-name TF_top30 --analysis-criteria 2 --type-name sbflnaish230-reduced_sbflnaish2-excludeCCT-noHeuristics
+
+
 
 # ===============================
 

@@ -29,6 +29,9 @@ def get_mutations_on_target_lines(bug_idx, line_idx2line_info, db):
     """
     Get mutations on target lines
     """
+    if len(line_idx2line_info) == 0:
+        return {}
+
     columns = [
         "line_idx", "mutant_idx", "build_result",
         "targetting_file", "mutant_filename", "mut_op",
