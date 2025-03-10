@@ -821,50 +821,131 @@ class Analyze:
         [stage05] analyze04: Analyze SBFL rank of buggy lines
             for all buggy versions resulting from MBFL feature extraction
         """
-        # Step 1: retrieve list of bug_idx where mbfl is TRUE
-        # "bug_idx, version, buggy_file, buggy_function, buggy_lineno, buggy_line_idx",
-        target_buggy_version_list = get_target_buggy_version_list(self.subject_name, self.experiment_name, "mbfl", self.db)
+        subjects = [
+            "zlib_ng_TF_top30",
+            "libxml2_TF_top30",
+            "opencv_features2d_TF_top30",
+            "opencv_imgproc_TF_top30",
+            "opencv_core_TF_top30",
+            "jsoncpp_TF_top30",
+        ]
 
-        # For each buggy version with MBFL feature
-        rank_dataset = []
-        acc_5_list = []
-        acc10_list = []
-        for buggy_version in tqdm(target_buggy_version_list, desc="Analyzing buggy versions for MBFL"):
-            bug_idx = buggy_version[0]
-            version = buggy_version[1]
-            buggy_file = buggy_version[2]
-            buggy_function = buggy_version[3]
-            buggy_lineno = buggy_version[4]
-            buggy_line_idx = buggy_version[5]
-            num_failing_tcs = buggy_version[6]
-            num_passing_tcs = buggy_version[7]
-            num_ccts = buggy_version[8]
-            num_total_lines = buggy_version[9]
+        experiment_name = "TF_top30"
 
-            rank_data = self.measure_sbfl_rank(bug_idx, buggy_file, buggy_function)
-            rank_dataset.append(rank_data["sbfl_rank"])
+        experiments = [
+            [
+                "allfails-maxMutants-excludeCCT",
+                "allfails-noReduced-excludeCCT-noHeuristics"
+            ],
+            [
+                "rand50-maxMutants-excludeCCT",
+                "rand50-noReduced-excludeCCT-noHeuristics"
+            ],
+            [
+                "sbflnaish250-maxMutants-excludeCCT",
+                "sbflnaish250-noReduced-excludeCCT-noHeuristics"
+            ],
+            [
+                "sbflnaish230-maxMutants-excludeCCT",
+                "sbflnaish230-noReduced-excludeCCT-noHeuristics"
+            ],
+            [
+                "sbflnaish210-maxMutants-excludeCCT",
+                "sbflnaish210-noReduced-excludeCCT-noHeuristics"
+            ],
+            [
+                "sbflnaish201-maxMutants-excludeCCT",
+                "sbflnaish201-noReduced-excludeCCT-noHeuristics"
+            ],
+            [
+                "sbflnaish200-maxMutants-excludeCCT",
+                "sbflnaish200-noReduced-excludeCCT-noHeuristics"
+            ],
+            [
+                "sbflnaish250-reducedAvg-excludeCCT",
+                "sbflnaish250-reduced-excludeCCT-noHeuristics"
+            ],
+            [
+                "sbflnaish250-reducedSbflnaish2-excludeCCT",
+                "sbflnaish250-reduced_sbflnaish2-excludeCCT-noHeuristics"
+            ],
+            [
+                "sbflnaish250-reducedMinMutants-excludeCCT",
+                "sbflnaish250-reduced_min-excludeCCT-noHeuristics"
+            ],
+            [
+                "sbflnaish250-maxMutants-withCCT",
+                "sbflnaish250-noReduced-withCCT-noHeuristics"
+            ],
+        ]
 
-            if rank_data["sbfl_rank"] <= 5:
-                acc_5_list.append(1)
-            else:
-                acc_5_list.append(0)
+        for subject in subjects:
+            print(f">> Analyzing {subject}")
 
-            if rank_data["sbfl_rank"] <= 10:
-                acc10_list.append(1)
-            else:
-                acc10_list.append(0)
-        
-        acc_5 = sum(acc_5_list) / len(acc_5_list)
-        acc_10 = sum(acc10_list) / len(acc10_list)
 
-        print(f"Accuracy@5: {acc_5}")
-        print(f"Accuracy@10: {acc_10}")
-        
-        average_rank = sum(rank_dataset) / len(rank_dataset)
-        print(f"Average SBFL rank {self.experiment.analysis_config['sbfl_standard']}: {average_rank}")
+            # Step 1: retrieve list of bug_idx where mbfl is TRUE
+            # "bug_idx, version, buggy_file, buggy_function, buggy_lineno, buggy_line_idx",
+            target_buggy_version_list = get_target_buggy_version_list(subject, experiment_name, "mbfl", self.db)
+
+            for exp_name, exp_dirname in experiments:
+                type_dir = out_dir / subject / "analysis" / exp_name
+                assert type_dir.exists()
+
+                # For each buggy version with MBFL feature
+                acc_5_list = []
+                acc10_list = []
+                rank_dataset = {}
+                for buggy_version in tqdm(target_buggy_version_list, desc="Analyzing buggy versions for MBFL"):
+                    bug_idx = buggy_version[0]
+                    version = buggy_version[1]
+                    buggy_file = buggy_version[2]
+                    buggy_function = buggy_version[3]
+                    buggy_lineno = buggy_version[4]
+                    buggy_line_idx = buggy_version[5]
+                    num_failing_tcs = buggy_version[6]
+                    num_passing_tcs = buggy_version[7]
+                    num_ccts = buggy_version[8]
+                    num_total_lines = buggy_version[9]
+
+                    rank_data = self.measure_sbfl_rank(bug_idx, buggy_file, buggy_function)
+                    rank_data["bug_idx"] = bug_idx
+                    rank_data["version"] = version
+                    rank_data["buggy_file"] = buggy_file
+                    rank_data["buggy_function"] = buggy_function
+                    rank_data["buggy_lineno"] = buggy_lineno
+                    rank_data["buggy_line_idx"] = buggy_line_idx
+                    rank_data["num_failing_tcs"] = num_failing_tcs
+                    rank_data["num_passing_tcs"] = num_passing_tcs
+                    rank_data["num_ccts"] = num_ccts
+                    rank_data["num_total_lines"] = num_total_lines
+                    rank_dataset[version] = rank_data
+
+                    if rank_data["sbfl_rank"] <= 5:
+                        acc_5_list.append(1)
+                    else:
+                        acc_5_list.append(0)
+
+                    if rank_data["sbfl_rank"] <= 10:
+                        acc10_list.append(1)
+                    else:
+                        acc10_list.append(0)
+                
+                acc_5 = sum(acc_5_list) / len(acc_5_list)
+                acc_10 = sum(acc10_list) / len(acc10_list)
+
+                print(f"\t>> Accuracy@5: {acc_5}")
+                print(f"\t>> Accuracy@10: {acc_10}")
+                
+                # average_rank = sum(rank_dataset) / len(rank_dataset)
+                # print(f"\t>> Average SBFL rank naish2_5: {average_rank}")
+
+                with open(type_dir / "sbfl_rank.json", "w") as f:
+                    json.dump(rank_dataset, f, indent=2)
+
 
     def measure_sbfl_rank(self, bug_idx, buggy_file, buggy_function):
-        sbfl_standard = self.experiment.analysis_config["sbfl_standard"]
+        # sbfl_standard = self.experiment.analysis_config["sbfl_standard"]
+        sbfl_standard = "naish2_5"
         rank_name = f"{sbfl_standard}_rank"
         # Step 1: getch relevant information
         columns = ["file", "function", sbfl_standard]
@@ -898,7 +979,7 @@ class Analyze:
         total_number_of_functions = len(grouped)
 
         rank_data = {
-            "sbfl_rank": rank,
+            "sbfl_rank": int(rank),
             "total_number_of_functions": total_number_of_functions
         }
 
@@ -1162,11 +1243,11 @@ class Analyze:
         """
         subjects = [
             "zlib_ng_TF_top30",
-            # "libxml2_TF_top30",
-            # "opencv_features2d_TF_top30",
-            # "opencv_imgproc_TF_top30",
-            # "opencv_core_TF_top30",
-            # "jsoncpp_TF_top30",
+            "libxml2_TF_top30",
+            "opencv_features2d_TF_top30",
+            "opencv_imgproc_TF_top30",
+            "opencv_core_TF_top30",
+            "jsoncpp_TF_top30",
         ]
 
         experiment_name = "TF_top30"
@@ -1245,7 +1326,7 @@ class Analyze:
                 version2buggy_line_info[version] = buggy_line_info
 
             for exp_name, exp_dirname in experiments:
-                type_dir = out_dir / subject / "analysis" / exp_dirname
+                type_dir = out_dir / subject / "analysis" / exp_name
                 assert type_dir.exists()
                 utilized_mutation_info_dir = type_dir / "utilized_mutation_info"
                 assert utilized_mutation_info_dir.exists()
@@ -1317,7 +1398,10 @@ class Analyze:
                             total_statics[version_name][line]["f2p"] += mut_dict["f2p"]
                             total_statics[version_name][line]["p2f"] += mut_dict["p2f"]
 
-                    avg_num_utilized_mutants_per_line = total_num_utilized_mutants / len(mut_info_json)
+                    if len(mut_info_json) == 0:
+                        avg_num_utilized_mutants_per_line = 0
+                    else:
+                        avg_num_utilized_mutants_per_line = total_num_utilized_mutants / len(mut_info_json)
                     utilized_mut_info_csv_fp.write(f"{version_name},{total_num_utilized_mutants},{avg_num_utilized_mutants_per_line},{buggy_line_tested},{buggy_line_mut_info['mut_cnt']},{buggy_line_mut_info['f2p']},{buggy_line_mut_info['p2f']},{version_num_ccts}\n")
                     total_num_utilized_mutants_overall += total_num_utilized_mutants
                     total_num_lines_executed_by_failing_tcs += version_num_lines_executed_by_failing_tcs
@@ -1444,6 +1528,10 @@ class Analyze:
                 "sbflnaish201-noReduced-excludeCCT-noHeuristics"
             ],
             [
+                "sbflnaish200-maxMutants-excludeCCT",
+                "sbflnaish200-noReduced-excludeCCT-noHeuristics"
+            ],
+            [
                 "sbflnaish250-reducedAvg-excludeCCT",
                 "sbflnaish250-reduced-excludeCCT-noHeuristics"
             ],
@@ -1506,7 +1594,7 @@ class Analyze:
                         "python3", "machine_learning.py",
                         "--subject", self.subject_name,
                         "--experiment-name", self.experiment_name,
-                        "--targeting-experiment-name", analysis_type,
+                        "--targeting-experiment-name", analysis_type_name,
                         "--project-name", project_name,
                         "--train",
                         "--train-validate-test-ratio", "8", "1", "1",
@@ -1525,7 +1613,7 @@ class Analyze:
                         "python3", "machine_learning.py",
                         "--subject", self.subject_name,
                         "--experiment-name", self.experiment_name,
-                        "--targeting-experiment-name", analysis_type,
+                        "--targeting-experiment-name", analysis_type_name,
                         "--inference-name", "self",
                         "--inference",
                         "--model-name", f"{self.subject_name}::{project_name}",
@@ -1541,7 +1629,7 @@ class Analyze:
                         "python3", "machine_learning.py",
                         "--subject", "opencv_calib3d_TF_top30",
                         "--experiment-name", self.experiment_name,
-                        "--targeting-experiment-name", "allfails-noReduced-excludeCCT-noHeuristics",
+                        "--targeting-experiment-name", "allfails-maxMutants-excludeCCT",
                         "--inference-name", "opencv_calib3d-D0",
                         "--inference",
                         "--model-name", f"{self.subject_name}::{project_name}",

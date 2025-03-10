@@ -43,7 +43,7 @@ class EngineBase:
 
             print(f"\nTesting {target_name} ({idx+1}/{size})")
             rank = self.test_instr(
-                model, subject_name, buggy_line_key, bug_idx, raw_test_set[bug_idx], params,
+                model, subject_name, buggy_line_key, bug_idx, version_name, raw_test_set[bug_idx], params,
                 line_suspend_score_dir, function_susp_score_dir, bug_keys_dir
             )
             print(f"\tRank: {rank}")
@@ -67,7 +67,7 @@ class EngineBase:
         self.write_test_accuracy_to_txt(project_out_dir, acc_5, acc_10, size)
     
     def test_instr(
-            self, model, subject_name, buggy_line_key, bug_idx, raw_test, params,
+            self, model, subject_name, buggy_line_key, bug_idx, version_name, raw_test, params,
             line_suspend_score_dir, function_susp_score_dir, bug_keys_dir
         ):
         # print(f"\tBuggy Line Key: {buggy_line_key}")
@@ -86,7 +86,7 @@ class EngineBase:
         # 4. write line_susp to csv
         # key: susp. score
         line_susp_file = self.write_line_susp_scores(
-            line_suspend_score_dir, line_susp, subject_name, bug_idx
+            line_suspend_score_dir, line_susp, subject_name, bug_idx, version_name
         )
 
         # 5. get rank of buggy function
@@ -94,7 +94,7 @@ class EngineBase:
 
         # 6. write function_susp to csv
         # [function_name, {susp.: susp. score, rank: rank}]
-        self.write_function_susp_scores(function_susp_score_dir, function_susp, subject_name, bug_idx)
+        self.write_function_susp_scores(function_susp_score_dir, function_susp, subject_name, bug_idx, version_name)
 
         # 7. get rank of buggy function
         rank = self.get_rank_of_buggy_function(function_susp, buggy_line_key)
@@ -263,8 +263,8 @@ class EngineBase:
             json.dump(parameter_dict, f, indent=4)
         return param_file
     
-    def write_line_susp_scores(self, line_susp_dir, line_susp, subject, bug_id):
-        line_susp_file = line_susp_dir / f"{subject}-{bug_id}.line_susp_score.csv"
+    def write_line_susp_scores(self, line_susp_dir, line_susp, subject, bug_id, version_name):
+        line_susp_file = line_susp_dir / f"{subject}-{version_name}-{bug_id}.line_susp_score.csv"
         with open(line_susp_file, "w") as f:
             writer = csv.writer(f)
             writer.writerow(["key", "suspiciousness"])
@@ -272,8 +272,8 @@ class EngineBase:
                 writer.writerow([key, susp])
         return line_susp_file
     
-    def write_function_susp_scores(self, function_susp_dir, function_susp, subject, bug_id):
-        function_susp_file = function_susp_dir / f"{subject}-{bug_id}.function_susp_score.csv"
+    def write_function_susp_scores(self, function_susp_dir, function_susp, subject, bug_id, version_name):
+        function_susp_file = function_susp_dir / f"{subject}-{version_name}-{bug_id}.function_susp_score.csv"
         with open(function_susp_file, "w") as f:
             writer = csv.writer(f)
             writer.writerow(["file_function_key", "suspiciousness", "rank"])
