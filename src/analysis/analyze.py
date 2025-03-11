@@ -900,14 +900,14 @@ class Analyze:
                     version = buggy_version[1]
                     buggy_file = buggy_version[2]
                     buggy_function = buggy_version[3]
-                    buggy_lineno = buggy_version[4]
+                    buggy_lineno = int(buggy_version[4])
                     buggy_line_idx = buggy_version[5]
                     num_failing_tcs = buggy_version[6]
                     num_passing_tcs = buggy_version[7]
                     num_ccts = buggy_version[8]
                     num_total_lines = buggy_version[9]
 
-                    rank_data = self.measure_sbfl_rank(bug_idx, buggy_file, buggy_function)
+                    rank_data = self.measure_sbfl_rank(bug_idx, buggy_file, buggy_function, buggy_lineno)
                     rank_data["bug_idx"] = bug_idx
                     rank_data["version"] = version
                     rank_data["buggy_file"] = buggy_file
@@ -943,12 +943,12 @@ class Analyze:
                     json.dump(rank_dataset, f, indent=2)
 
 
-    def measure_sbfl_rank(self, bug_idx, buggy_file, buggy_function):
+    def measure_sbfl_rank(self, bug_idx, buggy_file, buggy_function, buggy_lineno):
         # sbfl_standard = self.experiment.analysis_config["sbfl_standard"]
         sbfl_standard = "naish2_5"
         rank_name = f"{sbfl_standard}_rank"
         # Step 1: getch relevant information
-        columns = ["file", "function", sbfl_standard]
+        columns = ["file", "function", "lineno",sbfl_standard]
         col_str = ", ".join(columns)
         rows = self.db.read(
             "line_info",
@@ -959,6 +959,16 @@ class Analyze:
 
         # Step2: Convert to DataFrame for easier manipulation
         df = pd.DataFrame(rows, columns=columns)
+        
+        # Step 2.1: Order by sbfl_score descening
+        df = df.sort_values(by=[sbfl_standard], ascending=False)
+        # measure the (row_num / total rows) * 100 for buggy file, function, lineno
+        sbfl_line_top_percent = (((df.index[((df["file"] == buggy_file) & (df["function"] == buggy_function) & (df["lineno"] == buggy_lineno))]) + 1) / len(df)) * 100
+        # change to float from numpy.float64
+        sbfl_line_top_percent = float(sbfl_line_top_percent[0])
+        
+
+        # Step 3: Group by file, function and get max sbfl_score
         grouped = df.groupby(["file", "function"]).agg(
             sbfl_score=(sbfl_standard, "max"),
         ).reset_index()
@@ -969,16 +979,17 @@ class Analyze:
         # grouped.to_csv("tmp.csv", index=False)
 
         # Step 5: Get rank of buggy line by buggy_file, buggy_function
-        buggy_line_rank = grouped[
+        buggy_function_rank = grouped[
             (grouped["file"] == buggy_file) & (grouped["function"] == buggy_function)
         ][[rank_name]]
 
 
-        rank = buggy_line_rank[rank_name].values[0]
+        rank = buggy_function_rank[rank_name].values[0]
 
         total_number_of_functions = len(grouped)
 
         rank_data = {
+            "sbfl_line_top_percent": sbfl_line_top_percent,
             "sbfl_rank": int(rank),
             "total_number_of_functions": total_number_of_functions
         }
@@ -1304,7 +1315,7 @@ class Analyze:
             # 1. First get buggy line information from db
             bug_info_list = self.db.read(
                 "bug_info",
-                columns="bug_idx, version, buggy_file, buggy_function, buggy_lineno, num_lines_executed_by_failing_tcs, num_ccts",
+                columns="bug_idx, version, buggy_file, buggy_function, buggy_lineno, num_lines_executed_by_failing_tcs, num_funcs_executed_by_failing_tcs, num_ccts",
                 conditions={
                     "subject": subject,
                     "experiment_name": experiment_name,
@@ -1321,7 +1332,8 @@ class Analyze:
                     "buggy_function": bug_info[3],
                     "buggy_lineno": bug_info[4],
                     "num_lines_executed_by_failing_tcs": bug_info[5],
-                    "num_ccts": bug_info[6]
+                    "num_funcs_executed_by_failing_tcs": bug_info[6],
+                    "num_ccts": bug_info[7]
                 }
                 version2buggy_line_info[version] = buggy_line_info
 
@@ -1336,8 +1348,9 @@ class Analyze:
                 
                 total_statics = {}
                 total_num_utilized_mutants_overall = 0
-                total_num_ccts = 0
                 total_num_lines_executed_by_failing_tcs = 0
+                total_num_funcs_executed_by_failing_tcs = 0
+                total_num_ccts = 0
                 assert len(version2buggy_line_info) == len(list(utilized_mutation_info_dir.iterdir()))
                 total_stats_on_buggy_line = {
                     "mut_cnt": 0,
@@ -1354,8 +1367,8 @@ class Analyze:
                     version_buggy_function = version2buggy_line_info[version_name]["buggy_function"]
                     version_buggy_lineno = version2buggy_line_info[version_name]["buggy_lineno"]
                     version_num_lines_executed_by_failing_tcs = version2buggy_line_info[version_name]["num_lines_executed_by_failing_tcs"]
+                    version_num_funcs_executed_by_failing_tcs = version2buggy_line_info[version_name]["num_funcs_executed_by_failing_tcs"]
                     version_num_ccts = version2buggy_line_info[version_name]["num_ccts"]
-                    total_num_ccts += version_num_ccts
 
                     # get data: "file", "function", "lineno", "mutants"
                     mut_info_json = json.loads(version_json_file.read_text())
@@ -1403,16 +1416,20 @@ class Analyze:
                     else:
                         avg_num_utilized_mutants_per_line = total_num_utilized_mutants / len(mut_info_json)
                     utilized_mut_info_csv_fp.write(f"{version_name},{total_num_utilized_mutants},{avg_num_utilized_mutants_per_line},{buggy_line_tested},{buggy_line_mut_info['mut_cnt']},{buggy_line_mut_info['f2p']},{buggy_line_mut_info['p2f']},{version_num_ccts}\n")
+                    
                     total_num_utilized_mutants_overall += total_num_utilized_mutants
                     total_num_lines_executed_by_failing_tcs += version_num_lines_executed_by_failing_tcs
+                    total_num_funcs_executed_by_failing_tcs += version_num_funcs_executed_by_failing_tcs
+                    total_num_ccts += version_num_ccts
 
                 utilized_mut_info_csv_fp.close()
 
 
                 total_num_versions = len(version2buggy_line_info)
                 avg_num_utilized_mutants_overall = total_num_utilized_mutants_overall / len(version2buggy_line_info)
-                avg_num_ccts = total_num_ccts / len(version2buggy_line_info)
                 avg_num_lines_executed_by_failing_tcs = total_num_lines_executed_by_failing_tcs / len(version2buggy_line_info)
+                avg_num_funcs_executed_by_failing_tcs = total_num_funcs_executed_by_failing_tcs / len(version2buggy_line_info)
+                avg_num_ccts = total_num_ccts / len(version2buggy_line_info)
 
                 # buggy line
                 avg_mut_cnt = total_stats_on_buggy_line["mut_cnt"] / total_num_versions
@@ -1425,6 +1442,7 @@ class Analyze:
                         "total_num_utilized_mutants_overall": total_num_utilized_mutants_overall,
                         "avg_num_utilized_mutants_overall": avg_num_utilized_mutants_overall,
                         "avg_num_lines_executed_by_failing_tcs": avg_num_lines_executed_by_failing_tcs,
+                        "avg_num_funcs_executed_by_failing_tcs": avg_num_funcs_executed_by_failing_tcs,
                         "avg_num_ccts": avg_num_ccts,
                         "avg_mut_cnt_buggy_line": avg_mut_cnt,
                         "avg_f2p_buggy_line": avg_f2p,
