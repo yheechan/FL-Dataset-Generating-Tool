@@ -1,4 +1,5 @@
 import csv
+from tqdm import tqdm
 
 from lib.utils import *
 from analysis.rank_utils import *
@@ -44,6 +45,8 @@ class Validate:
             self.val08()
             self.val09()
             self.val10()
+            self.val11()
+            self.val12()
         else:
             for val_type in validation_criteria:
                 if val_type == 1:
@@ -66,6 +69,10 @@ class Validate:
                     self.val09()
                 elif val_type == 10:
                     self.val10()
+                elif val_type == 11:
+                    self.val11()
+                elif val_type == 12:
+                    self.val12()
     
     def val01(self):
         """
@@ -390,6 +397,58 @@ class Validate:
 
     def val07(self):
         """
+        [stage03] Validate the following for all tc_info with tc_result one of the ['fail', 'pass', 'cct']
+            and bug_idx one of the bug_idx in bug_info with subject, experiment_name, and prerequisites IS TRUE:
+            1. The length of branch_cov_bit_seq is equal to the length of first branch_cov_bit_seq of the tc_info.
+        """
+
+        # Step 1: Fetch all bug_idx and required columns from bug_info
+        columns = ["b.bug_idx", "b.num_failing_tcs", "b.num_passing_tcs", "b.num_ccts"]
+        col_str = ", ".join(columns)
+        spechal_str = f"""
+            WHERE b.subject = '{self.subject_name}'
+            AND b.experiment_name = '{self.experiment_name}'
+            AND b.mbfl IS TRUE
+        """
+
+        bug_info_list = self.db.read(
+            "bug_info b",
+            columns=col_str,
+            special=spechal_str
+        )
+
+        print(f">> Total {len(bug_info_list)} bug_idx found for validation")
+        for bug_info in tqdm(bug_info_list, desc="Validating mbfl features"):
+            bug_idx, fail_cnt, pass_cnt, cct_cnt = bug_info
+            total_tc_cnt = fail_cnt + pass_cnt + cct_cnt
+
+            columns = [
+                "t.bug_idx", "t.tc_idx", "t.tc_result",
+                "t.branch_cov_bit_seq"
+            ]
+            col_str = ", ".join(columns)
+            tc_info_list = self.db.read(
+                "tc_info t",
+                columns=col_str,
+                conditions={
+                    "bug_idx": bug_idx,
+                },
+                special="ORDER BY t.tc_idx ASC"
+            )
+
+            branch_cov_length = len(tc_info_list[0][3])
+            for tc_info in tc_info_list:
+                tBug_idx, tc_idx, tc_result, branch_cov_bit_seq = tc_info
+                if tc_result not in ["fail", "pass", "cct"]:
+                    continue
+
+                # Validate the lengths of features
+                assert len(branch_cov_bit_seq) == branch_cov_length, f"Length of branch_cov_bit_seq is not equal to branch_cov_length for bug_idx {bug_idx}"
+
+        print(f"[stage06-VAL12] {len(bug_info_list)} buggy versions have valid branch_cov_bit_seq length for all tc in tc_info")
+
+    def val08(self):
+        """
         [stage04] val07: Validate the following for all bug_idx in bug_info with sbfl IS TRUE:
             1. Columns ep, np, ef, nf, cct_ep, and cct_np in line_info are not NULL.
             2. ep + np = num_passing_tcs in bug_info.
@@ -483,7 +542,7 @@ class Validate:
 
         print(f"[stage04-VAL07] {len(bug_info_res)} buggy versions with sbfl=TRUE have valid sbfl feature data in line_info")
 
-    def val08(self):
+    def val09(self):
         """
         [stage05] val08: Validate the following columns in line_info table for all bug_idx in bug_info with mbfl IS TRUE:
             1. selected_for_mbfl is TRUE
@@ -516,7 +575,7 @@ class Validate:
 
         print(f"[stage05-VAL08] {len(line_info_res)} buggy lines with mbfl=TRUE is targetd for all types (sbfl asc, desc, and random mbfl) of mbfl extraction method")
 
-    def val09(self):
+    def val10(self):
         """
         [stage05] val09: Validate number of mutations generated on buggy line is greater than 0 for all bug_idx in bug_info with mbfl IS TRUE
         """
@@ -544,7 +603,7 @@ class Validate:
 
         print(f"[stage05-VAL09] {len(res)} buggy lines with mbfl=TRUE have greater than 0 mutations generated")
 
-    def val10(self):
+    def val11(self):
         """
         [stage05] val10: Validate the following for all bug_idx in bug_info with mbfl IS TRUE:
             1. Columns f2p, p2f, f2f, p2p, p2f_cct, and p2p_cct in mutation_info are not NULL.
@@ -638,6 +697,79 @@ class Validate:
                 )
 
         print(f"[stage05-VAL10] {len(bug_info_res)} buggy versions with mbfl=TRUE have valid mbfl feature data in mutation_info")
+
+    def val12(self):
+        """
+        [stage05] val11: Validate the following for all mutation_info with
+            bug_idx one of the bug_idx in bug_info with subject, experiment_name, and mbfl IS TRUE:
+            1. the lengths of following features equals the total number of tc which is fail+pass+cct
+                - f2p_tc_cov_bit_seq, p2f_tc_cov_bit_seq, f2f_tc_cov_bit_seq, p2p_tc_cov_bit_seq, p2f_cct_tc_cov_bit_seq, p2p_cct_tc_cov_bit_seq
+            2. the sum of all "1" in the features equals the total number of tc which is fail+pass+cct
+        """
+
+        # Step 1: Fetch all bug_idx and required columns from bug_info
+        columns = ["b.bug_idx", "b.num_failing_tcs", "b.num_passing_tcs", "b.num_ccts"]
+        col_str = ", ".join(columns)
+        spechal_str = f"""
+            WHERE b.subject = '{self.subject_name}'
+            AND b.experiment_name = '{self.experiment_name}'
+            AND b.mbfl IS TRUE
+        """
+
+        bug_info_list = self.db.read(
+            "bug_info b",
+            columns=col_str,
+            special=spechal_str
+        )
+
+        print(f">> Total {len(bug_info_list)} bug_idx found for validation")
+        for bug_info in tqdm(bug_info_list, desc="Validating mbfl features"):
+            bug_idx, fail_cnt, pass_cnt, cct_cnt = bug_info
+            total_tc_cnt = fail_cnt + pass_cnt + cct_cnt
+
+            columns = [
+                "m.bug_idx", "m.f2p_tc_bit_seq", "m.p2f_tc_bit_seq", "m.f2f_tc_bit_seq",
+                "m.p2p_tc_bit_seq", "m.p2f_cct_tc_bit_seq", "m.p2p_cct_tc_bit_seq"
+            ]
+            col_str = ", ".join(columns)
+
+            mutation_info_list = self.db.read(
+                "mutation_info m",
+                columns=col_str,
+                conditions={
+                    "bug_idx": bug_idx,
+                    "is_for_test": True,
+                    "build_result": True
+                }
+            )
+
+            for mutation_info in mutation_info_list:
+                mBug_idx, f2p, p2f, f2f, p2p, p2f_cct, p2p_cct = mutation_info
+
+                # Validate the lengths of features
+                assert len(f2p) == total_tc_cnt, f"Length of f2p_tc_bit_seq is not equal to total_tc_cnt for bug_idx {bug_idx}"
+                assert len(p2f) == total_tc_cnt, f"Length of p2f_tc_bit_seq is not equal to total_tc_cnt for bug_idx {bug_idx}"
+                assert len(f2f) == total_tc_cnt, f"Length of f2f_tc_bit_seq is not equal to total_tc_cnt for bug_idx {bug_idx}"
+                assert len(p2p) == total_tc_cnt, f"Length of p2p_tc_bit_seq is not equal to total_tc_cnt for bug_idx {bug_idx}"
+                assert len(p2f_cct) == total_tc_cnt, f"Length of p2f_cct_tc_bit_seq is not equal to total_tc_cnt for bug_idx {bug_idx}"
+                assert len(p2p_cct) == total_tc_cnt, f"Length of p2p_cct_tc_bit_seq is not equal to total_tc_cnt for bug_idx {bug_idx}"
+
+                # Validate the sum of all "1" in the features
+                f2p_cnt = f2p.count("1")
+                p2f_cnt = p2f.count("1")
+                f2f_cnt = f2f.count("1")
+                p2p_cnt = p2p.count("1")
+                p2f_cct_cnt = p2f_cct.count("1")
+                p2p_cct_cnt = p2p_cct.count("1")
+
+                assert f2p_cnt + f2f_cnt == fail_cnt, f"Sum of '1' in f2p and f2f is not equal to fail_cnt for bug_idx {bug_idx}"
+                assert p2f_cnt + p2p_cnt == pass_cnt, f"Sum of '1' in p2f and p2p is not equal to pass_cnt for bug_idx {bug_idx}"
+                assert p2f_cct_cnt + p2p_cct_cnt == cct_cnt, f"Sum of '1' in p2f_cct and p2p_cct is not equal to cct_cnt for bug_idx {bug_idx}"
+
+                all_cnt = f2p_cnt + p2f_cnt + f2f_cnt + p2p_cnt + p2f_cct_cnt + p2p_cct_cnt
+                assert all_cnt == total_tc_cnt, f"Sum of all '1' in the features is not equal to total_tc_cnt for bug_idx {bug_idx}"
+        
+        print(f"[stage06-VAL11] {len(bug_info_list)} buggy versions with mbfl=TRUE have valid mbfl feature data in mutation_info")
 
 
 

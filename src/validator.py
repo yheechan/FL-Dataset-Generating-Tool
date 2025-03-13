@@ -19,21 +19,30 @@ help_for_validation_criteria = \
             2. The number of rows in tc_info with tc_result='fail' matches num_failing_tcs.
             3. The number of rows in tc_info with tc_result='pass' matches num_passing_tcs.
     6: [stage03] Validate that all lines_executed_by_failing_tc.json and line2function.json file are available for all buggy versions resulting from prerequisite data preparation
-    7: [stage04] Validate the following for all bug_idx in bug_info with sbfl IS TRUE:
+    7: [stage03] Validate the following for all tc_info with tc_result one of the ['fail', 'pass', 'cct']
+            and bug_idx one of the bug_idx in bug_info with subject, experiment_name, and prerequisites IS TRUE:
+            1. The length of branch_cov_bit_seq is equal to the length of first branch_cov_bit_seq of the tc_info.
+    8: [stage04] Validate the following for all bug_idx in bug_info with sbfl IS TRUE:
             1. Columns ep, np, ef, nf, cct_ep, and cct_np in line_info are not NULL.
             2. ep + np = num_passing_tcs in bug_info.
             3. ef + nf = num_failing_tcs in bug_info.
             4. cct_ep + cct_np = num_ccts in bug_info.
-    8: [stage05] Validate the following columns in line_info table for all bug_idx in bug_info with mbfl IS TRUE:
+    9: [stage05] Validate the following columns in line_info table for all bug_idx in bug_info with mbfl IS TRUE:
             1. selected_for_mbfl is TRUE
-    9: [stage05] Validate number of mutations generated on buggy line is greater than 0 for all bug_idx in bug_info with mbfl IS TRUE
-    10: [stage05] Validate the following for all bug_idx in bug_info with mbfl IS TRUE:
+    10: [stage05] Validate number of mutations generated on buggy line is greater than 0 for all bug_idx in bug_info with mbfl IS TRUE
+    11: [stage05] Validate the following for all bug_idx in bug_info with mbfl IS TRUE:
             1. Columns f2p, p2f, f2f, p2p, p2f_cct, and p2p_cct in mutation_info are not NULL.
             2. f2p + f2f = num_failing_tcs in bug_info.
             3. p2f + p2p = num_passing_tcs in bug_info.
             4. p2f_cct + p2p_cct = num_ccts in bug_info.
-
+    12: [stage05] Validate the following for all mutation_info with
+            bug_idx one of the bug_idx in bug_info with subject, experiment_name, and mbfl IS TRUE:
+            1. the lengths of following features equals the total number of tc which is fail+pass+cct
+                - f2p_tc_cov_bit_seq, p2f_tc_cov_bit_seq, f2f_tc_cov_bit_seq, p2p_tc_cov_bit_seq, p2f_cct_tc_cov_bit_seq, p2p_cct_tc_cov_bit_seq
+            2. the sum of all "1" in the features equals the total number of tc which is fail+pass+cct
 """
+
+
 
 # This script is to test mutants (of subject)
 # the mutant is considered buggy (and saved within out/buggy_mutants)
