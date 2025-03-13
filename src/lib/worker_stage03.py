@@ -1,7 +1,6 @@
 import subprocess as sp
 import json
-import os
-import random
+import time
 
 from lib.utils import *
 from lib.worker_base import Worker
@@ -129,7 +128,7 @@ class WorkerStage03(Worker):
         self.buggy_line_idx = -1
 
         total_tc_list = self.failing_tcs_list + self.passing_tcs_list + self.ccts_list
-        total_tc_list = sorted(total_tc_list, key=sort_testcase_script_name)
+        total_tc_list = sorted(total_tc_list, key=sort_tc_idx)
         print_command([">> total_tc_list length: ", len(total_tc_list)], self.verbose)
 
         # make a csv file for coverage where the column is each test case
@@ -146,7 +145,7 @@ class WorkerStage03(Worker):
         self.lines_execed = {}
         # postprocess coverage for all test cases (failing, passing, ccts) at postprocessed_coverage.csv
         # postprocess coverage for all test cases (failing, passing) at postprocessed_coverage_noCCTs.csv
-        for idx, tc_script_name in enumerate(total_tc_list):
+        for idx, (tc_idx, tc_script_name, tc_result) in enumerate(total_tc_list):
             # print(f"Processing {idx+1}/{len(total_tc_list)}: {tc_script_name}")
 
             tc_name = tc_script_name.split(".")[0]
@@ -222,10 +221,14 @@ class WorkerStage03(Worker):
 
     def write_postprocessed_coverage(self, cov_data):
         for tc_script_name in cov_data["row_data"]:
-            cov_bit_seq = cov_data["row_data"][tc_script_name]
+            cov_bit_seq = cov_data["row_data"][tc_script_name]["cov_bit_seq"]
+            branch_cov_bit_seq = cov_data["row_data"][tc_script_name]["branch_cov_bit_seq"]
             self.db.update(
                 "tc_info",
-                set_values={"cov_bit_seq": cov_bit_seq},
+                set_values={
+                    "cov_bit_seq": cov_bit_seq,
+                    "branch_cov_bit_seq": branch_cov_bit_seq
+                },
                 conditions={
                     "bug_idx": self.bug_idx,
                     "tc_name": tc_script_name
@@ -252,16 +255,17 @@ class WorkerStage03(Worker):
             )
     
     def add_cov_data(self, cov_data, tc_cov_json, tc_script_name, first=False):
-        is_pass = False if tc_script_name in self.failing_tcs_list else True
+        is_pass = False if tc_script_name in self.failing_tcs_name_set else True
         if tc_script_name not in cov_data["row_data"]:
-            cov_data["row_data"][tc_script_name] = ""
+            cov_data["row_data"][tc_script_name] = {
+                "cov_bit_seq": "",
+                "branch_cov_bit_seq": "",
+            }
 
         isCCTs = False
         if is_pass:
-            if tc_script_name in self.passing_tcs_list:
-                assert tc_script_name in self.passing_tcs_list, f"Test case {tc_script_name} is not in passing test cases"
-            else:
-                assert tc_script_name in self.ccts_list, f"Test case {tc_script_name} is not in CCTs"                
+            if tc_script_name not in self.passing_tcs_name_set:
+                assert tc_script_name in self.ccts_name_set, f"Test case {tc_script_name} is not in CCTs"                
                 isCCTs = True
         
         cnt = 0
@@ -272,6 +276,7 @@ class WorkerStage03(Worker):
                 line_data = file["lines"][i]
 
                 lineno = line_data["line_number"]
+                branch_list = line_data["branches"]
                 key = self.make_key(filename, lineno)
 
                 # add key to the column data
@@ -284,9 +289,14 @@ class WorkerStage03(Worker):
                 else:
                     assert key == cov_data["col_data"][cnt], f"Key {key} does not match with the col data key {cov_data['col_data'][cnt]}"
 
+                # THIS PART ADDS BRANCH COVERAGE DATA TO THE ROW DATA
+                for branch in branch_list:
+                    branch_cov = "1" if branch["count"] > 0 else "0"
+                    cov_data["row_data"][tc_script_name]["branch_cov_bit_seq"] += branch_cov
 
+                # THIS PART ADDS LINE COVERAGE DATA TO THE ROW DATA
                 covered = "1" if line_data["count"] > 0 else "0"
-                cov_data["row_data"][tc_script_name] += covered
+                cov_data["row_data"][tc_script_name]["cov_bit_seq"] += covered
 
                 if covered == "1":
                     # increment lines executed by test case
@@ -348,13 +358,24 @@ class WorkerStage03(Worker):
             self.apply_patch(self.target_code_file_path, self.buggy_code_file, patch_file, True)
             return 1
         
-        # 4. Run test cases    
-        for tc_script_name in self.failing_tcs_list+self.passing_tcs_list+self.ccts_list:
+        # 4. Run test cases
+        total_tcs = self.failing_tcs_list + self.passing_tcs_list + self.ccts_list
+        sorted_tcs = sorted(total_tcs, key=sort_tc_idx)
+        for tc_idx, tc_script_name, tc_result in sorted_tcs:
             # 4-1. remove past coverage
             self.remove_all_gcda(self.core_repo_dir)
 
             # 4-2. Run test case
+            tc_start_time = time.time()
             res = self.run_test_case(tc_script_name)
+            tc_time_duration = time.time() - tc_start_time
+
+            # update tc_execution_time_duration in tc_info table
+            self.db.update(
+                "tc_info",
+                set_values={"tc_execution_time_duration": tc_time_duration},
+                conditions={"bug_idx": self.bug_idx, "tc_name": tc_script_name}
+            )
             
             # 4-3. Remove untarged files for coverage
             self.remove_untargeted_files_for_gcovr(self.core_repo_dir)
@@ -365,7 +386,7 @@ class WorkerStage03(Worker):
             )
 
             # 4-5. Check if the buggy line is coveraged
-            if tc_script_name in self.failing_tcs_list:
+            if tc_script_name in self.failing_tcs_name_set:
                 buggy_line_covered = self.check_buggy_line_covered(
                     tc_script_name, raw_cov_file, self.target_code_file, self.buggy_lineno
                 )
@@ -375,14 +396,14 @@ class WorkerStage03(Worker):
                     print(f">> Failed to check coverage for failing TC {tc_script_name}")
                 else:
                     print(f">> Buggy line {self.buggy_lineno} is covered by failing TC {tc_script_name}")
-            elif tc_script_name in self.passing_tcs_list:
+            elif tc_script_name in self.passing_tcs_name_set:
                 # check_buggy_line_covered return 0 if the buggy line is covered
                 # and 1 if the buggy line is not covered
                 buggy_line_covered = self.check_buggy_line_covered(
                     tc_script_name, raw_cov_file, self.target_code_file, self.buggy_lineno
                 )
                 if buggy_line_covered == 0:
-                    self.ccts_list.append(tc_script_name)
+                    self.ccts_list.append((tc_idx, tc_script_name, tc_result))
                     # os.remove(raw_cov_file) # 2024-09-17 Do not remove raw cov of ccts
         
         # 2024-08-12 SAVE INITIALIZATION CODE COVERAGE
@@ -456,7 +477,7 @@ class WorkerStage03(Worker):
 
     
     def update_ccts(self):
-        special = "AND tc_name in (%s)" % ",".join(["'%s'" % tc for tc in self.ccts_list])
+        special = "AND tc_name in (%s)" % ",".join(["'%s'" % tc_name for tc_idx, tc_name, tc_result in self.ccts_list])
         self.db.update(
             "tc_info",
             set_values={"tc_result": "cct"},

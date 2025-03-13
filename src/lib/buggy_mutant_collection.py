@@ -161,6 +161,7 @@ class BuggyMutantCollection(Subject):
             columns = [
                 "bug_idx INT NOT NULL", # -- Foreign key to bug_info(bug_idx)
                 "tc_name TEXT",
+                "tc_idx INT",
                 "tc_result TEXT",
                 "tc_ret_code INT",
                 "FOREIGN KEY (bug_idx) REFERENCES bug_info(bug_idx) ON DELETE CASCADE ON UPDATE CASCADE" # -- Automatically delete tc_info rows when bug_info is deleted, Update changes in bug_info to tc_info

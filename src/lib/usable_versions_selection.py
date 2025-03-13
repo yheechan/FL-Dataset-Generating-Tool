@@ -285,6 +285,7 @@ class UsableVersionSelection(Subject):
             self.db.delete("tc_info", conditions={"bug_idx": bug_idx})
 
             failing_tcs_txt = buggy_version / "testsuite_info/failing_tcs.txt"
+            idx = 0
             with open(failing_tcs_txt, "r") as f:
                 lines = f.readlines()
                 for line in lines:
@@ -293,9 +294,10 @@ class UsableVersionSelection(Subject):
                     tc_ret_code = 1
                     self.db.insert(
                         "tc_info",
-                        "bug_idx, tc_name, tc_result, tc_ret_code",
-                        f"{bug_idx}, '{tc_name}', '{tc_result}', {tc_ret_code}"
+                        "bug_idx, tc_idx, tc_name, tc_result, tc_ret_code",
+                        f"{bug_idx}, '{idx}', '{tc_name}', '{tc_result}', {tc_ret_code}"
                     )
+                    idx += 1
             passing_tcs_txt = buggy_version / "testsuite_info/passing_tcs.txt"
             with open(passing_tcs_txt, "r") as f:
                 lines = f.readlines()
@@ -305,8 +307,9 @@ class UsableVersionSelection(Subject):
                     tc_ret_code = 0
                     self.db.insert(
                         "tc_info",
-                        "bug_idx, tc_name, tc_result, tc_ret_code",
-                        f"{bug_idx}, '{tc_name}', '{tc_result}', {tc_ret_code}"
+                        "bug_idx, tc_idx, tc_name, tc_result, tc_ret_code",
+                        f"{bug_idx}, {idx}, '{tc_name}', '{tc_result}', {tc_ret_code}"
                     )
+                    idx += 1
 
             self.num_to_check -= 1

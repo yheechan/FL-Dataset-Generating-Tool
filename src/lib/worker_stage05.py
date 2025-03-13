@@ -164,7 +164,7 @@ class WorkerStage05(Worker):
         # Select buggy line for mutation test
         # Randomly select lines for mutation test
         failing_tcs_executed_lines = []
-        for failing_tc in self.failing_tcs_list:
+        for tc_idx, failing_tc, tc_result in self.failing_tcs_list:
             res = self.db.read(
                 "tc_info",
                 columns="cov_bit_seq",
@@ -455,6 +455,9 @@ class WorkerStage05(Worker):
         for type, tcs in self.utilized_testcases.items():
             print(f">> # of {type} test cases: {len(tcs)}")
         
+        self.tcs_list = self.failing_tcs_list + self.passing_tcs_list + self.ccts_list
+        self.tcs_list = sorted(self.tcs_list, key=sort_tc_idx)
+        
         # 2. Apply version patch
         patch_file = self.make_patch_file(self.target_code_file_path, self.buggy_code_file, "version.patch")
         self.apply_patch(self.target_code_file_path, self.buggy_code_file, patch_file, False)
@@ -630,7 +633,15 @@ class WorkerStage05(Worker):
     
     def start_test_on_mutant(self, target_file_path, mutant_file_path, mutant_idx, result_dict):
         print(f">> Testing mutant {mutant_idx}:{mutant_file_path.name} on {self.version_dir.name}")
-        tc_outcome = {"p2f": -1, "p2p": -1, "f2p": -1, "f2f": -1, "p2f_cct": -1, "p2p_cct": -1}
+        tc_outcome = {
+            "f2p_tc_bit_seq": "",
+            "p2f_tc_bit_seq": "",
+            "f2f_tc_bit_seq": "",
+            "p2p_tc_bit_seq": "",
+            "p2f_cct_tc_bit_seq": "",
+            "p2p_cct_tc_bit_seq": "",
+            "p2f": -1, "p2p": -1, "f2p": -1, "f2f": -1, "p2f_cct": -1, "p2p_cct": -1
+        }
         tc_outcome_detailed = {"p2f": [], "p2p": [], "f2p": [], "f2f": [], "p2f_cct": [], "p2p_cct": []}
 
         # 1. Make patch file
@@ -651,11 +662,22 @@ class WorkerStage05(Worker):
             print(f"Failed to build on {mutant_idx}:{mutant_file_path.name} of {self.version_dir.name}")
             self.apply_patch(target_file_path, mutant_file_path, patch_file, True)
             for tc_outcome_key in tc_outcome:
-                result_dict[tc_outcome_key] = -1
+                if "tc_bit_seq" in tc_outcome_key:
+                    result_dict[tc_outcome_key] = ""
+                else:
+                    result_dict[tc_outcome_key] = -1
             return
         
         result_dict["build_result"] = True
-        tc_outcome = {"p2f": 0, "p2p": 0, "f2p": 0, "f2f": 0, "p2f_cct": 0, "p2p_cct": 0}
+        tc_outcome = {
+            "f2p_tc_bit_seq": "",
+            "p2f_tc_bit_seq": "",
+            "f2f_tc_bit_seq": "",
+            "p2p_tc_bit_seq": "",
+            "p2f_cct_tc_bit_seq": "",
+            "p2p_cct_tc_bit_seq": "",
+            "p2f": 0, "p2p": 0, "f2p": 0, "f2f": 0, "p2f_cct": 0, "p2p_cct": 0
+        }
         tc_execution_time_duration = 0.0
         ccts_execution_time_duration = 0.0
 
@@ -664,47 +686,46 @@ class WorkerStage05(Worker):
         mutant2tcs_results_fp = open(mutant2tcs_results_file, "w")
         mutant2tcs_results_fp.write("tc_name,outcome,return_code,return_code_str,time_taken\n")
         # 4. Run test cases
-        for type, tcs in self.utilized_testcases.items():
-            for tc_script_name in tcs:
-                outcome = ""
-                tc_start_time = time.time()
-                res = self.run_test_case(tc_script_name)
-                if res == 0:
-                    if type == "fail":
-                        outcome = "f2p"
-                        self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_script_name)
-                    elif type == "pass":
-                        outcome = "p2p"
-                        self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_script_name)
-                    elif type == "cct":
-                        outcome = "p2p_cct"
-                        self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_script_name)
-                else:
-                    if type == "fail":
-                        outcome = "f2f"
-                        self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_script_name)
-                    elif type == "pass":
-                        outcome = "p2f"
-                        self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_script_name)
-                    elif type == "cct":
-                        outcome = "p2f_cct"
-                        self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_script_name)
-                
-                tc_time_duration = time.time() - tc_start_time
-                if type == "fail" or type == "pass":
-                    tc_execution_time_duration += tc_time_duration
-                else:
-                    ccts_execution_time_duration += tc_time_duration
-                
-                error_str = "code-not-found-in-listed-crash-codes"
-                if res in crash_codes_dict:
-                    error_str = crash_codes_dict[res]
-                if res == 1:
-                    error_str = "fail"
-                if res == 0:
-                    error_str = "pass"
-                content = f"{tc_script_name},{outcome},{res},{error_str},{tc_time_duration}\n"
-                mutant2tcs_results_fp.write(content)
+        for tc_idx, tc_script_name, tc_result in self.tcs_list:
+            outcome = ""
+            tc_start_time = time.time()
+            res = self.run_test_case(tc_script_name)
+            tc_time_duration = time.time() - tc_start_time
+            if res == 0:
+                if tc_result == "fail":
+                    outcome = "f2p"
+                    self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_script_name)
+                elif tc_result == "pass":
+                    outcome = "p2p"
+                    self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_script_name)
+                elif tc_result == "cct":
+                    outcome = "p2p_cct"
+                    self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_script_name)
+            else:
+                if tc_result == "fail":
+                    outcome = "f2f"
+                    self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_script_name)
+                elif tc_result == "pass":
+                    outcome = "p2f"
+                    self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_script_name)
+                elif tc_result == "cct":
+                    outcome = "p2f_cct"
+                    self.update_tc_outcome(outcome, tc_outcome, tc_outcome_detailed, tc_script_name)
+            
+            if tc_result == "fail" or tc_result == "pass":
+                tc_execution_time_duration += tc_time_duration
+            else:
+                ccts_execution_time_duration += tc_time_duration
+            
+            error_str = "code-not-found-in-listed-crash-codes"
+            if res in crash_codes_dict:
+                error_str = crash_codes_dict[res]
+            if res == 1:
+                error_str = "fail"
+            if res == 0:
+                error_str = "pass"
+            content = f"{tc_script_name},{outcome},{res},{error_str},{tc_time_duration}\n"
+            mutant2tcs_results_fp.write(content)
         mutant2tcs_results_fp.close()
 
         result_dict["tc_execution_time_duration"] = tc_execution_time_duration
@@ -721,6 +742,30 @@ class WorkerStage05(Worker):
     def update_tc_outcome(self, outcome, tc_outcome, tc_outcome_detailed, tc_name):
         tc_outcome[outcome] += 1
         tc_outcome_detailed[outcome].append(tc_name)
+
+        f2p_tc_bit_seq, p2f_tc_bit_seq, \
+        f2f_tc_bit_seq, p2p_tc_bit_seq, \
+        p2f_cct_tc_bit_seq, p2p_cct_tc_bit_seq = "0", "0", "0", "0", "0", "0"
+
+        if outcome == "f2p":
+            f2p_tc_bit_seq = "1"
+        elif outcome == "p2f":
+            p2f_tc_bit_seq = "1"
+        elif outcome == "f2f":
+            f2f_tc_bit_seq = "1"
+        elif outcome == "p2p":
+            p2p_tc_bit_seq = "1"
+        elif outcome == "p2f_cct":
+            p2f_cct_tc_bit_seq = "1"
+        elif outcome == "p2p_cct":
+            p2p_cct_tc_bit_seq = "1"
+
+        tc_outcome["f2p_tc_bit_seq"] += f2p_tc_bit_seq
+        tc_outcome["p2f_tc_bit_seq"] += p2f_tc_bit_seq
+        tc_outcome["f2f_tc_bit_seq"] += f2f_tc_bit_seq
+        tc_outcome["p2p_tc_bit_seq"] += p2p_tc_bit_seq
+        tc_outcome["p2f_cct_tc_bit_seq"] += p2f_cct_tc_bit_seq
+        tc_outcome["p2p_cct_tc_bit_seq"] += p2p_cct_tc_bit_seq
     
     def write_result(self, fp, target_file_path, mutant_id, lineno, num_failing_tcs, mutant_name, build_result, tc_outcome, tc_outcome_detailed):
         build_str = "PASS" if build_result else "FAIL"

@@ -86,6 +86,10 @@ class PrerequisitePreparation(Subject):
         # Make coverage csv file
         if not self.db.column_exists("tc_info", "cov_bit_seq"):
             self.db.add_column("tc_info", "cov_bit_seq TEXT DEFAULT NULL")
+        if not self.db.column_exists("tc_info", "branch_cov_bit_seq"):
+            self.db.add_column("tc_info", "branch_cov_bit_seq TEXT DEFAULT NULL")
+        if not self.db.column_exists("tc_info", "tc_execution_time_duration"):
+            self.db.add_column("tc_info", "tc_execution_time_duration FLOAT NULL")
         
         # Add buggy_line_key in bug info table
         if not self.db.column_exists("bug_info", "buggy_file"):

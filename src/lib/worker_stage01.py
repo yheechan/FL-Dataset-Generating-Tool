@@ -124,10 +124,13 @@ class WorkerStage01(Worker):
         # Delete existing data for the version
         self.db.delete("tc_info", conditions={"bug_idx": self.bug_idx})
 
+        tc_info_dict = {
+            "fail": self.failing_tcs,
+            "pass": self.passing_tcs,
+            "crash": self.crashed_tcs
+        }
         # Write test case info
-        self.write_tc_info(self.bug_idx, self.failing_tcs, "fail")
-        self.write_tc_info(self.bug_idx, self.passing_tcs, "pass")
-        self.write_tc_info(self.bug_idx, self.crashed_tcs, "crash")
+        self.write_tc_info(self.bug_idx, tc_info_dict)
 
         print(f">> Saved buggy mutant {self.assigned_mutant_code_file.name}")
         print(f"\t - Failing test cases: {len(self.failing_tcs)}")
@@ -135,13 +138,16 @@ class WorkerStage01(Worker):
         print(f"\t - Crashing test cases: {len(self.crashed_tcs)}")
 
 
-    def write_tc_info(self, bug_idx, tc_list, result):
-        for tc in tc_list:
-            self.db.insert(
-                "tc_info",
-                "bug_idx, tc_name, tc_result, tc_ret_code",
-                f"'{bug_idx}', '{tc[0]}', '{result}', {tc[1]}"
-            )
+    def write_tc_info(self, bug_idx, tc_info_dict):
+        idx = 0
+        for result, tc_list in tc_info_dict.items():
+            for tc in tc_list:
+                self.db.insert(
+                    "tc_info",
+                    "bug_idx, tc_idx, tc_name, tc_result, tc_ret_code",
+                    f"'{bug_idx}', '{idx}', '{tc[0]}', '{result}', {tc[1]}"
+                )
+                idx += 1
 
     def run_test_suite(self):
         passing_tcs = []

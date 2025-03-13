@@ -208,8 +208,9 @@ class Worker:
     def set_testcases(self, bug_idx):
         res = self.db.read(
             "tc_info",
-            columns="tc_name, tc_result",
-            conditions={"bug_idx": bug_idx}
+            columns="tc_name, tc_result, tc_idx",
+            conditions={"bug_idx": bug_idx},
+            special="ORDER BY tc_idx ASC"
         )
 
         self.failing_tcs_list = []
@@ -218,21 +219,36 @@ class Worker:
         self.excluded_failing_tcs_list = []
         self.excluded_passing_tcs_list = []
         self.ccts_list = []
+        
+        self.failing_tcs_name_set = set()
+        self.passing_tcs_name_set = set()
+        self.crashed_tcs_name_set = set()
+        self.excluded_failing_tcs_name_set = set()
+        self.excluded_passing_tcs_name_set = set()
+        self.ccts_name_set = set()
+
         for row in res:
             tc_name = row[0]
             tc_result = row[1]
+            tc_idx = row[2]
             if tc_result == "fail":
-                self.failing_tcs_list.append(tc_name)
+                self.failing_tcs_list.append((tc_idx, tc_name, tc_result))
+                self.failing_tcs_name_set.add(tc_name)
             elif tc_result == "pass":
-                self.passing_tcs_list.append(tc_name)
+                self.passing_tcs_list.append((tc_idx, tc_name, tc_result))
+                self.passing_tcs_name_set.add(tc_name)
             elif tc_result == "crash":
-                self.crashed_tcs_list.append(tc_name)
+                self.crashed_tcs_list.append((tc_idx, tc_name, tc_result))
+                self.crashed_tcs_name_set.add(tc_name)
             elif tc_result == "excluded_fail":
-                self.excluded_failing_tcs_list.append(tc_name)
+                self.excluded_failing_tcs_list.append((tc_idx, tc_name, tc_result))
+                self.excluded_failing_tcs_name_set.add(tc_name)
             elif tc_result == "excluded_pass":
-                self.excluded_passing_tcs_list.append(tc_name)
+                self.excluded_passing_tcs_list.append((tc_idx, tc_name, tc_result))
+                self.excluded_passing_tcs_name_set.add(tc_name)
             elif tc_result == "cct":
-                self.ccts_list.append(tc_name)
+                self.ccts_list.append((tc_idx, tc_name, tc_result))
+                self.ccts_name_set.add(tc_name)
     
     def set_line_idx_map(self, bug_idx):
         res = self.db.read(

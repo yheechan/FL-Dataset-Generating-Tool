@@ -86,6 +86,10 @@ def sort_testcase_script_name(tc_script):
     tc_filename = tc_script.split('.')[0]
     return int(tc_filename[2:])
 
+def sort_tc_idx(tc_info):
+    tc_idx, tc_name, tc_result = tc_info
+    return tc_idx
+
 def sort_bug_id(bug_id):
     return int(bug_id[3:])
 

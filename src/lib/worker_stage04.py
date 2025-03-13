@@ -44,7 +44,7 @@ class WorkerStage04(Worker):
             "line_info",
             columns="line_idx, file, function, lineno",
             conditions={"bug_idx": self.bug_idx},
-            special="ORDER BY line_idx"
+            special="ORDER BY line_idx ASC"
         )
         line_data = []
         for num, row in enumerate(res):

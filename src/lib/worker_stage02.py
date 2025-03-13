@@ -71,7 +71,7 @@ class WorkerStage02(Worker):
             return
         
         # 4. run the test suite
-        for tc_script_name in self.failing_tcs_list:
+        for tc_idx, tc_script_name, tc_result in self.failing_tcs_list:
             # 4-1. remove past coverage
             self.remove_all_gcda(self.core_repo_dir)
 
