@@ -1,5 +1,4 @@
 import csv
-from tqdm import tqdm
 
 from lib.utils import *
 from analysis.rank_utils import *
@@ -362,7 +361,7 @@ class Validate:
                     f"No matching tc_info rows found for bug_idx {bug_idx}."
                 )
 
-        print(f"[stage03-VAL04] {len(bug_info_res)} buggy versions with prerequisites=TRUE have valid failing and passing test case counts")
+        print(f"[stage03-VAL05] {len(bug_info_res)} buggy versions with prerequisites=TRUE have valid failing and passing test case counts")
 
     def val06(self):
         """
@@ -408,7 +407,7 @@ class Validate:
         spechal_str = f"""
             WHERE b.subject = '{self.subject_name}'
             AND b.experiment_name = '{self.experiment_name}'
-            AND b.mbfl IS TRUE
+            AND b.prerequisites IS TRUE
         """
 
         bug_info_list = self.db.read(
@@ -418,7 +417,7 @@ class Validate:
         )
 
         print(f">> Total {len(bug_info_list)} bug_idx found for validation")
-        for bug_info in tqdm(bug_info_list, desc="Validating mbfl features"):
+        for bug_info in bug_info_list:
             bug_idx, fail_cnt, pass_cnt, cct_cnt = bug_info
             total_tc_cnt = fail_cnt + pass_cnt + cct_cnt
 
@@ -443,9 +442,12 @@ class Validate:
                     continue
 
                 # Validate the lengths of features
+                # if len(branch_cov_bit_seq) != branch_cov_length:
+                #     print(f"{len(branch_cov_bit_seq)} != {branch_cov_length}")
+                #     print(f"bug_idx: {bug_idx}, tc_idx: {tc_idx}, tc_result: {tc_result}")
                 assert len(branch_cov_bit_seq) == branch_cov_length, f"Length of branch_cov_bit_seq is not equal to branch_cov_length for bug_idx {bug_idx}"
 
-        print(f"[stage06-VAL12] {len(bug_info_list)} buggy versions have valid branch_cov_bit_seq length for all tc in tc_info")
+        print(f"[stage06-VAL07] {len(bug_info_list)} buggy versions have valid branch_cov_bit_seq length for all tc in tc_info")
 
     def val08(self):
         """
@@ -540,7 +542,7 @@ class Validate:
                     f"cct_ep + cct_np ({line_data['cct_ep']} + {line_data['cct_np']}) != num_ccts ({bug_info_map[bug_idx]['num_ccts']})"
                 )
 
-        print(f"[stage04-VAL07] {len(bug_info_res)} buggy versions with sbfl=TRUE have valid sbfl feature data in line_info")
+        print(f"[stage04-VAL08] {len(bug_info_res)} buggy versions with sbfl=TRUE have valid sbfl feature data in line_info")
 
     def val09(self):
         """
@@ -573,7 +575,7 @@ class Validate:
             # assert for_sbfl_ranked_mbfl_asc is True, f"for_sbfl_ranked_mbfl_asc is not TRUE for bug_idx {bug_idx}"
             assert selected_for_mbfl is True, f"selected_for_mbfl is not TRUE for bug_idx {bug_idx}"
 
-        print(f"[stage05-VAL08] {len(line_info_res)} buggy lines with mbfl=TRUE is targetd for all types (sbfl asc, desc, and random mbfl) of mbfl extraction method")
+        print(f"[stage05-VAL09] {len(line_info_res)} buggy lines with mbfl=TRUE is targetd for all types (sbfl asc, desc, and random mbfl) of mbfl extraction method")
 
     def val10(self):
         """
@@ -601,7 +603,7 @@ class Validate:
         for row in res:
             assert row[1] > 0, f"Number of mutations is not greater than 0 for bug_idx {row[0]}"
 
-        print(f"[stage05-VAL09] {len(res)} buggy lines with mbfl=TRUE have greater than 0 mutations generated")
+        print(f"[stage05-VAL10] {len(res)} buggy lines with mbfl=TRUE have greater than 0 mutations generated")
 
     def val11(self):
         """
@@ -696,7 +698,7 @@ class Validate:
                     f"p2f_cct + p2p_cct ({mutation_data['p2f_cct']} + {mutation_data['p2p_cct']}) != num_ccts ({bug_info_map[bug_idx]['num_ccts']})"
                 )
 
-        print(f"[stage05-VAL10] {len(bug_info_res)} buggy versions with mbfl=TRUE have valid mbfl feature data in mutation_info")
+        print(f"[stage05-VAL11] {len(bug_info_res)} buggy versions with mbfl=TRUE have valid mbfl feature data in mutation_info")
 
     def val12(self):
         """
@@ -723,7 +725,7 @@ class Validate:
         )
 
         print(f">> Total {len(bug_info_list)} bug_idx found for validation")
-        for bug_info in tqdm(bug_info_list, desc="Validating mbfl features"):
+        for bug_info in bug_info_list:
             bug_idx, fail_cnt, pass_cnt, cct_cnt = bug_info
             total_tc_cnt = fail_cnt + pass_cnt + cct_cnt
 
@@ -769,7 +771,7 @@ class Validate:
                 all_cnt = f2p_cnt + p2f_cnt + f2f_cnt + p2p_cnt + p2f_cct_cnt + p2p_cct_cnt
                 assert all_cnt == total_tc_cnt, f"Sum of all '1' in the features is not equal to total_tc_cnt for bug_idx {bug_idx}"
         
-        print(f"[stage06-VAL11] {len(bug_info_list)} buggy versions with mbfl=TRUE have valid mbfl feature data in mutation_info")
+        print(f"[stage06-VAL12] {len(bug_info_list)} buggy versions with mbfl=TRUE have valid mbfl feature data in mutation_info")
 
 
 

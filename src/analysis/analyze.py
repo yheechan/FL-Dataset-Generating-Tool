@@ -7,6 +7,9 @@ import math
 import pandas as pd
 import matplotlib.pyplot as plt
 import shutil
+from sklearn.metrics.pairwise import cosine_similarity
+import multiprocessing
+import torch
 
 from lib.utils import *
 from analysis.individual import Individual
@@ -1734,3 +1737,101 @@ class Analyze:
         
         return acc5, acc10
 
+
+    def analyze10(self):
+        """
+        [stage05] Analyze10: Add cosine similarity of passing TCs to failing TCs based on branch_cov_bit_seq
+        """
+
+        if not self.db.column_exists("tc_info", "similarity"):
+            self.db.add_column("tc_info", "similarity REAL DEFAULT NULL")
+
+        subjects = [
+            # "zlib_ng_exp1",
+            # "libxml2_exp1",
+            # "opencv_features2d_exp1",
+            # "opencv_imgproc_exp1",
+            # "opencv_core_exp1",
+            "jsoncpp_exp1",
+        ]
+
+        experiment_name = "e1"
+
+        for subject in subjects:
+            print(f">> Analyzing {subject}")
+            # 1. First get buggy line information from db
+            bug_info_list = self.db.read(
+                "bug_info",
+                columns="bug_idx, version, num_failing_tcs, num_passing_tcs, num_ccts",
+                conditions={
+                    "subject": subject,
+                    "experiment_name": experiment_name,
+                    "mbfl": True
+                }
+            )
+
+            print(f"\t>> Analyzing {len(bug_info_list)} bugs")
+
+            for bug_data in tqdm(bug_info_list, desc=f"Analyzing {subject} bugs"):
+                bug_idx = bug_data[0]
+                version = bug_data[1]
+                num_failing_tcs = bug_data[2]
+                num_passing_tcs = bug_data[3]
+                num_ccts = bug_data[4]
+                total_num_tcs = num_failing_tcs + num_passing_tcs + num_ccts
+
+                failing_tc_list = self.db.read(
+                    "tc_info",
+                    columns="tc_idx, tc_name, tc_result, branch_cov_bit_seq",
+                    conditions={
+                        "bug_idx": bug_idx,
+                        "tc_result": "fail"
+                    }
+                )
+
+                fail_bit_seq_list = [[int(bit) for bit in tc_info[3]] for tc_info in failing_tc_list]
+
+                passing_tc_list = self.db.read(
+                    "tc_info",
+                    columns="tc_idx, tc_name, tc_result, branch_cov_bit_seq",
+                    conditions={
+                        "bug_idx": bug_idx,
+                        "tc_result": "pass"
+                    }
+                )
+
+                cct_list = self.db.read(
+                    "tc_info",
+                    columns="tc_idx, tc_name, tc_result, branch_cov_bit_seq",
+                    conditions={
+                        "bug_idx": bug_idx,
+                        "tc_result": "cct"
+                    }
+                )
+
+                target_tc_list = passing_tc_list + cct_list
+
+                cosine_results = {}
+                failing_np = np.array(fail_bit_seq_list)
+                for tc_info in target_tc_list:
+                    tc_idx, tc_name, tc_result, branch_cov_bit_seq = tc_info
+                    bit_seq = [int(bit) for bit in branch_cov_bit_seq]
+                    bit_seq = np.array(bit_seq).reshape(1, -1)
+                    
+                    similarities_sklearn = cosine_similarity(bit_seq, failing_np)
+                    avg_similarity = np.mean(similarities_sklearn)
+                    avg_similarity = float(avg_similarity)
+                    cosine_results[tc_name] = avg_similarity
+
+                    # update the db
+                    self.db.update(
+                        "tc_info",
+                        set_values={"similarity": avg_similarity},
+                        conditions={
+                            "bug_idx": bug_idx,
+                            "tc_idx": tc_idx,
+                            "tc_name": tc_name
+                        }
+                    )
+
+        print(">> Done!")

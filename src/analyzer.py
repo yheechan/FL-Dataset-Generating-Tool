@@ -16,8 +16,11 @@ help_for_analysis_criteria = \
     3: [stage05] Analyze probability that buggy line is within top-k percent based on sbfl suspiciousness scores
     4: [stage05] SBFL rank of buggy lines for all buggy versions resulting from MBFL feature extraction
     5: [stage05] Download SBFL features for all buggy versions
-    6: [stage05] Generate figures for mbfl score and MBFL feature extraction time for subjects and analysis types below
+    6: DEPRECATED to ipynb [stage05] Generate figures for mbfl score and MBFL feature extraction time for subjects and analysis types below
     7: [stage05] Write the statistical numbers of mutations
+    8: [stage05] Conduct significance wilcoxon test on two types of a ML result data for a subeject
+    9: [stage05] Analyze09: Conduct experiments with various hyper-parameters of model
+    10: [stage05] Analyze10: Add cosine similarity of passing TCs to failing TCs based on branch_cov_bit_seq
 """
 
 # This script is to test mutants (of subject)
