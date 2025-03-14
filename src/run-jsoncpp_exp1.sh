@@ -67,7 +67,7 @@
 # 598 valid prerequisites
 
 
-# python3 validator.py --subject jsoncpp_exp1 --experiment-name e1 --validation-criteria 1,2,3,4,5,6
+# python3 validator.py --subject jsoncpp_exp1 --experiment-name e1 --validation-criteria 1,2,3,4,5,6,7
 
 
 
@@ -93,7 +93,7 @@
 
 # 598 valid SBFL features
 
-# python3 validator.py --subject jsoncpp_exp1 --experiment-name e1 --validation-criteria 7
+# python3 validator.py --subject jsoncpp_exp1 --experiment-name e1 --validation-criteria 8
 # python3 analyzer.py --subject jsoncpp_exp1 --experiment-name e1 --analysis-criteria 1
 
 # ===============================
@@ -119,7 +119,7 @@
 
 # extracted 232 valid MBFL features
 
-# python3 validator.py --subject jsoncpp_exp1 --experiment-name e1 --validation-criteria 8,9,10
+# python3 validator.py --subject jsoncpp_exp1 --experiment-name e1 --validation-criteria 9,10,11,12
 # python3 analyzer.py --subject jsoncpp_exp1 --experiment-name e1 --analysis-criteria 1
 
 
