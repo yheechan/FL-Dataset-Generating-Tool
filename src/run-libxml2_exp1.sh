@@ -101,9 +101,9 @@
 
 # 5. Extract MBFL features
 
-date > ../timer/libxml2_exp1/stage05_start-remote.txt
-time python3 extract_mbfl_features.py --subject libxml2_exp1 --experiment-name e1 --target-set-name prerequisite_data --trial trial1 --parallel-cnt 5 --dont-terminate-leftovers --remain-one-bug-per-line --version-limit 8 > ../timer/libxml2_exp1/stage05.log
-date > ../timer/libxml2_exp1/stage05_end-remote.txt
+# date > ../timer/libxml2_exp1/stage05_start-remote.txt
+# time python3 extract_mbfl_features.py --subject libxml2_exp1 --experiment-name e1 --target-set-name prerequisite_data --trial trial1 --parallel-cnt 5 --dont-terminate-leftovers --remain-one-bug-per-line --version-limit 8 > ../timer/libxml2_exp1/stage05.log
+# date > ../timer/libxml2_exp1/stage05_end-remote.txt
 
 # Number of tasks (assigned_works): 232
 # Number of tasks (works): 236

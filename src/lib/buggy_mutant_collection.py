@@ -406,7 +406,7 @@ class BuggyMutantCollection(Subject):
             '-o', str(mutant_dir),
             # '-ll', '1',
             # '-l', '2',
-            '-ll', '1', # limit on line
+            '-ll', '1', # limit on line 20 for zlib_ng
             '-l', '20', # limit on mutant operator
             '-d', unused_ops,
             '-p', str(self.compile_command_file)

@@ -29,3 +29,4 @@
 # record the number of mutation utilized as a whole
 # python3 analyzer.py --subject all --experiment-name all --analysis-criteria 7
 
+# python3 analyzer.py --subject all --experiment-name all --analysis-criteria 10
