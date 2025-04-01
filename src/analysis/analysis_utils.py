@@ -9,7 +9,8 @@ def get_target_buggy_version_list(subject_name, experiment_name, stage, db):
     """
     columns = [
         "bug_idx", "version", "buggy_file", "buggy_function", "buggy_lineno", "buggy_line_idx",
-        "num_failing_tcs", "num_passing_tcs", "num_ccts", "num_total_lines", "num_lines_executed_by_failing_tcs"
+        "num_failing_tcs", "num_passing_tcs", "num_ccts", "num_total_lines", "num_lines_executed_by_failing_tcs",
+        "num_total_tcs"
     ]
     col_str = ", ".join(columns)
     return db.read(
@@ -25,7 +26,7 @@ def get_target_buggy_version_list(subject_name, experiment_name, stage, db):
 # ========================================
 # ========= MBFL related functions =======
 # ========================================
-def get_mutations_on_target_lines(bug_idx, line_idx2line_info, db):
+def get_mutations_on_target_lines(bug_idx, line_idx2line_info, db, utilizing_tcs_list):
     """
     Get mutations on target lines
     """
@@ -35,7 +36,9 @@ def get_mutations_on_target_lines(bug_idx, line_idx2line_info, db):
     columns = [
         "line_idx", "mutant_idx", "build_result",
         "targetting_file", "mutant_filename", "mut_op",
-        "f2p", "p2f", "f2f", "p2p", "p2f_cct", "p2p_cct",
+        "f2p_tc_bit_seq", "p2f_tc_bit_seq",
+        "f2f_tc_bit_seq", "p2p_tc_bit_seq",
+        "p2f_cct_tc_bit_seq", "p2p_cct_tc_bit_seq",
         "build_time_duration", "tc_execution_time_duration", "ccts_execution_time_duration"
     ]
     col_str = ", ".join(columns)
@@ -57,6 +60,14 @@ def get_mutations_on_target_lines(bug_idx, line_idx2line_info, db):
         line_idx = row[0]
         if line_idx not in lines_idx2mutant_idx:
             lines_idx2mutant_idx[line_idx] = []
+        
+        f2p, p2f, f2f, p2p, tc_execution_time_duration = measure_mut_stats(
+            f2p_tc_bit_seq=row[6], p2f_tc_bit_seq=row[7],
+            f2f_tc_bit_seq=row[8], p2p_tc_bit_seq=row[9],
+            p2f_cct_tc_bit_seq=row[10], p2p_cct_tc_bit_seq=row[11],
+            utilizing_tcs_list=utilizing_tcs_list, build_result=row[2]
+        )
+        
         lines_idx2mutant_idx[line_idx].append(
             {
                 "mutant_idx": row[1],
@@ -64,21 +75,56 @@ def get_mutations_on_target_lines(bug_idx, line_idx2line_info, db):
                 "targetting_file": row[3],
                 "mutant_filename": row[4],
                 "mut_op": row[5],
-                "f2p": row[6],
-                "p2f": row[7],
-                "f2f": row[8],
-                "p2p": row[9],
-                "p2f_cct": row[10],
-                "p2p_cct": row[11],
+                "f2p": f2p,
+                "p2f": p2f,
+                "f2f": f2f,
+                "p2p": p2p,
                 "build_time_duration": row[12],
-                "tc_execution_time_duration": row[13],
-                "ccts_execution_time_duration": row[14]
+                "tc_execution_time_duration": tc_execution_time_duration,
             }
         )
     
     return lines_idx2mutant_idx
 
-def measure_mbfl_scores(line_idx2line_info, lines_idx2mutant_idx, total_num_of_failing_tcs, mtc, analysis_config):
+def measure_mut_stats(
+        f2p_tc_bit_seq, p2f_tc_bit_seq,
+        f2f_tc_bit_seq, p2p_tc_bit_seq,
+        p2f_cct_tc_bit_seq, p2p_cct_tc_bit_seq,
+        utilizing_tcs_list, build_result
+    ):
+    """
+    Measure mutation statistics
+    """
+    f2p, p2f, f2f, p2p = 0, 0, 0, 0
+    tc_execution_time_duration = 0.0
+    if build_result == False:
+        return f2p, p2f, f2f, p2p, tc_execution_time_duration
+
+    for tc_info in utilizing_tcs_list:
+        tc_execution_time_duration += tc_info[4]
+        tc_idx = tc_info[0]
+        if f2p_tc_bit_seq[tc_idx] == "1":
+            f2p += 1
+            # print(f"\tf2p: {f2p}, {tc_info[1]}")
+        elif p2f_tc_bit_seq[tc_idx] == "1":
+            p2f += 1
+            # print(f"\tp2f: {p2f}, {tc_info[1]}")
+        elif f2f_tc_bit_seq[tc_idx] == "1":
+            f2f += 1
+            # print(f"\tf2f: {f2f}, {tc_info[1]}")
+        elif p2p_tc_bit_seq[tc_idx] == "1":
+            p2p += 1
+            # print(f"\tp2p: {p2p}, {tc_info[1]}")
+        elif p2f_cct_tc_bit_seq[tc_idx] == "1":
+            p2f += 1
+            # print(f"\tp2f_cct: {p2f}, {tc_info[1]}")
+        elif p2p_cct_tc_bit_seq[tc_idx] == "1":
+            p2p += 1
+            # print(f"\tp2p_cct: {p2p}, {tc_info[1]}")
+
+    return f2p, p2f, f2f, p2p, tc_execution_time_duration
+
+def measure_mbfl_scores(line_data, line_idx2line_info, lines_idx2mutant_idx, total_num_of_failing_tcs, mtc, analysis_config):
     """
     Measure MBFL scores for a given number of mutants
     """
@@ -86,40 +132,26 @@ def measure_mbfl_scores(line_idx2line_info, lines_idx2mutant_idx, total_num_of_f
     utilizing_line_idx2mutants, total_num_of_utilized_mutants = select_random_mtc_mutants_per_line(
         line_idx2line_info, lines_idx2mutant_idx, mtc, analysis_config
     )
-    # print(f"Total number of utilized mutants: {total_num_of_utilized_mutants}")
-    # print(f"utilizing_line_idx2mutants: {len(utilizing_line_idx2mutants)}")
-    # for line_idx, line_info in line_idx2line_info.items():  --> this is to check whether # of mutation per line method works properly
-    #     sbfl_score = line_info[analysis_config['sbfl_standard']]
-    #     if not line_idx in utilizing_line_idx2mutants:
-    #         print(f"{line_idx} - {sbfl_score} - NONE")
-    #         continue
-    #     mutant_len = len(utilizing_line_idx2mutants[line_idx])
-    #     print(f"{line_idx} - {sbfl_score} - {mutant_len}")
-    # exit()
-
 
     # Calculate total information
     total_p2f, total_f2p, \
         total_build_time, total_tc_execution_time \
-        = calculate_total_info(utilizing_line_idx2mutants, analysis_config["include_cct"])
+        = calculate_total_info(utilizing_line_idx2mutants)
 
 
     for line_idx, mutants in utilizing_line_idx2mutants.items():
-        # print(f"Analyzing line {line_idx}")
 
-        met_data = measure_metallaxis(mutants, total_num_of_failing_tcs, analysis_config["include_cct"])
-        muse_data = measure_muse(mutants, total_p2f, total_f2p, analysis_config["include_cct"])
-
-        # met_score, muse_score = met_data["met_score"], muse_data["muse_score"]
-        # print(f"\tMetallaxis score: {met_score}")
-        # print(f"\tMUSE score: {muse_score}")
+        met_data = measure_metallaxis(mutants, total_num_of_failing_tcs)
+        muse_data = measure_muse(mutants, total_p2f, total_f2p)
 
         for mbfl_form, sub_form_list in final_mbfl_formulas.items():
             for sub_form in sub_form_list:
                 if "met" in mbfl_form:
-                    line_idx2line_info[line_idx][sub_form] = met_data[sub_form]
+                    # line_idx2line_info[line_idx][sub_form] = met_data[sub_form]
+                    line_data[line_idx][sub_form] = met_data[sub_form]
                 elif "muse" in mbfl_form:
-                    line_idx2line_info[line_idx][sub_form] = muse_data[sub_form]
+                    # line_idx2line_info[line_idx][sub_form] = muse_data[sub_form]
+                    line_data[line_idx][sub_form] = muse_data[sub_form]
     
     mtc_version_data = {
         "total_num_of_utilized_mutants": total_num_of_utilized_mutants,
@@ -200,7 +232,7 @@ def select_random_mtc_mutants_per_line(line_idx2line_info, lines_idx2mutant_idx,
     return selected_mutants, total_num_of_utilized_mutants
 
 
-def calculate_total_info(utilizing_line_idx2mutants, include_cct=False):
+def calculate_total_info(utilizing_line_idx2mutants):
     """
     Calculate total information for selected mutants
         - total_p2f, total_f2p, total_build_time, total_tc_execution_time
@@ -217,13 +249,10 @@ def calculate_total_info(utilizing_line_idx2mutants, include_cct=False):
             total_f2p += mutant["f2p"]
             total_build_time += mutant["build_time_duration"]
             total_tc_execution_time += mutant["tc_execution_time_duration"]
-            if include_cct:
-                total_p2f += mutant["p2f_cct"]
-                total_tc_execution_time += mutant["ccts_execution_time_duration"]
 
     return total_p2f, total_f2p, total_build_time, total_tc_execution_time
 
-def measure_metallaxis(mutants, total_num_of_failing_tcs, include_cct=False):
+def measure_metallaxis(mutants, total_num_of_failing_tcs):
     """
     Measure Metallaxis score
     """
@@ -235,8 +264,6 @@ def measure_metallaxis(mutants, total_num_of_failing_tcs, include_cct=False):
         f2p = mutant["f2p"]
         f2p_list.append(f2p)
         p2f = mutant["p2f"]
-        if include_cct:
-            p2f += mutant["p2f_cct"]
         
         met_2_score = 0.0
         met_3_score = 0.0
@@ -270,7 +297,7 @@ def measure_metallaxis(mutants, total_num_of_failing_tcs, include_cct=False):
     return met_data
 
 
-def measure_muse(mutants, total_p2f, total_f2p, include_cct=False):
+def measure_muse(mutants, total_p2f, total_f2p):
     """
     Measure MUSE score
     """
@@ -283,8 +310,6 @@ def measure_muse(mutants, total_p2f, total_f2p, include_cct=False):
     for mutant in mutants:
         line_total_p2f += mutant["p2f"]
         line_total_f2p += mutant["f2p"]
-        if include_cct:
-            line_total_p2f += mutant["p2f_cct"]
     
     muse_1 = 1 / (utilized_mutant_cnt + 1)
 
@@ -339,11 +364,11 @@ def update_line_info_table_with_mbfl_scores(bug_idx, line_idx2line_info, lines_i
 # ========================================
 # ========= SBFL related functions =======
 # ========================================
-def update_line_info_table_with_sbfl_scores(bug_idx, line2sbfl, db):
+def update_line_info_table_with_sbfl_scores(bug_idx, line_data, db):
     """
     Update line_info table with SBFL scores
     """
-    for line_idx, sbfl_scores in line2sbfl.items():
+    for line_idx, sbfl_scores in line_data.items():
 
         db.update(
             "line_info",
@@ -355,21 +380,16 @@ def update_line_info_table_with_sbfl_scores(bug_idx, line2sbfl, db):
         )
 
     
-def measure_sbfl_scores(line2spectrum, num_failing_tcs, num_passing_tcs, num_ccts, include_cct):
+def set_sbfl_scores(line_data, num_failing_tcs, num_passing_tcs, num_ccts):
     """
     Measure SBFL scores with given spectrum
     """
-    line2sbfl = {}
-    for line_idx, spectrum in line2spectrum.items():
+    for line_idx, line_info in line_data.items():
         for sbfl_formula, sub_form_list in final_sbfl_formulas.items():
-            ep, np, ef, nf = spectrum["ep"], spectrum["np"], spectrum["ef"], spectrum["nf"]
+            ep, np, ef, nf = line_info["ep"], line_info["np"], line_info["ef"], line_info["nf"]
+
             total_fails = num_failing_tcs
-            total_passes = num_passing_tcs
-            if include_cct:
-                cct_ep, cct_np = spectrum["cct_ep"], spectrum["cct_np"]
-                ep += cct_ep
-                np += cct_np
-                total_passes += num_ccts
+            total_passes = num_passing_tcs + num_ccts
             
             for sub_form in sub_form_list:
                 sbfl_score = sbfl(
@@ -377,41 +397,39 @@ def measure_sbfl_scores(line2spectrum, num_failing_tcs, num_passing_tcs, num_cct
                     formula=sub_form,
                     fails=total_fails, passes=total_passes
                 )
-
-                if line_idx not in line2sbfl:
-                    line2sbfl[line_idx] = {}
                 sub_form_str = sub_form.lower()
                 sub_form_str = sub_form_str.replace("+", "_")
-                assert sub_form_str not in line2sbfl[line_idx], f"Error: {sub_form_str} already exists in line2sbfl[{line_idx}]"
-                line2sbfl[line_idx][sub_form_str] = sbfl_score
+                assert sub_form_str in line_info, f"Sub form {sub_form} not in line_info"
+                line_data[line_idx][sub_form_str] = sbfl_score
 
-    return line2sbfl
 
-def get_spectrum(bug_idx, db):
+def set_spectrum(bug_idx, line_data, db, utilizing_tcs_list):
     """
     Get spectrum for bug_idx
     """
-    columns = [
-        "line_idx", "ep", "np", "ef", "nf", "cct_ep", "cct_np"
-    ]
-    col_str = ", ".join(columns)
-    ret = db.read(
+    # tc_idx, tc_result, cov_bit_seq, similarity
+    res = db.read(
         "line_info",
-        columns=col_str,
-        conditions={"bug_idx": bug_idx}
+        columns="line_idx, file, function, lineno",
+        conditions={"bug_idx": bug_idx},
+        special="ORDER BY line_idx ASC"
     )
 
-    line2spectrum = {}
+    for tc_info in utilizing_tcs_list:
+        tc_idx, tc_result, cov_bit_seq, similarity, tc_executione_time_duration, tc_name = tc_info
 
-    for row in ret:
-        line_idx = row[0]
-        line2spectrum[line_idx] = {
-            "ep": row[1],
-            "np": row[2],
-            "ef": row[3],
-            "nf": row[4],
-            "cct_ep": row[5],
-            "cct_np": row[6]
-        }
-    
-    return line2spectrum
+        for line_idx, line_cov in enumerate(cov_bit_seq):
+            if tc_result == "pass" and line_cov =="1":
+                line_data[line_idx]["ep"] += 1
+            elif tc_result == "pass" and line_cov == "0":
+                line_data[line_idx]["np"] += 1
+            elif tc_result == "fail" and line_cov == "1":
+                line_data[line_idx]["ef"] += 1
+            elif tc_result == "fail" and line_cov == "0":
+                line_data[line_idx]["nf"] += 1
+            elif tc_result == "cct" and line_cov == "1":
+                line_data[line_idx]["ep"] += 1
+                # line_data[line_idx]["cct_ep"] += 1
+            elif tc_result == "cct" and line_cov == "0":
+                line_data[line_idx]["np"] += 1
+                # line_data[line_idx]["cct_np"] += 1

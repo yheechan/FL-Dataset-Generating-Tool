@@ -6,11 +6,12 @@ from ml.trainer import Trainer
 from ml.inference import Inference
 
 
-def handle_feature_preparation(args):
-    postprocessor = Postprocessor(
-        args.subject, args.experiment_name, args.type_name,
-    )
-    postprocessor.run()
+# DEPRECATED 250319
+# def handle_feature_preparation(args):
+#     postprocessor = Postprocessor(
+#         args.subject, args.experiment_name, args.type_name,
+#     )
+#     postprocessor.run()
 
 def handle_train(args):
         # Train, validate, test ratio
@@ -68,9 +69,10 @@ def main():
     parser = make_parser()
     args = parser.parse_args()
 
-    if args.prepare_fl_features:
-        handle_feature_preparation(args)
-    elif args.train:
+    # DEPRECATED 250319
+    # if args.prepare_fl_features:
+    #     handle_feature_preparation(args)
+    if args.train:
         handle_train(args)
     elif args.inference:
         handle_inference(args)
@@ -87,8 +89,9 @@ def make_parser():
     # parser.add_argument("--subject2setname-pair", type=str, nargs="+", help="Subject name and its FL dataset directory file name pair(s). EX: jsoncpp:FL-dataset-jsoncpp-240803-v2 libxml2:FL-dataset-libxml2", required=True)
 
     # 1. Prepare FL features
-    parser.add_argument("--prepare-fl-features", action="store_true", help="Prepare FL features.")
-    parser.add_argument("--type-name", type=str, help="Type name.")
+    # DEPRECATED 250319
+    # parser.add_argument("--prepare-fl-features", action="store_true", help="Prepare FL features.")
+    # parser.add_argument("--type-name", type=str, help="Type name.")
 
     # 2. Train the model
     parser.add_argument("--train", action="store_true", help="Train the model.")

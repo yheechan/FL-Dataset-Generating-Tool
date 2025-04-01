@@ -239,7 +239,7 @@ class BuggyMutantCollection(Subject):
             
             cmd = [
                 "ssh", f"{machine_name}",
-                f"cd {homedir}/FL-dataset-generation-{subject_name}/src && python3 test_mutant_buggy_collection.py --subject {subject_name} --experiment-name {self.experiment_name} --machine {machine_name} --core {core_name} --mutant-path {mutant_input} --target-file-path {target_file_path} {optional_flag}"
+                f"cd {homedir}FL-dataset-generation-{subject_name}/src && python3 test_mutant_buggy_collection.py --subject {subject_name} --experiment-name {self.experiment_name} --machine {machine_name} --core {core_name} --mutant-path {mutant_input} --target-file-path {target_file_path} {optional_flag}"
             ]
             print_command(cmd, self.verbose)
             res = sp.run(cmd, stderr=sp.PIPE, stdout=sp.PIPE, cwd=src_dir)

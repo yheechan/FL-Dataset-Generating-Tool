@@ -164,11 +164,11 @@
 # ===============================
 
 
-# time python3 analyzer.py \
-#     --subject zlib_ng_exp1 \
-#     --experiment-name e1 \
-#     --analysis-criteria 9 \
-#     --batch-size 128
+time python3 analyzer.py \
+    --subject zlib_ng_exp1 \
+    --experiment-name e1 \
+    --analysis-criteria 9 \
+    --batch-size 128
 
 # time python3 analyzer.py \
 #     --subject zlib_ng_exp1 \

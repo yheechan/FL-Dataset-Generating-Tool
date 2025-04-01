@@ -162,11 +162,11 @@
 
 # ===============================
 
-# time python3 analyzer.py \
-#     --subject libxml2_exp1 \
-#     --experiment-name e1 \
-#     --analysis-criteria 9 \
-#     --batch-size 1024
+time python3 analyzer.py \
+    --subject libxml2_exp1 \
+    --experiment-name e1 \
+    --analysis-criteria 9 \
+    --batch-size 1024
 
 # time python3 analyzer.py \
 #     --subject libxml2_exp1 \

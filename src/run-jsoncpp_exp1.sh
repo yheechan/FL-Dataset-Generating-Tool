@@ -171,11 +171,11 @@
 
 # ===============================
 
-# time python3 analyzer.py \
-#     --subject jsoncpp_exp1 \
-#     --experiment-name e1 \
-#     --analysis-criteria 9 \
-#     --batch-size 512
+time python3 analyzer.py \
+    --subject jsoncpp_exp1 \
+    --experiment-name e1 \
+    --analysis-criteria 9 \
+    --batch-size 512
 
 # time python3 analyzer.py \
 #     --subject jsoncpp_exp1 \

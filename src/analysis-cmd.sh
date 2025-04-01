@@ -21,12 +21,17 @@
 # python3 analyzer.py --subject opencv_calib3d_TF_top30 --experiment-name TF_top30 --analysis-criteria 3
 
 
+
+
+# ******************************************
+# ADD COSINE SIMILARITY OF PASSINGS TCS IN DB
+# python3 analyzer.py --subject all --experiment-name all --analysis-criteria 10
+
+# RECORD THE SBFL SCORES FOR EACH DATASET
 # python3 analyzer.py --subject all --experiment-name all --analysis-criteria 4
 
-# 5. analyze mbfl rank accuracy and mbfl feature extraction time as a whole
-# python3 analyzer.py --subject all --experiment-name all --analysis-criteria 6 --> which is deprecated
-
-# record the number of mutation utilized as a whole
+# RECORD UTILIZED DATA (MUT, TCS) INFORMATION FOR EACH DATASET
 # python3 analyzer.py --subject all --experiment-name all --analysis-criteria 7
 
-# python3 analyzer.py --subject all --experiment-name all --analysis-criteria 10
+# CONDUCT ML EXPERIMENTS WITH 10 VARIED PARAMETERS
+# python3 analyzer.py --subject all --experiment-name all --analysis-criteria X

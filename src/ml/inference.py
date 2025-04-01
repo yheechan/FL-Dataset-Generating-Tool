@@ -31,6 +31,8 @@ class Inference(EngineBase):
         self.params = self.read_parameter_file(self.project_out_dir / "train")
         self.params["config_param"]["target_subject_name"] = self.subject_name
         self.params["config_param"]["target_experiment_name"] = self.experiment_name
+        if "calib3d_TF_top30" in self.subject_name:
+            self.params["config_param"]["target_experiment_name"] = "TF_top30"
         self.params["config_param"]["targeting_experiment_name"] = self.targeting_experiment_name
         self.params["training_param"]["device"] = device
 

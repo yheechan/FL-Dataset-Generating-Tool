@@ -102,9 +102,9 @@
 
 # 5. Extract MBFL features
 
-date > ../timer/opencv_core_exp1/stage05_start-remote.txt
-time python3 extract_mbfl_features.py --subject opencv_core_exp1 --experiment-name e1 --target-set-name prerequisite_data --trial trial1 --parallel-cnt 8 --dont-terminate-leftovers --remain-one-bug-per-line --version-limit 1 > ../timer/opencv_core_exp1/stage05.log
-date > ../timer/opencv_core_exp1/stage05_end-remote.txt
+# date > ../timer/opencv_core_exp1/stage05_start-remote.txt
+# time python3 extract_mbfl_features.py --subject opencv_core_exp1 --experiment-name e1 --target-set-name prerequisite_data --trial trial1 --parallel-cnt 8 --dont-terminate-leftovers --remain-one-bug-per-line --version-limit 1 > ../timer/opencv_core_exp1/stage05.log
+# date > ../timer/opencv_core_exp1/stage05_end-remote.txt
 
 # Number of tasks (assigned_works): 232
 # Number of tasks (works): 232
@@ -166,11 +166,11 @@ date > ../timer/opencv_core_exp1/stage05_end-remote.txt
 
 # ===============================
 
-# time python3 analyzer.py \
-#     --subject opencv_core_exp1 \
-#     --experiment-name e1 \
-#     --analysis-criteria 9 \
-#     --batch-size 512
+time python3 analyzer.py \
+    --subject opencv_core_exp1 \
+    --experiment-name e1 \
+    --analysis-criteria 9 \
+    --batch-size 512
 
 # time python3 analyzer.py \
 #     --subject opencv_core_exp1 \
