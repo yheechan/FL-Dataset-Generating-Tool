@@ -194,6 +194,47 @@ class Analyze:
 
     def analyze02(self, type_name):
         """
+        {
+            "list_of_line_selection_methods": [
+                "all_fails",
+                "rand",
+                "sbfl"
+            ],
+            "line_selection_method": "sbfl",
+            "line_selection_rate": 0.2,
+            "mut_cnt_config": [
+                3
+            ],
+            "list_of_mutant_num_methods": [
+                "all_fails",
+                "reduced_num_mut",
+                "sbfl"
+            ],
+            "mutant_num_method": "reduced_num_mut",
+            "mutant_num_std": [
+                3,
+                3,
+                3
+            ],
+            "list_of_tc_reduction_methods": [
+                "all",
+                "random_rate",
+                "random_equal",
+                "branch_cov_rate",
+                "branch_cov_equal",
+                "line_selective_reduction"
+            ],
+            "tc_reduction_method": "random_rate",
+            "tc_reduction_rate": 0.1,
+            "sbfl_standard": "naish2_5",
+            "experiment_repeat": 1,
+            "include_cct": false,
+            "apply_heuristic": false,
+            "versions_to_remove": [],
+            "deliberate_inclusion": false
+        }
+        """
+        """
         [stage05] analyze02: Analyze MBFL results
             for all buggy versions resulting from MBFL feature extraction
             and save the final results to file system for ML learning
@@ -254,6 +295,10 @@ class Analyze:
             for buggy_version in tqdm(target_buggy_version_list, desc=f"Analyzing buggy versions for MBFL ({type_name})"):
                 bug_idx = buggy_version[0]
                 version = buggy_version[1]
+                buggy_file = buggy_version[2]
+                buggy_function = buggy_version[3]
+                buggy_lineno = buggy_version[4]
+                buggy_line_idx = buggy_version[5]
                 total_num_failing_tcs = buggy_version[6]
                 total_num_passing_tcs = buggy_version[7]
                 num_ccts = buggy_version[8]
@@ -305,7 +350,13 @@ class Analyze:
                     }
 
                 # Get all mutants generated on target lines
-                lines_idx2mutant_idx = get_mutations_on_target_lines(bug_idx, line_idx2line_info, self.db, self.utilizing_tcs_list)
+                lines_idx2mutant_idx = get_mutations_on_target_lines(
+                    bug_idx, line_idx2line_info,
+                    self.db, self.utilizing_tcs_list,
+                    self.experiment.analysis_config["tc_reduction_method"],
+                    buggy_line_idx,
+                    self.experiment.analysis_config["include_cct"],
+                )
                 debug_print(self.verbose, f">> Found {len(lines_idx2mutant_idx)} lines with mutants")
 
                 for mtc in self.experiment.analysis_config["mut_cnt_config"]:
@@ -535,7 +586,7 @@ class Analyze:
         )
         
         special_str = "AND (tc_result = 'pass'"
-        if withCCT:
+        if withCCT or tc_reduction_method == "line_selective_reduction":
             special_str += " OR tc_result = 'cct'"
         special_str += ")"
         special_str += " ORDER BY similarity DESC"
@@ -549,8 +600,8 @@ class Analyze:
             special=special_str
         )
 
-        if tc_reduction_method == "all":
-            utilizing_tcs_list = failing_tcs + passing_tcs 
+        if tc_reduction_method == "all" or tc_reduction_method == "line_selective_reduction":
+            utilizing_tcs_list = failing_tcs + passing_tcs
         elif tc_reduction_method == "random_rate":
             limit = int(len(passing_tcs) * tc_reduction_rate)
             if limit == 0:
@@ -971,10 +1022,10 @@ class Analyze:
             #     "sbflnaish210-maxMutants-excludeCCT",
             #     "sbflnaish210-noReduced-excludeCCT-noHeuristics"
             # ],
-            [
-                "sbflnaish220-maxMutants-excludeCCT",
-                "sbflnaish220-maxMutants-excludeCCT"
-            ],
+            # [
+            #     "sbflnaish220-maxMutants-excludeCCT",
+            #     "sbflnaish220-maxMutants-excludeCCT"
+            # ],
             # [
             #     "sbflnaish201-maxMutants-excludeCCT",
             #     "sbflnaish201-noReduced-excludeCCT-noHeuristics"
@@ -985,10 +1036,10 @@ class Analyze:
             # ],
 
             # RQ2
-            [
-                "sbflnaish230-reduced5Mutants-excludeCCT",
-                "sbflnaish230-reduced5Mutants-excludeCCT",
-            ],
+            # [
+            #     "sbflnaish230-reduced5Mutants-excludeCCT",
+            #     "sbflnaish230-reduced5Mutants-excludeCCT",
+            # ],
             # [
             #     "sbflnaish230-reduced3Mutants-excludeCCT",
             #     "sbflnaish230-reduced3Mutants-excludeCCT",
@@ -1487,11 +1538,11 @@ class Analyze:
         """
         subjects = [
             "zlib_ng_exp1",
-            "libxml2_exp1",
-            "opencv_features2d_exp1",
-            "opencv_imgproc_exp1",
-            "opencv_core_exp1",
-            "jsoncpp_exp1",
+            # "libxml2_exp1",
+            # "opencv_features2d_exp1",
+            # "opencv_imgproc_exp1",
+            # "opencv_core_exp1",
+            # "jsoncpp_exp1",
         ]
 
         experiment_name = "e1"
@@ -1520,10 +1571,10 @@ class Analyze:
             #     "sbflnaish210-maxMutants-excludeCCT",
             #     "sbflnaish210-noReduced-excludeCCT-noHeuristics"
             # ],
-            [
-                "sbflnaish220-maxMutants-excludeCCT",
-                "sbflnaish220-maxMutants-excludeCCT"
-            ],
+            # [
+            #     "sbflnaish220-maxMutants-excludeCCT",
+            #     "sbflnaish220-maxMutants-excludeCCT"
+            # ],
             # [
             #     "sbflnaish201-maxMutants-excludeCCT",
             #     "sbflnaish201-noReduced-excludeCCT-noHeuristics"
@@ -1534,10 +1585,10 @@ class Analyze:
             # ],
 
             # RQ2
-            [
-                "sbflnaish230-reduced5Mutants-excludeCCT",
-                "sbflnaish230-reduced5Mutants-excludeCCT",
-            ],
+            # [
+            #     "sbflnaish230-reduced5Mutants-excludeCCT",
+            #     "sbflnaish230-reduced5Mutants-excludeCCT",
+            # ],
             # [
             #     "sbflnaish230-reduced3Mutants-excludeCCT",
             #     "sbflnaish230-reduced3Mutants-excludeCCT",
@@ -1606,40 +1657,44 @@ class Analyze:
             # ]
 
             # RQ4_20 branch
-            [
-                "sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov70",
-                "sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov70"
-            ],
-            [
-                "sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov50",
-                "sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov50"
-            ],
-            [
-                "sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov30",
-                "sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov30"
-            ],
-            [
-                "sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov10",
-                "sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov10"
-            ],
+            # [
+            #     "sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov70",
+            #     "sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov70"
+            # ],
+            # [
+            #     "sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov50",
+            #     "sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov50"
+            # ],
+            # [
+            #     "sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov30",
+            #     "sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov30"
+            # ],
+            # [
+            #     "sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov10",
+            #     "sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov10"
+            # ],
 
-            # RQ4_20 random
+            # # RQ4_20 random
+            # [
+            #     "sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom70",
+            #     "sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom70"
+            # ],
+            # [
+            #     "sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom50",
+            #     "sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom50"
+            # ],
+            # [
+            #     "sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom30",
+            #     "sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom30"
+            # ],
+            # [
+            #     "sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom10",
+            #     "sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom10"
+            # ],
             [
-                "sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom70",
-                "sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom70"
-            ],
-            [
-                "sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom50",
-                "sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom50"
-            ],
-            [
-                "sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom30",
-                "sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom30"
-            ],
-            [
-                "sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom10",
-                "sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom10"
-            ],
+                "test1",
+                "test1"
+            ]
         ]
 
         for subject in subjects:
@@ -1671,6 +1726,21 @@ class Analyze:
                 }
                 version2buggy_line_info[version] = buggy_line_info
 
+            features = [
+                "version",
+                "num_failing_tcs", "num_passing_tcs", "num_ccts",
+                "num_utilized_failing_tcs", "num_utilized_passing_tcs", "num_utilized_ccts",
+                "total_num_utilized_mutants", "avg_num_utilized_mutants_per_line",
+                "buggy_line_tested", "buggy_line_mut_cnt",
+                "nonbuggy_line_f2p", "nonbuggy_line_p2f",
+                "nonbuggy_line_f2f", "nonbuggy_line_p2p",
+                "buggy_line_f2p", "buggy_line_p2f",
+                "buggy_line_f2f", "buggy_line_p2p",
+                "total_mut_build_time", "total_tc_exec_time",
+                "total_tc_executions",
+                "num_lines_executed_by_failing_tcs", "num_funcs_executed_by_failing_tcs"
+            ]
+            features_str = ",".join(features)
             for exp_name, exp_dirname in experiments:
                 type_dir = out_dir / subject / "analysis" / exp_name
                 assert type_dir.exists()
@@ -1680,7 +1750,7 @@ class Analyze:
                 assert utilized_tc_info_dir.exists()
 
                 utilized_data_info_csv_fp = open(type_dir / "utilized_data_info.csv", "w")
-                utilized_data_info_csv_fp.write("version,num_failing_tcs,num_passing_tcs,num_ccts,num_utilized_failing_tcs,num_utilized_passing_tcs,num_utilized_ccts,total_num_utilized_mutants,avg_num_utilized_mutants_per_line,buggy_line_tested,buggy_line_mut_cnt,buggy_line_f2p,buggy_line_p2f,total_mut_build_time,total_tc_exec_time,num_lines_executed_by_failing_tcs,num_funcs_executed_by_failing_tcs\n")
+                utilized_data_info_csv_fp.write(f"{features_str}\n")
                
                 total_statistics = {
                     "version": [],
@@ -1694,10 +1764,17 @@ class Analyze:
                     "avg_num_utilized_mutants_per_line": [],
                     "buggy_line_tested": [],
                     "buggy_line_mut_cnt": [],
+                    "nonbuggy_line_f2p": [],
+                    "nonbuggy_line_p2f": [],
+                    "nonbuggy_line_f2f": [],
+                    "nonbuggy_line_p2p": [],
                     "buggy_line_f2p": [],
                     "buggy_line_p2f": [],
+                    "buggy_line_f2f": [],
+                    "buggy_line_p2p": [],
                     "total_mut_build_time": [],
                     "total_tc_exec_time": [],
+                    "total_tc_executions": [],
                     "num_lines_executed_by_failing_tcs": [],
                     "num_funcs_executed_by_failing_tcs": []
                 }
@@ -1716,13 +1793,21 @@ class Analyze:
                         "total_num_utilized_mutants": 0,
                         "buggy_line_tested": False,
                         "buggy_line_mut_cnt": 0,
+                        "nonbuggy_line_f2p": [],
+                        "nonbuggy_line_p2f": [],
+                        "nonbuggy_line_f2f": [],
+                        "nonbuggy_line_p2p": [],
                         "buggy_line_f2p": 0,
                         "buggy_line_p2f": 0,
+                        "buggy_line_f2f": 0,
+                        "buggy_line_p2p": 0,
                         "total_mut_build_time": 0,
                         "total_tc_exec_time": 0,
+                        "total_tc_executions": 0,
                     }
 
                     # mut info
+                    utilized_tcs = False
                     for line, line_data in utilized_mut_json.items():
                         for mut_dict in line_data["mutants"]:
                             if line_data["file"] == buggy_data["buggy_file"] and line_data["function"] == buggy_data["buggy_function"] and line_data["lineno"] == buggy_data["buggy_lineno"]:
@@ -1731,6 +1816,28 @@ class Analyze:
                             
                                 buggy_version_mut_info["buggy_line_f2p"] += mut_dict["f2p"]
                                 buggy_version_mut_info["buggy_line_p2f"] += mut_dict["p2f"]
+                                buggy_version_mut_info["buggy_line_f2f"] += mut_dict["f2f"]
+                                buggy_version_mut_info["buggy_line_p2p"] += mut_dict["p2p"]
+                            else:
+                                buggy_version_mut_info["nonbuggy_line_f2p"].append(mut_dict["f2p"])
+                                buggy_version_mut_info["nonbuggy_line_p2f"].append(mut_dict["p2f"])
+                                buggy_version_mut_info["nonbuggy_line_f2f"].append(mut_dict["f2f"])
+                                buggy_version_mut_info["nonbuggy_line_p2p"].append(mut_dict["p2p"])
+                            
+                            buggy_version_mut_info["total_tc_executions"] += (
+                                mut_dict["f2p"] + mut_dict["p2f"] + mut_dict["f2f"] + mut_dict["p2p"]
+                            )
+
+                            # a more fine-grained tc reduction (reduction diffierent per line)
+                            if "utilized_tcs_bit_seq" in mut_dict:
+                                utilized_tcs = True
+                                for tc_idx, tc_bit in enumerate(mut_dict["utilized_tcs_bit_seq"]):
+                                    tc_idx = str(tc_idx)
+                                    tc_bit = str(tc_bit)
+                                    if tc_bit == "1":
+                                        assert tc_idx in utilized_tc_json
+                                        buggy_version_mut_info["total_tc_exec_time"] += utilized_tc_json[tc_idx]["tc_execution_time_duration"]
+
                             buggy_version_mut_info["total_mut_build_time"] += mut_dict["build_time_duration"]
                         buggy_version_mut_info["total_num_utilized_mutants"] += len(line_data["mutants"])
 
@@ -1738,8 +1845,10 @@ class Analyze:
                         avg_num_utilized_mutants_per_line = 0
                     else:
                         avg_num_utilized_mutants_per_line = buggy_version_mut_info["total_num_utilized_mutants"] / len(utilized_mut_json)
+                    
 
                     # tc_info
+                    total_tc_exec_time = 0
                     for tc_idx, tc_info in utilized_tc_json.items():
                         if tc_info["tc_result"] == "fail":
                             buggy_version_mut_info["num_utilized_failing_tcs"] += 1
@@ -1747,10 +1856,10 @@ class Analyze:
                             buggy_version_mut_info["num_utilized_passing_tcs"] += 1
                         elif tc_info["tc_result"] == "cct":
                             buggy_version_mut_info["num_utilized_ccts"] += 1
+                        total_tc_exec_time += tc_info["tc_execution_time_duration"]
 
-                        buggy_version_mut_info["total_tc_exec_time"] += tc_info["tc_execution_time_duration"]
-                    buggy_version_mut_info["total_tc_exec_time"] *= buggy_version_mut_info["total_num_utilized_mutants"]
-
+                    if utilized_tcs == False:
+                        buggy_version_mut_info["total_tc_exec_time"] = total_tc_exec_time*buggy_version_mut_info["total_num_utilized_mutants"]
 
                     total_statistics["version"].append(buggy_version)
                     total_statistics["num_failing_tcs"].append(buggy_data["num_failing_tcs"])
@@ -1764,10 +1873,31 @@ class Analyze:
                     total_statistics["buggy_line_mut_cnt"].append(buggy_version_mut_info["buggy_line_mut_cnt"])
                     total_statistics["buggy_line_f2p"].append(buggy_version_mut_info["buggy_line_f2p"])
                     total_statistics["buggy_line_p2f"].append(buggy_version_mut_info["buggy_line_p2f"])
+                    total_statistics["buggy_line_f2f"].append(buggy_version_mut_info["buggy_line_f2f"])
+                    total_statistics["buggy_line_p2p"].append(buggy_version_mut_info["buggy_line_p2p"])
                     total_statistics["total_mut_build_time"].append(buggy_version_mut_info["total_mut_build_time"])
                     total_statistics["total_tc_exec_time"].append(buggy_version_mut_info["total_tc_exec_time"])
+                    total_statistics["total_tc_executions"].append(buggy_version_mut_info["total_tc_executions"])
                     total_statistics["num_lines_executed_by_failing_tcs"].append(buggy_data["num_lines_executed_by_failing_tcs"])
                     total_statistics["num_funcs_executed_by_failing_tcs"].append(buggy_data["num_funcs_executed_by_failing_tcs"])
+
+                    avg_nonbuggy_line_f2p = 0
+                    avg_nonbuggy_line_p2f = 0
+                    avg_nonbuggy_line_f2f = 0
+                    avg_nonbuggy_line_p2p = 0
+                    if len(buggy_version_mut_info["nonbuggy_line_f2p"]) > 0:
+                        avg_nonbuggy_line_f2p = sum(buggy_version_mut_info["nonbuggy_line_f2p"]) / len(buggy_version_mut_info["nonbuggy_line_f2p"])
+                    if len(buggy_version_mut_info["nonbuggy_line_p2f"]) > 0:
+                        avg_nonbuggy_line_p2f = sum(buggy_version_mut_info["nonbuggy_line_p2f"]) / len(buggy_version_mut_info["nonbuggy_line_p2f"])
+                    if len(buggy_version_mut_info["nonbuggy_line_f2f"]) > 0:
+                        avg_nonbuggy_line_f2f = sum(buggy_version_mut_info["nonbuggy_line_f2f"]) / len(buggy_version_mut_info["nonbuggy_line_f2f"])
+                    if len(buggy_version_mut_info["nonbuggy_line_p2p"]) > 0:
+                        avg_nonbuggy_line_p2p = sum(buggy_version_mut_info["nonbuggy_line_p2p"]) / len(buggy_version_mut_info["nonbuggy_line_p2p"])
+
+                    total_statistics["nonbuggy_line_f2p"].append(avg_nonbuggy_line_f2p)
+                    total_statistics["nonbuggy_line_p2f"].append(avg_nonbuggy_line_p2f)
+                    total_statistics["nonbuggy_line_f2f"].append(avg_nonbuggy_line_f2f)
+                    total_statistics["nonbuggy_line_p2p"].append(avg_nonbuggy_line_p2p)
 
                     content = [
                         buggy_version,
@@ -1781,10 +1911,17 @@ class Analyze:
                         avg_num_utilized_mutants_per_line,
                         buggy_version_mut_info["buggy_line_tested"],
                         buggy_version_mut_info["buggy_line_mut_cnt"],
+                        avg_nonbuggy_line_f2p,
+                        avg_nonbuggy_line_p2f,
+                        avg_nonbuggy_line_f2f,
+                        avg_nonbuggy_line_p2p,
                         buggy_version_mut_info["buggy_line_f2p"],
                         buggy_version_mut_info["buggy_line_p2f"],
+                        buggy_version_mut_info["buggy_line_f2f"],
+                        buggy_version_mut_info["buggy_line_p2p"],
                         buggy_version_mut_info["total_mut_build_time"],
                         buggy_version_mut_info["total_tc_exec_time"],
+                        buggy_version_mut_info["total_tc_executions"],
                         buggy_data["num_lines_executed_by_failing_tcs"],
                         buggy_data["num_funcs_executed_by_failing_tcs"]
                     ]
@@ -1805,10 +1942,17 @@ class Analyze:
                         "avg_num_utilized_mutants": sum(total_statistics["total_num_utilized_mutants"]) / len(version2buggy_line_info),
                         "avg_num_utilized_mutants_per_line": sum(total_statistics["avg_num_utilized_mutants_per_line"]) / len(version2buggy_line_info),
                         "avg_buggy_line_mut_cnt": sum(total_statistics["buggy_line_mut_cnt"]) / len(version2buggy_line_info),
+                        "avg_nonbuggy_line_f2p": sum(total_statistics["nonbuggy_line_f2p"]) / len(version2buggy_line_info),
+                        "avg_nonbuggy_line_p2f": sum(total_statistics["nonbuggy_line_p2f"]) / len(version2buggy_line_info),
+                        "avg_nonbuggy_line_f2f": sum(total_statistics["nonbuggy_line_f2f"]) / len(version2buggy_line_info),
+                        "avg_nonbuggy_line_p2p": sum(total_statistics["nonbuggy_line_p2p"]) / len(version2buggy_line_info),
                         "avg_buggy_line_f2p": sum(total_statistics["buggy_line_f2p"]) / len(version2buggy_line_info),
                         "avg_buggy_line_p2f": sum(total_statistics["buggy_line_p2f"]) / len(version2buggy_line_info),
+                        "avg_buggy_line_f2f": sum(total_statistics["buggy_line_f2f"]) / len(version2buggy_line_info),
+                        "avg_buggy_line_p2p": sum(total_statistics["buggy_line_p2p"]) / len(version2buggy_line_info),
                         "avg_total_mut_build_time": sum(total_statistics["total_mut_build_time"]) / len(version2buggy_line_info),
                         "avg_total_tc_exec_time": sum(total_statistics["total_tc_exec_time"]) / len(version2buggy_line_info),
+                        "avg_total_tc_executions": sum(total_statistics["total_tc_executions"]) / len(version2buggy_line_info),
                         "avg_num_lines_executed_by_failing_tcs": sum(total_statistics["num_lines_executed_by_failing_tcs"]) / len(version2buggy_line_info),
                         "avg_num_funcs_executed_by_failing_tcs": sum(total_statistics["num_funcs_executed_by_failing_tcs"]) / len(version2buggy_line_info)
                     }
@@ -1908,10 +2052,10 @@ class Analyze:
             #     "sbflnaish210-maxMutants-excludeCCT",
             #     "sbflnaish210-noReduced-excludeCCT-noHeuristics"
             # ],
-            [
-                "sbflnaish220-maxMutants-excludeCCT",
-                "sbflnaish220-maxMutants-excludeCCT"
-            ],
+            # [
+            #     "sbflnaish220-maxMutants-excludeCCT",
+            #     "sbflnaish220-maxMutants-excludeCCT"
+            # ],
             # [
             #     "sbflnaish201-maxMutants-excludeCCT",
             #     "sbflnaish201-noReduced-excludeCCT-noHeuristics"
@@ -1922,10 +2066,10 @@ class Analyze:
             # ],
 
             # RQ2
-            [
-                "sbflnaish230-reduced5Mutants-excludeCCT",
-                "sbflnaish230-reduced5Mutants-excludeCCT",
-            ],
+            # [
+            #     "sbflnaish230-reduced5Mutants-excludeCCT",
+            #     "sbflnaish230-reduced5Mutants-excludeCCT",
+            # ],
             # [
             #     "sbflnaish230-reduced3Mutants-excludeCCT",
             #     "sbflnaish230-reduced3Mutants-excludeCCT",

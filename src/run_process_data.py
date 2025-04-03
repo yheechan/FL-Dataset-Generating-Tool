@@ -54,7 +54,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "all_fails",
         #     "mutant_num_std": [10, 10, 10],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "all",
         #     "tc_reduction_rate": 1.0,
 
@@ -75,7 +75,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "all_fails",
         #     "mutant_num_std": [10, 10, 10],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "all",
         #     "tc_reduction_rate": 1.0,
 
@@ -96,7 +96,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "all_fails",
         #     "mutant_num_std": [10, 10, 10],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "all",
         #     "tc_reduction_rate": 1.0,
 
@@ -119,7 +119,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "all_fails",
         #     "mutant_num_std": [10, 10, 10],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "all",
         #     "tc_reduction_rate": 1.0,
 
@@ -130,27 +130,27 @@ if __name__ == "__main__":
         #     "versions_to_remove": [],
         #     "deliberate_inclusion": False
         # }],
-        ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish220-maxMutants-excludeCCT", {
-            "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
-            "line_selection_method": "sbfl",
-            "line_selection_rate": 0.2,
-            "mut_cnt_config": [10],
+        # ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish220-maxMutants-excludeCCT", {
+        #     "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
+        #     "line_selection_method": "sbfl",
+        #     "line_selection_rate": 0.2,
+        #     "mut_cnt_config": [10],
 
-            "list_of_mutant_num_methods": ["all_fails", "reduced_num_mut", "sbfl"],
-            "mutant_num_method": "all_fails",
-            "mutant_num_std": [10, 10, 10],
+        #     "list_of_mutant_num_methods": ["all_fails", "reduced_num_mut", "sbfl"],
+        #     "mutant_num_method": "all_fails",
+        #     "mutant_num_std": [10, 10, 10],
 
-            "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
-            "tc_reduction_method": "all",
-            "tc_reduction_rate": 1.0,
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
+        #     "tc_reduction_method": "all",
+        #     "tc_reduction_rate": 1.0,
 
-            "sbfl_standard": "naish2_5",
-            "experiment_repeat": 1,
-            "include_cct": False,
-            "apply_heuristic": False,
-            "versions_to_remove": [],
-            "deliberate_inclusion": False
-        }],
+        #     "sbfl_standard": "naish2_5",
+        #     "experiment_repeat": 1,
+        #     "include_cct": False,
+        #     "apply_heuristic": False,
+        #     "versions_to_remove": [],
+        #     "deliberate_inclusion": False
+        # }],
         # ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish210-maxMutants-excludeCCT", { --> THIS WAS USED ALSO FOR RQ2
         #     "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
         #     "line_selection_method": "sbfl",
@@ -161,7 +161,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "all_fails",
         #     "mutant_num_std": [10, 10, 10],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "all",
         #     "tc_reduction_rate": 1.0,
 
@@ -182,7 +182,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "all_fails",
         #     "mutant_num_std": [10, 10, 10],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "all",
         #     "tc_reduction_rate": 1.0,
 
@@ -203,7 +203,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "all_fails",
         #     "mutant_num_std": [10, 10, 10],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "all",
         #     "tc_reduction_rate": 1.0,
 
@@ -216,27 +216,27 @@ if __name__ == "__main__":
         # }],
 
         # RQ2 Mutation # Control
-        ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish230-reduced5Mutants-excludeCCT", {
-            "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
-            "line_selection_method": "sbfl",
-            "line_selection_rate": 0.3,
-            "mut_cnt_config": [5],
+        # ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish230-reduced5Mutants-excludeCCT", {
+        #     "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
+        #     "line_selection_method": "sbfl",
+        #     "line_selection_rate": 0.3,
+        #     "mut_cnt_config": [5],
 
-            "list_of_mutant_num_methods": ["all_fails", "reduced_num_mut", "sbfl"],
-            "mutant_num_method": "reduced_num_mut",
-            "mutant_num_std": [5, 5, 5],
+        #     "list_of_mutant_num_methods": ["all_fails", "reduced_num_mut", "sbfl"],
+        #     "mutant_num_method": "reduced_num_mut",
+        #     "mutant_num_std": [5, 5, 5],
 
-            "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
-            "tc_reduction_method": "all",
-            "tc_reduction_rate": 1.0,
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
+        #     "tc_reduction_method": "all",
+        #     "tc_reduction_rate": 1.0,
 
-            "sbfl_standard": "naish2_5",
-            "experiment_repeat": 1,
-            "include_cct": False,
-            "apply_heuristic": False,
-            "versions_to_remove": [],
-            "deliberate_inclusion": False
-        }],
+        #     "sbfl_standard": "naish2_5",
+        #     "experiment_repeat": 1,
+        #     "include_cct": False,
+        #     "apply_heuristic": False,
+        #     "versions_to_remove": [],
+        #     "deliberate_inclusion": False
+        # }],
         # ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish230-reduced3Mutants-excludeCCT", {
         #     "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
         #     "line_selection_method": "sbfl",
@@ -247,7 +247,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "reduced_num_mut",
         #     "mutant_num_std": [3, 3, 3],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "all",
         #     "tc_reduction_rate": 1.0,
 
@@ -268,7 +268,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "reduced_num_mut",
         #     "mutant_num_std": [1, 1, 1],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "all",
         #     "tc_reduction_rate": 1.0,
 
@@ -290,7 +290,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "reduced_num_mut",
         #     "mutant_num_std": [5, 5, 5],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "all",
         #     "tc_reduction_rate": 1.0,
 
@@ -311,7 +311,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "reduced_num_mut",
         #     "mutant_num_std": [3, 3, 3],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "all",
         #     "tc_reduction_rate": 1.0,
 
@@ -332,7 +332,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "reduced_num_mut",
         #     "mutant_num_std": [1, 1, 1],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "all",
         #     "tc_reduction_rate": 1.0,
 
@@ -353,7 +353,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "reduced_num_mut",
         #     "mutant_num_std": [5, 5, 5],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "all",
         #     "tc_reduction_rate": 1.0,
 
@@ -374,7 +374,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "all_fails",
         #     "mutant_num_std": [1, 1, 1],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "all",
         #     "tc_reduction_rate": 1.0,
 
@@ -395,7 +395,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "all_fails",
         #     "mutant_num_std": [0, 0, 0],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "all",
         #     "tc_reduction_rate": 1.0,
 
@@ -417,7 +417,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "all_fails",
         #     "mutant_num_std": [7, 7, 7],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "all",
         #     "tc_reduction_rate": 1.0,
 
@@ -438,7 +438,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "all_fails",
         #     "mutant_num_std": [3, 3, 3],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "all",
         #     "tc_reduction_rate": 1.0,
 
@@ -461,7 +461,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "sbfl",
         #     "mutant_num_std": [10, 6, 2],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "all",
         #     "tc_reduction_rate": 1.0,
 
@@ -484,7 +484,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "all_fails",
         #     "mutant_num_std": [1, 1, 1],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "all",
         #     "tc_reduction_rate": 1.0,
 
@@ -507,7 +507,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "all_fails",
         #     "mutant_num_std": [1, 1, 1],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "branch_cov_rate",
         #     "tc_reduction_rate": 0.7,
 
@@ -528,7 +528,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "all_fails",
         #     "mutant_num_std": [1, 1, 1],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "branch_cov_rate",
         #     "tc_reduction_rate": 0.5,
 
@@ -549,7 +549,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "all_fails",
         #     "mutant_num_std": [1, 1, 1],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "branch_cov_rate",
         #     "tc_reduction_rate": 0.3,
 
@@ -570,7 +570,7 @@ if __name__ == "__main__":
         #     "mutant_num_method": "all_fails",
         #     "mutant_num_std": [1, 1, 1],
 
-        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
         #     "tc_reduction_method": "branch_cov_rate",
         #     "tc_reduction_rate": 0.1,
 
@@ -583,167 +583,190 @@ if __name__ == "__main__":
         # }],
 
         # RQ4_20
-        ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov70", {
+        # ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov70", {
+        #     "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
+        #     "line_selection_method": "sbfl",
+        #     "line_selection_rate": 0.2,
+        #     "mut_cnt_config": [3],
+
+        #     "list_of_mutant_num_methods": ["all_fails", "reduced_num_mut", "sbfl"],
+        #     "mutant_num_method": "reduced_num_mut",
+        #     "mutant_num_std": [3, 3, 3],
+
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
+        #     "tc_reduction_method": "branch_cov_rate",
+        #     "tc_reduction_rate": 0.7,
+
+        #     "sbfl_standard": "naish2_5",
+        #     "experiment_repeat": 1,
+        #     "include_cct": False,
+        #     "apply_heuristic": False,
+        #     "versions_to_remove": [],
+        #     "deliberate_inclusion": False
+        # }],
+        # ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov50", {
+        #     "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
+        #     "line_selection_method": "sbfl",
+        #     "line_selection_rate": 0.2,
+        #     "mut_cnt_config": [3],
+
+        #     "list_of_mutant_num_methods": ["all_fails", "reduced_num_mut", "sbfl"],
+        #     "mutant_num_method": "reduced_num_mut",
+        #     "mutant_num_std": [3, 3, 3],
+
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
+        #     "tc_reduction_method": "branch_cov_rate",
+        #     "tc_reduction_rate": 0.5,
+
+        #     "sbfl_standard": "naish2_5",
+        #     "experiment_repeat": 1,
+        #     "include_cct": False,
+        #     "apply_heuristic": False,
+        #     "versions_to_remove": [],
+        #     "deliberate_inclusion": False
+        # }],
+        # ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov30", {
+        #     "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
+        #     "line_selection_method": "sbfl",
+        #     "line_selection_rate": 0.2,
+        #     "mut_cnt_config": [3],
+
+        #     "list_of_mutant_num_methods": ["all_fails", "reduced_num_mut", "sbfl"],
+        #     "mutant_num_method": "reduced_num_mut",
+        #     "mutant_num_std": [3, 3, 3],
+
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
+        #     "tc_reduction_method": "branch_cov_rate",
+        #     "tc_reduction_rate": 0.3,
+
+        #     "sbfl_standard": "naish2_5",
+        #     "experiment_repeat": 1,
+        #     "include_cct": False,
+        #     "apply_heuristic": False,
+        #     "versions_to_remove": [],
+        #     "deliberate_inclusion": False
+        # }],
+        # ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov10", {
+        #     "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
+        #     "line_selection_method": "sbfl",
+        #     "line_selection_rate": 0.2,
+        #     "mut_cnt_config": [3],
+
+        #     "list_of_mutant_num_methods": ["all_fails", "reduced_num_mut", "sbfl"],
+        #     "mutant_num_method": "reduced_num_mut",
+        #     "mutant_num_std": [3, 3, 3],
+
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
+        #     "tc_reduction_method": "branch_cov_rate",
+        #     "tc_reduction_rate": 0.1,
+
+        #     "sbfl_standard": "naish2_5",
+        #     "experiment_repeat": 1,
+        #     "include_cct": False,
+        #     "apply_heuristic": False,
+        #     "versions_to_remove": [],
+        #     "deliberate_inclusion": False
+        # }],
+
+        # ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom70", {
+        #     "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
+        #     "line_selection_method": "sbfl",
+        #     "line_selection_rate": 0.2,
+        #     "mut_cnt_config": [3],
+
+        #     "list_of_mutant_num_methods": ["all_fails", "reduced_num_mut", "sbfl"],
+        #     "mutant_num_method": "reduced_num_mut",
+        #     "mutant_num_std": [3, 3, 3],
+
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
+        #     "tc_reduction_method": "random_rate",
+        #     "tc_reduction_rate": 0.7,
+
+        #     "sbfl_standard": "naish2_5",
+        #     "experiment_repeat": 1,
+        #     "include_cct": False,
+        #     "apply_heuristic": False,
+        #     "versions_to_remove": [],
+        #     "deliberate_inclusion": False
+        # }],
+        # ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom50", {
+        #     "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
+        #     "line_selection_method": "sbfl",
+        #     "line_selection_rate": 0.2,
+        #     "mut_cnt_config": [3],
+
+        #     "list_of_mutant_num_methods": ["all_fails", "reduced_num_mut", "sbfl"],
+        #     "mutant_num_method": "reduced_num_mut",
+        #     "mutant_num_std": [3, 3, 3],
+
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
+        #     "tc_reduction_method": "random_rate",
+        #     "tc_reduction_rate": 0.5,
+
+        #     "sbfl_standard": "naish2_5",
+        #     "experiment_repeat": 1,
+        #     "include_cct": False,
+        #     "apply_heuristic": False,
+        #     "versions_to_remove": [],
+        #     "deliberate_inclusion": False
+        # }],
+        # ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom30", {
+        #     "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
+        #     "line_selection_method": "sbfl",
+        #     "line_selection_rate": 0.2,
+        #     "mut_cnt_config": [3],
+
+        #     "list_of_mutant_num_methods": ["all_fails", "reduced_num_mut", "sbfl"],
+        #     "mutant_num_method": "reduced_num_mut",
+        #     "mutant_num_std": [3, 3, 3],
+
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
+        #     "tc_reduction_method": "random_rate",
+        #     "tc_reduction_rate": 0.3,
+
+        #     "sbfl_standard": "naish2_5",
+        #     "experiment_repeat": 1,
+        #     "include_cct": False,
+        #     "apply_heuristic": False,
+        #     "versions_to_remove": [],
+        #     "deliberate_inclusion": False
+        # }],
+        # ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom10", {
+        #     "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
+        #     "line_selection_method": "sbfl",
+        #     "line_selection_rate": 0.2,
+        #     "mut_cnt_config": [3],
+
+        #     "list_of_mutant_num_methods": ["all_fails", "reduced_num_mut", "sbfl"],
+        #     "mutant_num_method": "reduced_num_mut",
+        #     "mutant_num_std": [3, 3, 3],
+
+        #     "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
+        #     "tc_reduction_method": "random_rate",
+        #     "tc_reduction_rate": 0.1,
+
+        #     "sbfl_standard": "naish2_5",
+        #     "experiment_repeat": 1,
+        #     "include_cct": False,
+        #     "apply_heuristic": False,
+        #     "versions_to_remove": [],
+        #     "deliberate_inclusion": False
+        # }],
+
+        # RQ4_line_selective_reduction
+        ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish220-reduced3Mutants-excludeCCT-reducedLineSelective", {
             "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
             "line_selection_method": "sbfl",
-            "line_selection_rate": 0.1,
-            "mut_cnt_config": [1],
+            "line_selection_rate": 0.2,
+            "mut_cnt_config": [3],
 
             "list_of_mutant_num_methods": ["all_fails", "reduced_num_mut", "sbfl"],
-            "mutant_num_method": "all_fails",
-            "mutant_num_std": [1, 1, 1],
+            "mutant_num_method": "reduced_num_mut",
+            "mutant_num_std": [3, 3, 3],
 
-            "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
-            "tc_reduction_method": "branch_cov_rate",
-            "tc_reduction_rate": 0.7,
-
-            "sbfl_standard": "naish2_5",
-            "experiment_repeat": 1,
-            "include_cct": False,
-            "apply_heuristic": False,
-            "versions_to_remove": [],
-            "deliberate_inclusion": False
-        }],
-        ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov50", {
-            "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
-            "line_selection_method": "sbfl",
-            "line_selection_rate": 0.1,
-            "mut_cnt_config": [1],
-
-            "list_of_mutant_num_methods": ["all_fails", "reduced_num_mut", "sbfl"],
-            "mutant_num_method": "all_fails",
-            "mutant_num_std": [1, 1, 1],
-
-            "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
-            "tc_reduction_method": "branch_cov_rate",
-            "tc_reduction_rate": 0.5,
-
-            "sbfl_standard": "naish2_5",
-            "experiment_repeat": 1,
-            "include_cct": False,
-            "apply_heuristic": False,
-            "versions_to_remove": [],
-            "deliberate_inclusion": False
-        }],
-        ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov30", {
-            "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
-            "line_selection_method": "sbfl",
-            "line_selection_rate": 0.1,
-            "mut_cnt_config": [1],
-
-            "list_of_mutant_num_methods": ["all_fails", "reduced_num_mut", "sbfl"],
-            "mutant_num_method": "all_fails",
-            "mutant_num_std": [1, 1, 1],
-
-            "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
-            "tc_reduction_method": "branch_cov_rate",
-            "tc_reduction_rate": 0.3,
-
-            "sbfl_standard": "naish2_5",
-            "experiment_repeat": 1,
-            "include_cct": False,
-            "apply_heuristic": False,
-            "versions_to_remove": [],
-            "deliberate_inclusion": False
-        }],
-        ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish220-reduced3Mutants-excludeCCT-reducedTCBranchCov10", {
-            "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
-            "line_selection_method": "sbfl",
-            "line_selection_rate": 0.1,
-            "mut_cnt_config": [1],
-
-            "list_of_mutant_num_methods": ["all_fails", "reduced_num_mut", "sbfl"],
-            "mutant_num_method": "all_fails",
-            "mutant_num_std": [1, 1, 1],
-
-            "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
-            "tc_reduction_method": "branch_cov_rate",
-            "tc_reduction_rate": 0.1,
-
-            "sbfl_standard": "naish2_5",
-            "experiment_repeat": 1,
-            "include_cct": False,
-            "apply_heuristic": False,
-            "versions_to_remove": [],
-            "deliberate_inclusion": False
-        }],
-
-        ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom70", {
-            "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
-            "line_selection_method": "sbfl",
-            "line_selection_rate": 0.1,
-            "mut_cnt_config": [1],
-
-            "list_of_mutant_num_methods": ["all_fails", "reduced_num_mut", "sbfl"],
-            "mutant_num_method": "all_fails",
-            "mutant_num_std": [1, 1, 1],
-
-            "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
-            "tc_reduction_method": "random_rate",
-            "tc_reduction_rate": 0.7,
-
-            "sbfl_standard": "naish2_5",
-            "experiment_repeat": 1,
-            "include_cct": False,
-            "apply_heuristic": False,
-            "versions_to_remove": [],
-            "deliberate_inclusion": False
-        }],
-        ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom50", {
-            "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
-            "line_selection_method": "sbfl",
-            "line_selection_rate": 0.1,
-            "mut_cnt_config": [1],
-
-            "list_of_mutant_num_methods": ["all_fails", "reduced_num_mut", "sbfl"],
-            "mutant_num_method": "all_fails",
-            "mutant_num_std": [1, 1, 1],
-
-            "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
-            "tc_reduction_method": "random_rate",
-            "tc_reduction_rate": 0.5,
-
-            "sbfl_standard": "naish2_5",
-            "experiment_repeat": 1,
-            "include_cct": False,
-            "apply_heuristic": False,
-            "versions_to_remove": [],
-            "deliberate_inclusion": False
-        }],
-        ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom30", {
-            "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
-            "line_selection_method": "sbfl",
-            "line_selection_rate": 0.1,
-            "mut_cnt_config": [1],
-
-            "list_of_mutant_num_methods": ["all_fails", "reduced_num_mut", "sbfl"],
-            "mutant_num_method": "all_fails",
-            "mutant_num_std": [1, 1, 1],
-
-            "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
-            "tc_reduction_method": "random_rate",
-            "tc_reduction_rate": 0.3,
-
-            "sbfl_standard": "naish2_5",
-            "experiment_repeat": 1,
-            "include_cct": False,
-            "apply_heuristic": False,
-            "versions_to_remove": [],
-            "deliberate_inclusion": False
-        }],
-        ["time python3 analyzer.py --subject subject_name_here --experiment-name e1 --analysis-criteria 2 --type-name sbflnaish220-reduced3Mutants-excludeCCT-reducedRandom10", {
-            "list_of_line_selection_methods": ["all_fails", "rand", "sbfl"],
-            "line_selection_method": "sbfl",
-            "line_selection_rate": 0.1,
-            "mut_cnt_config": [1],
-
-            "list_of_mutant_num_methods": ["all_fails", "reduced_num_mut", "sbfl"],
-            "mutant_num_method": "all_fails",
-            "mutant_num_std": [1, 1, 1],
-
-            "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal"],
-            "tc_reduction_method": "random_rate",
-            "tc_reduction_rate": 0.1,
+            "list_of_tc_reduction_methods": ["all", "random_rate", "random_equal", "branch_cov_rate", "branch_cov_equal", "line_selective_reduction"],
+            "tc_reduction_method": "line_selective_reduction",
+            "tc_reduction_rate": 1.0,
 
             "sbfl_standard": "naish2_5",
             "experiment_repeat": 1,

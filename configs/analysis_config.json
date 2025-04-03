@@ -5,30 +5,31 @@
         "sbfl"
     ],
     "line_selection_method": "sbfl",
-    "line_selection_rate": 0.1,
+    "line_selection_rate": 0.2,
     "mut_cnt_config": [
-        1
+        3
     ],
     "list_of_mutant_num_methods": [
         "all_fails",
         "reduced_num_mut",
         "sbfl"
     ],
-    "mutant_num_method": "all_fails",
+    "mutant_num_method": "reduced_num_mut",
     "mutant_num_std": [
-        1,
-        1,
-        1
+        3,
+        3,
+        3
     ],
     "list_of_tc_reduction_methods": [
         "all",
         "random_rate",
         "random_equal",
         "branch_cov_rate",
-        "branch_cov_equal"
+        "branch_cov_equal",
+        "line_selective_reduction"
     ],
-    "tc_reduction_method": "random_rate",
-    "tc_reduction_rate": 0.1,
+    "tc_reduction_method": "line_selective_reduction",
+    "tc_reduction_rate": 1.0,
     "sbfl_standard": "naish2_5",
     "experiment_repeat": 1,
     "include_cct": false,

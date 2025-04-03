@@ -26,7 +26,13 @@ def get_target_buggy_version_list(subject_name, experiment_name, stage, db):
 # ========================================
 # ========= MBFL related functions =======
 # ========================================
-def get_mutations_on_target_lines(bug_idx, line_idx2line_info, db, utilizing_tcs_list):
+def get_mutations_on_target_lines(
+        bug_idx, line_idx2line_info,
+        db, utilizing_tcs_list,
+        mutation_reduction_method,
+        buggy_line_idx,
+        withCCT=False,
+    ):
     """
     Get mutations on target lines
     """
@@ -61,15 +67,18 @@ def get_mutations_on_target_lines(bug_idx, line_idx2line_info, db, utilizing_tcs
         if line_idx not in lines_idx2mutant_idx:
             lines_idx2mutant_idx[line_idx] = []
         
-        f2p, p2f, f2f, p2p, tc_execution_time_duration = measure_mut_stats(
+        mut_line_idx = row[0]
+        f2p, p2f, f2f, p2p, tc_execution_time_duration, utilized_tcs_bit_seq = measure_mut_stats(
+            buggy_line_idx,
             f2p_tc_bit_seq=row[6], p2f_tc_bit_seq=row[7],
             f2f_tc_bit_seq=row[8], p2p_tc_bit_seq=row[9],
             p2f_cct_tc_bit_seq=row[10], p2p_cct_tc_bit_seq=row[11],
-            utilizing_tcs_list=utilizing_tcs_list, build_result=row[2]
+            utilizing_tcs_list=utilizing_tcs_list, build_result=row[2],
+            mutation_reduction_method=mutation_reduction_method,
+            mut_line_idx=mut_line_idx,
+            withCCT=withCCT
         )
-        
-        lines_idx2mutant_idx[line_idx].append(
-            {
+        insertings_data = {
                 "mutant_idx": row[1],
                 "build_result": row[2],
                 "targetting_file": row[3],
@@ -82,47 +91,120 @@ def get_mutations_on_target_lines(bug_idx, line_idx2line_info, db, utilizing_tcs
                 "build_time_duration": row[12],
                 "tc_execution_time_duration": tc_execution_time_duration,
             }
-        )
+        
+        if mutation_reduction_method == "line_selective_reduction":
+            insertings_data["utilized_tcs_bit_seq"] = utilized_tcs_bit_seq
+        
+        lines_idx2mutant_idx[line_idx].append(insertings_data)
+
     
     return lines_idx2mutant_idx
 
 def measure_mut_stats(
+        buggy_line_idx,
         f2p_tc_bit_seq, p2f_tc_bit_seq,
         f2f_tc_bit_seq, p2p_tc_bit_seq,
         p2f_cct_tc_bit_seq, p2p_cct_tc_bit_seq,
-        utilizing_tcs_list, build_result
+        utilizing_tcs_list, build_result,
+        mutation_reduction_method,
+        mut_line_idx,
+        withCCT=False
     ):
     """
     Measure mutation statistics
     """
     f2p, p2f, f2f, p2p = 0, 0, 0, 0
     tc_execution_time_duration = 0.0
-    if build_result == False:
-        return f2p, p2f, f2f, p2p, tc_execution_time_duration
+    utilized_tcs_bit_seq = ""
 
-    for tc_info in utilizing_tcs_list:
-        tc_execution_time_duration += tc_info[4]
+    if build_result == False:
+        return f2p, p2f, f2f, p2p, tc_execution_time_duration, utilized_tcs_bit_seq
+
+    sorted_utilizing_tcs_list = sorted(
+        utilizing_tcs_list,
+        key=lambda x: x[0]
+    )
+
+    for tc_info in sorted_utilizing_tcs_list:
         tc_idx = tc_info[0]
+        tc_result = tc_info[1]
+        cov_bit_seq = tc_info[2]
+        tc_execution_time_duration += tc_info[4]
+
+        if withCCT==False and tc_result == "cct":
+            utilized_tcs_bit_seq += "0"
+            continue
+        
+        if tc_result == "fail" and mut_line_idx == buggy_line_idx:
+            assert cov_bit_seq[mut_line_idx] == "1", \
+                f"cov_bit_seq: {cov_bit_seq}, mut_line_idx: {mut_line_idx}, buggy_line_idx: {buggy_line_idx}"
+
         if f2p_tc_bit_seq[tc_idx] == "1":
-            f2p += 1
+            if mutation_reduction_method == "line_selective_reduction":
+                if cov_bit_seq[mut_line_idx] == "1":
+                    f2p += 1
+                    utilized_tcs_bit_seq += "1"
+                else:
+                    utilized_tcs_bit_seq += "0"
+            else:
+                f2p += 1
             # print(f"\tf2p: {f2p}, {tc_info[1]}")
         elif p2f_tc_bit_seq[tc_idx] == "1":
-            p2f += 1
+            if mutation_reduction_method == "line_selective_reduction":
+                if cov_bit_seq[mut_line_idx] == "1":
+                    p2f += 1
+                    utilized_tcs_bit_seq += "1"
+                else:
+                    utilized_tcs_bit_seq += "0"
+            else:
+                p2f += 1
             # print(f"\tp2f: {p2f}, {tc_info[1]}")
         elif f2f_tc_bit_seq[tc_idx] == "1":
-            f2f += 1
+            if mutation_reduction_method == "line_selective_reduction":
+                if cov_bit_seq[mut_line_idx] == "1":
+                    f2f += 1
+                    utilized_tcs_bit_seq += "1"
+                else:
+                    utilized_tcs_bit_seq += "0"
+            else:
+                f2f += 1
             # print(f"\tf2f: {f2f}, {tc_info[1]}")
         elif p2p_tc_bit_seq[tc_idx] == "1":
-            p2p += 1
+            if mutation_reduction_method == "line_selective_reduction":
+                if cov_bit_seq[mut_line_idx] == "1":
+                    p2p += 1
+                    utilized_tcs_bit_seq += "1"
+                else:
+                    utilized_tcs_bit_seq += "0"
+            else:
+                p2p += 1
             # print(f"\tp2p: {p2p}, {tc_info[1]}")
         elif p2f_cct_tc_bit_seq[tc_idx] == "1":
-            p2f += 1
+            if mutation_reduction_method == "line_selective_reduction":
+                if cov_bit_seq[mut_line_idx] == "1":
+                    p2f += 1
+                    utilized_tcs_bit_seq += "1"
+                else:
+                    utilized_tcs_bit_seq += "0"
+            else:
+                p2f += 1
             # print(f"\tp2f_cct: {p2f}, {tc_info[1]}")
         elif p2p_cct_tc_bit_seq[tc_idx] == "1":
-            p2p += 1
+            if mutation_reduction_method == "line_selective_reduction":
+                if cov_bit_seq[mut_line_idx] == "1":
+                    p2p += 1
+                    utilized_tcs_bit_seq += "1"
+                else:
+                    utilized_tcs_bit_seq += "0"
+            else:
+                p2p += 1
             # print(f"\tp2p_cct: {p2p}, {tc_info[1]}")
+    
+    if mutation_reduction_method == "line_selective_reduction":
+        assert len(utilized_tcs_bit_seq) == len(sorted_utilizing_tcs_list), \
+            f"utilized_tcs_bit_seq: {utilized_tcs_bit_seq}, sorted_utilizing_tcs_list: {sorted_utilizing_tcs_list}"
 
-    return f2p, p2f, f2f, p2p, tc_execution_time_duration
+    return f2p, p2f, f2f, p2p, tc_execution_time_duration, utilized_tcs_bit_seq
 
 def measure_mbfl_scores(line_data, line_idx2line_info, lines_idx2mutant_idx, total_num_of_failing_tcs, mtc, analysis_config):
     """
