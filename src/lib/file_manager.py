@@ -121,12 +121,12 @@ class FileManager():
             "rsync", "-t", "-r", f"{repo}", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}/working_env/{machine}/{core}"
         ])
     
-    def send_configurations_remote(self, machinesCores_dict):
+    def send_configurations_remote(self, machinesCores_dict, repo):
         # machinesCores_dict format: [(machine, core, homedir), ...]
         tasks = []
         for machine, coreHomedir_list in machinesCores_dict.items():
             homedir = coreHomedir_list[0][1]
-            tasks.append((machine, homedir))
+            tasks.append((machine, homedir, repo))
 
         limit = 100
         print(f"Number of tasks (configurations): {len(tasks)}")
@@ -134,12 +134,12 @@ class FileManager():
             pool.map(self.single_send_configurations_remote, tasks)
     
     def single_send_configurations_remote(self, task):
-        machine, homedir = task
+        machine, homedir, repo = task
         print_command([
-            "rsync", "-t", "-r", f"{self.work_dir}/configurations.json", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}"
+            "rsync", "-t", "-r", f"{repo}", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}"
         ], self.verbose)
         sp.check_call([
-            "rsync", "-t", "-r", f"{self.work_dir}/configurations.json", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}"
+            "rsync", "-t", "-r", f"{repo}", f"{machine}:{homedir}FL-dataset-generation-{self.name}/work/{self.name}"
         ])
 
 

@@ -53,7 +53,7 @@ class Worker:
 
     def read_configs(self):
         configs = None
-        config_json = self.work / "configurations.json"
+        config_json = self.subject_repo / "configurations.json"
         
         with config_json.open() as f:
             configs = json.load(f)

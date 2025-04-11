@@ -11,6 +11,8 @@ class Subject:
         self.verbose = verbose
 
         self.work = work_dir / f"{subject_name}"
+        self.work.mkdir(exist_ok=True, parents=True)
+
         self.subject_dir = subjects_dir / subject_name
         self.subject_repo = self.work / subject_name
         self.config = self.read_configs()
@@ -45,28 +47,18 @@ class Subject:
     
     def initialize_working_directory(self):
         # Copy self.subject_dir content to work_dir
-        source = self.subject_dir.__str__() + "/."
-        print_command(["cp", "-r", source, self.work], self.verbose)
-        sp.check_call(["cp", "-r", source, self.work])
+        print_command(["cp", "-r", self.subject_dir, self.work], self.verbose)
+        sp.check_call(["cp", "-r", self.subject_dir, self.work])
         
-        configure_no_cov_file = self.work / "configure_no_cov_script.sh"
-        configure_yes_cov_file = self.work / "configure_yes_cov_script.sh"
-        build_file = self.work / "build_script.sh"
-        clean_file = self.work / "clean_script.sh"
+        configure_no_cov_file = self.work / self.name / "configure_no_cov_script.sh"
+        configure_yes_cov_file = self.work / self.name / "configure_yes_cov_script.sh"
+        build_file = self.work / self.name / "build_script.sh"
+        clean_file = self.work / self.name / "clean_script.sh"
 
         assert configure_no_cov_file.exists(), "Configure script does not exist"
         assert configure_yes_cov_file.exists(), "Configure script does not exist"
         assert build_file.exists(), "Build script does not exist"
         assert clean_file.exists(), "Clean build script does not exist"
-
-        print_command(["cp", configure_no_cov_file, self.configure_file_position], self.verbose)
-        sp.check_call(["cp", configure_no_cov_file, self.configure_file_position])
-        print_command(["cp", configure_yes_cov_file, self.configure_file_position], self.verbose)
-        sp.check_call(["cp", configure_yes_cov_file, self.configure_file_position])
-        print_command(["cp", build_file, self.build_file_position], self.verbose)
-        sp.check_call(["cp", build_file, self.build_file_position])
-        print_command(["cp", clean_file, self.clean_build_file_position], self.verbose)
-        sp.check_call(["cp", clean_file, self.clean_build_file_position])
 
         self.configure_no_cov_file = self.configure_file_position / "configure_no_cov_script.sh"
         self.configure_yes_cov_file = self.configure_file_position / "configure_yes_cov_script.sh"

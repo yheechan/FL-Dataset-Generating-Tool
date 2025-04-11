@@ -193,7 +193,7 @@ class PrerequisitePreparation(Subject):
         
         self.fileManager.send_repo_remote(self.subject_repo, self.experiment.machineCores_list)
 
-        self.fileManager.send_configurations_remote(self.experiment.machineCores_dict)
+        self.fileManager.send_configurations_remote(self.experiment.machineCores_dict, self.subject_repo)
         self.fileManager.send_src_remote(self.experiment.machineCores_dict)
         self.fileManager.send_tools_remote(self.tools_dir, self.experiment.machineCores_dict)
         self.fileManager.send_experiment_configurations_remote(self.experiment.machineCores_dict)

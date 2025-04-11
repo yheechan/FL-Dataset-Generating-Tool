@@ -167,21 +167,21 @@ ___
 서브젝트에 해당되는 모든 정보 (서브젝트 리포지토리, 서브젝트 configurations, etc.)는 ``./subjects/`` 디렉토리에 위치 시킨다. 그러므로 사용자는 가장 먼저 ``./subjects/`` 디렉토리를 생성해야 한다. 서브젝트에 대한 configuration 설정하는 방법은 [5.2.1장](#521-서브젝트의-가장-상위-디렉토리-설정) 부터 자세하게 설명한다 (설명은 ``libxml2`` 서브젝트 기준으로 예를 보인다).
 
 ### 5.2.1 서브젝트의 가장 상위 디렉토리 설정
-  1. ``./subjects/`` 디렉토리와 서브젝트 디렉토리 생성
+  1. ``./subjects/`` 디렉토리 생성
       ```
-      $ mkdir -p ./subjects/libxml2/
+      $ mkdir -p ./subjects
       ```
 
   2. 서브젝트의 리포지토리를 ``./subjects/libxml2/`` 디렉토리 위치에 복사, clone, 혹은 다운로드한다 (서브젝트 리포지토리 디렉토리의 이름은 서브젝트 가장 상위 디렉토리의 이름과 동일하게 내려 받는다).
       ```
-      $ cd ./subjects/libxml2
+      $ cd ./subjects/
       $ git clone <libxml2-link> libxml2
       ```
 
 #### 5.2.2 서브젝트의 실제 버그 (real-world bug) 버전 설정 방법
   3. ``./subjects/libxml2/`` 위치에 ``real_world_buggy_versions`` 이름의 디렉토리를 생성한다. 이 디렉토리는 실제 버그 버전들의 디렉토리로 구성되며 각 버전의 디렉토리가 해당 되는 버전에대한 정보를 담는다.
       ```
-      $ cd ./subjects/libxml2
+      $ cd ./subjects/libxml2/
       $ mkdir real_world_buggy_versions
       $ cd real_world_buggy_versions
       $ mkdir HTMLparser.issue318.c
@@ -206,6 +206,7 @@ ___
           * ``target_code_file``: 서브젝트의 리포지토리 디렉토리부터 타깃 소스코드 파일의 상대 경로 (ex. ``libxml2/HTMLparser.c``)
           * ``buggy_code_file``: ``./real_world_buggy_versions/buggy_code_file/``에 저장한 ``<source-file>``의 이름.
           * ``buggy_lineno``: ``<source-file>``에 버기 라인이 위차하고 있는 라인 번호.
+            * inference를 위한 데이터 생성시, ``buggy_lineno`` 값을 ``-1``로 입력해준다. 이는 실제 버그의 결함위치를 알지 못하기 때문이다.
       * 서브젝트의 실제 버그 버전들은 결함위치탐지 데이터셋 추출하는데 있어 필수로 필요한 사항이 아니다.
 
 #### 5.2.3 서브젝트의 configurations 설정
@@ -522,4 +523,4 @@ ___
   * 각 버그 버전의 변이 코드 (1개의 라인)이 실제 버그 소스 코드 파일에 위치하고 있는 것을 검증한다.
 
 ---
-마지막 업데이트 2024년 11월 07일
+마지막 업데이트 2025년 4월 11일

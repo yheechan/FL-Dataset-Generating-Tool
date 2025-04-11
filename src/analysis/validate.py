@@ -77,11 +77,14 @@ class Validate:
             assert postprocessed_coverage_noCCTs.exists(), f"Postprocessed coverage no CCTs file {postprocessed_coverage_noCCTs} does not exist"
 
             # VALIDATE: Assert that failing TCs execute the buggy line in postprocessed_coverage.csv
-            res = self.check_failing_tcs(postprocessed_coverage, individual.failing_tcs_list, buggy_line_key)
-            assert res, f"Failing test cases do not execute the buggy line in {postprocessed_coverage}"
+            if buggy_lineno != "-1":
+                res = self.check_failing_tcs(postprocessed_coverage, individual.failing_tcs_list, buggy_line_key)
+                assert res, f"Failing test cases do not execute the buggy line in {postprocessed_coverage}"
 
-            res = self.check_failing_tcs(postprocessed_coverage_noCCTs, individual.failing_tcs_list, buggy_line_key)
-            assert res, f"Failing test cases do not execute the buggy line in {postprocessed_coverage_noCCTs}"
+                res = self.check_failing_tcs(postprocessed_coverage_noCCTs, individual.failing_tcs_list, buggy_line_key)
+                assert res, f"Failing test cases do not execute the buggy line in {postprocessed_coverage_noCCTs}"
+            else:
+                print(f"\t [VAL] Buggy line number is -1, skipping failing TCs check")
 
             # VALIDATE: Assert the postprocessed_coverage_noCCTs.csv has no CCTs
             self.check_CCTs(postprocessed_coverage_noCCTs, individual.ccts_list, notExist=True)
@@ -154,19 +157,25 @@ class Validate:
             print(f"Validating MBFL features for {individual_name}")
             individual = Individual(self.subject_name, self.set_name, individual_name)
 
-            # VALIDATE: Assert that mbfl_featuers.csv exists
-            mbfl_features_csv_file = individual.dir_path / "mbfl_features.csv"
-            assert mbfl_features_csv_file.exists(), f"MBFL features file {mbfl_features_csv_file} does not exist"
+            # GET: bug info
+            target_code_file, bug_code_filename, buggy_lineno = individual.get_bug_info()
 
-            # VALIDATE: Assert that there is only one buggy line
-            self.check_one_buggy_line(mbfl_features_csv_file)
+            if buggy_lineno != "-1":
+                # VALIDATE: Assert that mbfl_featuers.csv exists
+                mbfl_features_csv_file = individual.dir_path / "mbfl_features.csv"
+                assert mbfl_features_csv_file.exists(), f"MBFL features file {mbfl_features_csv_file} does not exist"
 
-            # Validate: Assert that mbfl_feature_noCCTs.csv exists
-            mbfl_features_noCCTs_csv_file = individual.dir_path / "mbfl_features_noCCTs.csv"
-            assert mbfl_features_noCCTs_csv_file.exists(), f"MBFL features no CCTs file {mbfl_features_noCCTs_csv_file} does not exist"
+                # VALIDATE: Assert that there is only one buggy line
+                self.check_one_buggy_line(mbfl_features_csv_file)
 
-            # VALIDATE: Assert that there is only one buggy line
-            self.check_one_buggy_line(mbfl_features_noCCTs_csv_file)
+                # Validate: Assert that mbfl_feature_noCCTs.csv exists
+                mbfl_features_noCCTs_csv_file = individual.dir_path / "mbfl_features_noCCTs.csv"
+                assert mbfl_features_noCCTs_csv_file.exists(), f"MBFL features no CCTs file {mbfl_features_noCCTs_csv_file} does not exist"
+
+                # VALIDATE: Assert that there is only one buggy line
+                self.check_one_buggy_line(mbfl_features_noCCTs_csv_file)
+            else:
+                print(f"\t [VAL] Buggy line number is -1, skipping MBFL features check")
 
             # VALIDATE: Assert that selected_mutants.csv exists
             if trialName != None:
@@ -217,20 +226,28 @@ class Validate:
     def validate_sbfl_features(self):
         self.individual_list = get_dirs_in_dir(self.set_dir)
         for individual in self.individual_list:
-            print(f"Validating SBFL features for {individual.name}")
+            individual_name = individual.name
+            print(f"Validating MBFL features for {individual_name}")
+            individual = Individual(self.subject_name, self.set_name, individual_name)
+
+            # GET: bug info
+            target_code_file, bug_code_filename, buggy_lineno = individual.get_bug_info()
             
             # VALIDATE: Assert that sbfl_features.csv exists
-            sbfl_features_csv_file = individual / "sbfl_features.csv"
+            sbfl_features_csv_file = individual.dir_path / "sbfl_features.csv"
             assert sbfl_features_csv_file.exists(), f"SBFL features file {sbfl_features_csv_file} does not exist"
 
             # VALIDATE: Assert that sbfl_feature_noCCTs.csv exists
-            sbfl_features_noCCTs_csv_file = individual / "sbfl_features_noCCTs.csv"
+            sbfl_features_noCCTs_csv_file = individual.dir_path / "sbfl_features_noCCTs.csv"
             assert sbfl_features_noCCTs_csv_file.exists(), f"SBFL features no CCTs file {sbfl_features_noCCTs_csv_file} does not exist"
 
-            # VALIDATE: Assert that there is only one buggy line
-            self.check_one_buggy_line(sbfl_features_csv_file)
-            self.check_one_buggy_line(sbfl_features_noCCTs_csv_file)
-        
+            if buggy_lineno != "-1":
+                # VALIDATE: Assert that there is only one buggy line
+                self.check_one_buggy_line(sbfl_features_csv_file)
+                self.check_one_buggy_line(sbfl_features_noCCTs_csv_file)
+            else:
+                print(f"\t [VAL] Buggy line number is -1, skipping SBFL features check")
+
         print(f"All {len(self.individual_list)} individuals have been validated successfully")
 
 
@@ -260,17 +277,28 @@ class Validate:
             fl_features_file = self.set_dir / f"FL_features_per_bug_version/{bug}.fl_features.csv"
             assert fl_features_file.exists(), f"FL features file {fl_features_file} does not exist"
 
-            # VALIDATE: that there is only one row with "bug" column as 1
-            self.check_one_buggy_line(fl_features_file)
-            print(f"\t VAL01: One buggy line check passed")
 
+            buggy_line_key_file = self.set_dir / f"buggy_line_key_per_bug_version/{bug}.buggy_line_key.txt"
+            assert buggy_line_key_file.exists(), f"Buggy line key file {buggy_line_key_file} does not exist"
 
+            with open(buggy_line_key_file, "r") as f:
+                buggy_line_key = f.readline().strip()
+
+            buggy_file, buggy_function, buggy_lineno = buggy_line_key.split("#")
+
+            if buggy_lineno != "-1":
+                # VALIDATE: that there is only one row with "bug" column as 1
+                self.check_one_buggy_line(fl_features_file)
+                print(f"\t VAL01: One buggy line check passed")
+            else:
+                print(f"\t VAL01: Buggy line number is -1, skipping one buggy line check")
 
 
             failing_tcs_file = self.set_dir / f"test_case_info_per_bug_version/{bug}/failing_tcs.txt"
             assert failing_tcs_file.exists(), f"Failing test cases file {failing_tcs_file} does not exist"
             passing_tcs_file = self.set_dir / f"test_case_info_per_bug_version/{bug}/passing_tcs.txt"
             assert passing_tcs_file.exists(), f"Passing test cases file {passing_tcs_file} does not exist"
+
 
             failing_tcs_list = get_tc_list(failing_tcs_file)
             passing_tcs_list = get_tc_list(passing_tcs_file)
@@ -281,24 +309,17 @@ class Validate:
             print(f"\t VAL02: Spectrum to number of utilized test cases check passed")
 
 
-
-
-            buggy_line_key_file = self.set_dir / f"buggy_line_key_per_bug_version/{bug}.buggy_line_key.txt"
-            assert buggy_line_key_file.exists(), f"Buggy line key file {buggy_line_key_file} does not exist"
-
-            with open(buggy_line_key_file, "r") as f:
-                buggy_line_key = f.readline().strip()
             
             postprocessed_coverage_file = self.set_dir / f"postprocessed_coverage_per_bug_version/{bug}.cov_data.csv"
             assert postprocessed_coverage_file.exists(), f"Postprocessed coverage file {postprocessed_coverage_file} does not exist"
 
-            # VALIDATE: that all failing tcs execute the buggy line
-            res = self.check_failing_tcs(postprocessed_coverage_file, failing_tcs_list, buggy_line_key)
-            assert res, f"Failing test cases do not execute the buggy line in {postprocessed_coverage_file}"
-            print(f"\t VAL03: Failing test cases execute buggy line check passed")
-
-
-
+            if buggy_lineno != "-1":
+                # VALIDATE: that all failing tcs execute the buggy line
+                res = self.check_failing_tcs(postprocessed_coverage_file, failing_tcs_list, buggy_line_key)
+                assert res, f"Failing test cases do not execute the buggy line in {postprocessed_coverage_file}"
+                print(f"\t VAL03: Failing test cases execute buggy line check passed")
+            else:
+                print(f"\t VAL03: Buggy line number is -1, skipping failing TCs check")
 
             num_failing_tcs = len(failing_tcs_list)
             fl_features_file_with_susp = self.set_dir / f"FL_features_per_bug_version_with_susp_scores/{bug}.fl_features_with_susp_scores.csv"
@@ -319,8 +340,6 @@ class Validate:
             self.check_mutated_code(buggy_code_file, bug_info, buggy_line_key)
             print(f"\t VAL05: Mutated code check passed")
 
-            # if idx == 7:
-            #     break
 
         print(f"All {len(bugs)} bugs have been validated successfully")
     

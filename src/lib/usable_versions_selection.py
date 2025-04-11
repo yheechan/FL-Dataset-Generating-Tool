@@ -190,7 +190,7 @@ class UsableVersionSelection(Subject):
         
         self.fileManager.send_repo_remote(self.subject_repo, self.experiment.machineCores_list)
 
-        self.fileManager.send_configurations_remote(self.experiment.machineCores_dict)
+        self.fileManager.send_configurations_remote(self.experiment.machineCores_dict, self.subject_repo)
         self.fileManager.send_src_remote(self.experiment.machineCores_dict)
         self.fileManager.send_tools_remote(self.tools_dir, self.experiment.machineCores_dict)
         self.fileManager.send_experiment_configurations_remote(self.experiment.machineCores_dict)
@@ -339,7 +339,7 @@ class UsableVersionSelection(Subject):
         return target_code_file, mutant_code_file
 
     def copy_real_world_buggy_versions(self):
-        real_world_buggy_versions_dir = self.work / "real_world_buggy_versions"
+        real_world_buggy_versions_dir = self.subject_repo / "real_world_buggy_versions"
         
         for buggy_version in real_world_buggy_versions_dir.iterdir():
             if not buggy_version.is_dir():
